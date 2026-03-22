@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { createClient } from '@supabase/supabase-js';
+import 'dotenv/config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,17 +21,26 @@ app.use(express.json());
 const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || "";
 
-console.log("Initializing Supabase with URL:", supabaseUrl ? "Present" : "Missing");
+console.log("-----------------------------------------");
+console.log("SUPABASE CONFIGURATION:");
+console.log("URL:", supabaseUrl ? "Present" : "MISSING!");
+console.log("Anon Key:", supabaseAnonKey ? "Present" : "MISSING!");
+console.log("-----------------------------------------");
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Debug endpoint to check Supabase connection
 app.get("/api/debug/supabase", async (req, res) => {
   try {
-    const { data, error } = await supabase.from('leads').select('count', { count: 'exact', head: true });
+    const { data, error, count } = await supabase.from('leads').select('*', { count: 'exact', head: true });
     if (error) throw error;
-    res.json({ status: "connected", leadsCount: data });
+    res.json({ 
+      status: "connected", 
+      leadsCount: count,
+      url: supabaseUrl.substring(0, 10) + "..."
+    });
   } catch (error: any) {
+    console.error("DEBUG ERROR:", error);
     res.status(500).json({ status: "error", message: error.message, details: error });
   }
 });
@@ -60,7 +70,14 @@ const mapDbLeadToFrontend = (dbLead: any) => ({
   documentData: dbLead.document_data,
   financialRecord: dbLead.financial_record,
   createdAt: dbLead.created_at,
-  notes: dbLead.notes || ""
+  notes: dbLead.notes || "",
+  spouseInfo: {
+    name: dbLead.spouse_name || "",
+    cpf: dbLead.spouse_cpf || "",
+    rg: dbLead.spouse_rg || "",
+    phone: dbLead.spouse_phone || "",
+    email: dbLead.spouse_email || ""
+  }
 });
 
 const mapFrontendLeadToDb = (lead: any) => ({
@@ -85,7 +102,12 @@ const mapFrontendLeadToDb = (lead: any) => ({
   contract: lead.contract,
   document_data: lead.documentData || null,
   financial_record: lead.financialRecord || null,
-  notes: lead.notes
+  notes: lead.notes,
+  spouse_name: lead.spouseInfo?.name || null,
+  spouse_cpf: lead.spouseInfo?.cpf || null,
+  spouse_rg: lead.spouseInfo?.rg || null,
+  spouse_phone: lead.spouseInfo?.phone || null,
+  spouse_email: lead.spouseInfo?.email || null
 });
 
 // Helpers for Task Mapping
@@ -147,7 +169,7 @@ const authenticateToken = (req: any, res: any, next: any) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token || token === 'undefined' || token === 'null') {
+  if (!token || token === 'undefined' || token === 'null' || token === '') {
     return res.status(401).json({ error: "Token não fornecido" });
   }
 

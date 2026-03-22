@@ -77,9 +77,21 @@ export default function App() {
         // Fetch Leads
         const leadsRes = await fetch('/api/leads', { headers });
         console.log("Leads API Status:", leadsRes.status);
+        
+        if (leadsRes.status === 401 || leadsRes.status === 403) {
+          console.warn("Session expired or invalid. Logging out...");
+          handleLogout();
+          return;
+        }
+
         if (leadsRes.ok) {
           const data = await leadsRes.json();
           setLeads(data);
+        } else {
+          // If the API fails but we are authenticated, clear the mock leads
+          // to avoid confusion, or set to empty if it's a real connection.
+          setLeads([]);
+          console.error("Failed to fetch leads from DB:", leadsRes.statusText);
         }
 
         // Fetch Current User Profile to sync role
