@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import path from "path";
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
@@ -7,7 +6,16 @@ import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { createClient } from '@supabase/supabase-js';
-import 'dotenv/config';
+
+// dotenv is only needed locally
+if (process.env.VERCEL !== '1') {
+  try {
+    const dotenv = await import('dotenv');
+    dotenv.config();
+  } catch (e) {
+    // Ignore if dotenv is not found
+  }
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,16 +29,19 @@ app.use(express.json());
 const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || "";
 
-console.log("-----------------------------------------");
-console.log("SUPABASE CONFIGURATION:");
-console.log("URL:", supabaseUrl ? "Present" : "MISSING!");
-console.log("Anon Key:", supabaseAnonKey ? "Present" : "MISSING!");
-console.log("-----------------------------------------");
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("FATAL: MISSING SUPABASE CREDENTIALS!");
+}
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = createClient(supabaseUrl || "https://placeholder.supabase.co", supabaseAnonKey || "placeholder");
+
+// Health check endpoint
+app.get(["/api/health", "/health"], (req, res) => {
+  res.json({ status: "ok", version: "1.0.0", env: process.env.NODE_ENV });
+});
 
 // Debug endpoint to check Supabase connection
-app.get("/api/debug/supabase", async (req, res) => {
+app.get(["/api/debug/supabase", "/debug/supabase"], async (req, res) => {
   try {
     const { data, error, count } = await supabase.from('leads').select('*', { count: 'exact', head: true });
     if (error) throw error;
@@ -186,7 +197,7 @@ const authenticateToken = (req: any, res: any, next: any) => {
 };
 
 // Auth Endpoints
-app.post("/api/auth/login", async (req, res) => {
+app.post(["/api/auth/login", "/auth/login"], async (req, res) => {
   const { email, password } = req.body;
   const users = await getUsers();
   const user = users.find((u: any) => u.email === email);
@@ -215,7 +226,7 @@ app.post("/api/auth/login", async (req, res) => {
   });
 });
 
-app.get("/api/auth/me", authenticateToken, async (req: any, res) => {
+app.get(["/api/auth/me", "/auth/me"], authenticateToken, async (req: any, res) => {
   try {
     const users = await getUsers();
     const user = users.find((u: any) => u.id === req.user.id);
@@ -235,7 +246,7 @@ app.get("/api/auth/me", authenticateToken, async (req: any, res) => {
   }
 });
 
-app.patch("/api/auth/me", authenticateToken, async (req: any, res) => {
+app.patch(["/api/auth/me", "/auth/me"], authenticateToken, async (req: any, res) => {
   const { name, password } = req.body;
   const userId = req.user.id;
 
@@ -264,7 +275,7 @@ app.patch("/api/auth/me", authenticateToken, async (req: any, res) => {
 });
 
 // Webhook Endpoint (No auth required, uses API Key)
-app.post("/api/leads/webhook", async (req, res) => {
+app.post(["/api/leads/webhook", "/leads/webhook"], async (req, res) => {
   const apiKey = req.headers['x-api-key'];
 
   if (apiKey !== API_KEY) {
@@ -325,7 +336,7 @@ app.post("/api/leads/webhook", async (req, res) => {
 });
 
 // API to get leads for the frontend
-app.get("/api/leads", authenticateToken, async (req, res) => {
+app.get(["/api/leads", "/leads"], authenticateToken, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('leads')
@@ -340,7 +351,7 @@ app.get("/api/leads", authenticateToken, async (req, res) => {
   }
 });
 
-app.put("/api/leads/:id", authenticateToken, async (req, res) => {
+app.put(["/api/leads/:id", "/leads/:id"], authenticateToken, async (req, res) => {
   const { id } = req.params;
   const updatedLead = mapFrontendLeadToDb(req.body);
 
@@ -362,7 +373,7 @@ app.put("/api/leads/:id", authenticateToken, async (req, res) => {
   }
 });
 
-app.delete("/api/leads/:id", authenticateToken, async (req, res) => {
+app.delete(["/api/leads/:id", "/leads/:id"], authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
     const { error } = await supabase
@@ -378,7 +389,7 @@ app.delete("/api/leads/:id", authenticateToken, async (req, res) => {
   }
 });
 
-app.post("/api/leads", authenticateToken, async (req, res) => {
+app.post(["/api/leads", "/leads"], authenticateToken, async (req, res) => {
   const dbLead = mapFrontendLeadToDb(req.body);
   try {
     const { data, error } = await supabase
@@ -395,7 +406,7 @@ app.post("/api/leads", authenticateToken, async (req, res) => {
 });
 
 // Tasks Endpoints
-app.get("/api/tasks", authenticateToken, async (req: any, res) => {
+app.get(["/api/tasks", "/tasks"], authenticateToken, async (req: any, res) => {
   try {
     const { data, error } = await supabase
       .from('tasks')
@@ -411,7 +422,7 @@ app.get("/api/tasks", authenticateToken, async (req: any, res) => {
   }
 });
 
-app.post("/api/tasks", authenticateToken, async (req: any, res) => {
+app.post(["/api/tasks", "/tasks"], authenticateToken, async (req: any, res) => {
   const taskData = mapFrontendTaskToDb({ ...req.body, userId: req.user.id });
   
   try {
@@ -428,7 +439,7 @@ app.post("/api/tasks", authenticateToken, async (req: any, res) => {
   }
 });
 
-app.put("/api/tasks/:id", authenticateToken, async (req: any, res) => {
+app.put(["/api/tasks/:id", "/tasks/:id"], authenticateToken, async (req: any, res) => {
   const { id } = req.params;
   const updatedTask = mapFrontendTaskToDb(req.body);
 
@@ -451,7 +462,7 @@ app.put("/api/tasks/:id", authenticateToken, async (req: any, res) => {
   }
 });
 
-app.delete("/api/tasks/:id", authenticateToken, async (req: any, res) => {
+app.delete(["/api/tasks/:id", "/tasks/:id"], authenticateToken, async (req: any, res) => {
   const { id } = req.params;
   try {
     const { error } = await supabase
@@ -469,7 +480,7 @@ app.delete("/api/tasks/:id", authenticateToken, async (req: any, res) => {
 });
 
 // Kanban Columns Endpoints
-app.get("/api/columns", authenticateToken, async (req, res) => {
+app.get(["/api/columns", "/columns"], authenticateToken, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('kanban_columns')
@@ -484,7 +495,7 @@ app.get("/api/columns", authenticateToken, async (req, res) => {
   }
 });
 
-app.post("/api/columns", authenticateToken, async (req, res) => {
+app.post(["/api/columns", "/columns"], authenticateToken, async (req, res) => {
   const { name } = req.body;
   try {
     // Get current max position
@@ -508,7 +519,7 @@ app.post("/api/columns", authenticateToken, async (req, res) => {
   }
 });
 
-app.delete("/api/columns/:name", authenticateToken, async (req, res) => {
+app.delete(["/api/columns/:name", "/columns/:name"], authenticateToken, async (req, res) => {
   const { name } = req.params;
   try {
     const { error } = await supabase
@@ -524,7 +535,7 @@ app.delete("/api/columns/:name", authenticateToken, async (req, res) => {
   }
 });
 
-app.patch("/api/columns/:oldName", authenticateToken, async (req, res) => {
+app.patch(["/api/columns/:oldName", "/columns/:oldName"], authenticateToken, async (req, res) => {
   const { oldName } = req.params;
   const { newName } = req.body;
 
@@ -553,7 +564,7 @@ app.patch("/api/columns/:oldName", authenticateToken, async (req, res) => {
 });
 
 // User Management Endpoints
-app.get("/api/roles/permissions", authenticateToken, async (req, res) => {
+app.get(["/api/roles/permissions", "/roles/permissions"], authenticateToken, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('roles_permissions')
@@ -567,7 +578,7 @@ app.get("/api/roles/permissions", authenticateToken, async (req, res) => {
   }
 });
 
-app.post("/api/roles/permissions", authenticateToken, async (req, res) => {
+app.post(["/api/roles/permissions", "/roles/permissions"], authenticateToken, async (req, res) => {
   const { role_id, permissions } = req.body;
   try {
     const { data, error } = await supabase
@@ -583,7 +594,7 @@ app.post("/api/roles/permissions", authenticateToken, async (req, res) => {
   }
 });
 
-app.delete("/api/roles/permissions/:role_id", authenticateToken, async (req, res) => {
+app.delete(["/api/roles/permissions/:role_id", "/roles/permissions/:role_id"], authenticateToken, async (req, res) => {
   const { role_id } = req.params;
   try {
     const { error } = await supabase
@@ -599,12 +610,12 @@ app.delete("/api/roles/permissions/:role_id", authenticateToken, async (req, res
   }
 });
 
-app.get("/api/users", authenticateToken, async (req, res) => {
+app.get(["/api/users", "/users"], authenticateToken, async (req, res) => {
   const users = await getUsers();
   res.json(users);
 });
 
-app.post("/api/users", authenticateToken, async (req, res) => {
+app.post(["/api/users", "/users"], authenticateToken, async (req, res) => {
   const userData = req.body;
   try {
     const { data, error } = await supabase
@@ -620,7 +631,7 @@ app.post("/api/users", authenticateToken, async (req, res) => {
   }
 });
 
-app.delete("/api/users/:id", authenticateToken, async (req, res) => {
+app.delete(["/api/users/:id", "/users/:id"], authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
     const { error } = await supabase
@@ -636,7 +647,7 @@ app.delete("/api/users/:id", authenticateToken, async (req, res) => {
   }
 });
 
-app.patch("/api/users/:id", authenticateToken, async (req, res) => {
+app.patch(["/api/users/:id", "/users/:id"], authenticateToken, async (req, res) => {
   const { id } = req.params;
   const updates = req.body;
   try {
@@ -655,28 +666,28 @@ app.patch("/api/users/:id", authenticateToken, async (req, res) => {
 });
 
 async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
-
-  // Prevenimos o loop de listen() na Vercel (que importa o app como mÃ³dulo)
-  if (process.env.VERCEL !== '1') {
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
+  // na Vercel, não precisamos do middleware do Vite nem de servir arquivos estáticos manualmente, 
+  // pois a Vercel cuida disso de forma nativa através do vercel.json e da pasta dist.
+  if (process.env.NODE_ENV !== "production" && process.env.VERCEL !== '1') {
+    try {
+      const { createServer: createViteServer } = await import('vite');
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      });
+      app.use(vite.middlewares);
+      
+      const PORT = process.env.PORT || 3000;
+      app.listen(PORT, () => {
+        console.log(`Development server running on http://localhost:${PORT}`);
+      });
+    } catch (e) {
+      console.error("Failed to start Vite dev server:", e);
+    }
   }
 }
 
+// Inicializa o servidor se necessário (localmente)
 startServer();
 
 export default app;
