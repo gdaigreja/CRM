@@ -1,6 +1,7 @@
 let app;
 try {
-  const serverModule = await import('../server');
+  // Em ESM, precisamos da extensão .js para importações locais
+  const serverModule = await import('../server.js');
   app = serverModule.default;
 } catch (e: any) {
   app = (req: any, res: any) => {
