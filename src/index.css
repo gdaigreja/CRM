@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-antique: #F5F2ED;
+  --color-licorice: #1A1110;
+  --color-aventurine: #4D2A29;
+  --color-terracotta: #A0522D;
+  --color-exotic: #FF6321;
+  --color-success: #2E7D32;
+  
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-antique text-licorice font-sans antialiased;
+    overflow: hidden;
+  }
+
+  /* Hide scrollbars but allow scrolling */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-aventurine text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 text-sm font-medium;
+  }
+  
+  .input-field {
+    @apply w-full bg-white/50 border border-licorice/10 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:border-aventurine transition-colors;
+  }
+
+  .kanban-column {
+    @apply flex flex-col bg-licorice/5 rounded-xl w-72 min-w-[18rem] h-full max-h-full;
+  }
+}

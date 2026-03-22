@@ -1,0 +1,1638 @@
+import React, { useState, useCallback, useEffect } from 'react';
+import { 
+  DragDropContext, 
+  Droppable, 
+  Draggable, 
+  DropResult 
+} from '@hello-pangea/dnd';
+import { 
+  LayoutDashboard, 
+  Users, 
+  Columns,
+  FileText, 
+  Settings, 
+  Plus, 
+  Search, 
+  MoreHorizontal,
+  Phone,
+  MapPin,
+  Pencil,
+  X,
+  Check,
+  FilePlus,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Trash2,
+  AlertCircle,
+  Calendar,
+  ChevronDown,
+  Filter,
+  CheckSquare,
+  List,
+  LogOut,
+  Database,
+  DollarSign,
+  Activity,
+  ExternalLink,
+  User
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { v4 as uuidv4 } from 'uuid';
+import { Lead, LeadStatus, ContractData, SpouseInfo } from './types';
+import { INITIAL_LEADS, KANBAN_COLUMNS, DEFAULT_DOCUMENTS } from './constants';
+import { cn, formatCurrency, formatPhone, parseCurrency, formatRG, formatCPF, formatCEP, formatPercent } from './utils';
+import Dashboard from './components/Dashboard';
+import Registrations from './components/Registrations';
+import EditLeadSidebar from './components/EditLeadSidebar';
+import Documents from './components/Documents';
+import SettingsView from './components/Settings';
+import Tasks from './components/Tasks';
+import DocumentGenerator from './components/DocumentGenerator';
+import Login from './components/Login';
+import Finance from './components/Finance';
+
+export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!localStorage.getItem('token'));
+  const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('user') || 'null'));
+  const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
+  const [columns, setColumns] = useState<string[]>(KANBAN_COLUMNS);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [view, setView] = useState<'kanban' | 'dashboard' | 'registrations' | 'documents' | 'settings' | 'tasks' | 'generator' | 'finance'>('kanban');
+  const [editingColumn, setEditingColumn] = useState<string | null>(null);
+  const [rolePermissions, setRolePermissions] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const fetchData = async () => {
+      console.log("Fetching data from API...");
+      try {
+        const token = localStorage.getItem('token');
+        const headers = { 'Authorization': `Bearer ${token}` };
+
+        // Fetch Leads
+        const leadsRes = await fetch('/api/leads', { headers });
+        console.log("Leads API Status:", leadsRes.status);
+        if (leadsRes.ok) {
+          const data = await leadsRes.json();
+          setLeads(data);
+        }
+
+        // Fetch Current User Profile to sync role
+        const profileRes = await fetch('/api/auth/me', { headers });
+        console.log("Profile API Status:", profileRes.status);
+        if (profileRes.ok) {
+          const userData = await profileRes.json();
+          setUser(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
+        }
+
+        // Fetch Columns
+        const columnsRes = await fetch('/api/columns', { headers });
+        console.log("Columns API Status:", columnsRes.status);
+        if (columnsRes.ok) {
+          const data = await columnsRes.json();
+          if (data && data.length > 0) setColumns(data);
+        }
+
+        // Fetch Permissions
+        const permissionsRes = await fetch('/api/roles/permissions', { headers });
+        console.log("Permissions API Status:", permissionsRes.status);
+        if (permissionsRes.ok) {
+          const data = await permissionsRes.json();
+          const permsMap: Record<string, string[]> = {};
+          data.forEach((p: any) => {
+            // p.permissions is the PermissionLevel object
+            if (p.permissions && Array.isArray(p.permissions.features)) {
+              const enabledFeatures = p.permissions.features
+                .filter((f: any) => f.enabled)
+                .map((f: any) => f.id);
+              
+              let roleId = p.role_id.toLowerCase();
+              if (roleId === 'administrador') roleId = 'admin';
+              if (roleId === 'visualizador') roleId = 'viewer';
+              
+              permsMap[roleId] = enabledFeatures;
+            }
+          });
+          setRolePermissions(permsMap);
+        }
+      } catch (e) {
+        console.error("Error fetching data", e);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 10000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
+  const handleLogin = (token: string, userData: any) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
+  // Registration Filters
+  const [regSearchQuery, setRegSearchQuery] = useState('');
+  const [regFilterType, setRegFilterType] = useState<'all' | 'lead' | 'cliente'>('all');
+  const [regFilterStatus, setRegFilterStatus] = useState<LeadStatus | 'all'>('all');
+
+  // Dashboard Filters
+  const [dateRange, setDateRange] = useState<{ start: string | null, end: string | null, label: string }>({
+    start: null,
+    end: new Date().toISOString(),
+    label: 'Desde o início'
+  });
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Documents Filters
+  const [docSearchQuery, setDocSearchQuery] = useState('');
+  const [docFilterPendencias, setDocFilterPendencias] = useState(false);
+  const [docFilterComPrazo, setDocFilterComPrazo] = useState(false);
+
+  // Tasks Filters
+  const [taskSearchQuery, setTaskSearchQuery] = useState('');
+  const [taskFilterStatus, setTaskFilterStatus] = useState<'todos' | 'pendente' | 'em_andamento' | 'concluida'>('todos');
+  const [taskView, setTaskView] = useState<'list' | 'kanban'>('list');
+  // Finance Filters
+  const [financeSearchQuery, setFinanceSearchQuery] = useState('');
+
+  const [triggerNewTask, setTriggerNewTask] = useState<number>(0);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      console.log("Current User Role:", user.role);
+      console.log("Role Permissions Loaded:", rolePermissions.length > 0 ? "Yes" : "No");
+    }
+  }, [user, rolePermissions]);
+
+  const isFeatureEnabled = useCallback((featureId: string) => {
+    if (!user) return false;
+    
+    // Normalize role to match permission IDs
+    let role = user.role?.toLowerCase();
+    if (role === 'administrador') role = 'admin';
+    if (role === 'visualizador') role = 'viewer';
+    
+    // Admin always has access to everything
+    if (role === 'admin') return true;
+    
+    // Map view IDs to feature IDs if necessary
+    const map: Record<string, string> = {
+      'kanban': 'leads',
+      'registrations': 'clients',
+    };
+    
+    const id = map[featureId] || featureId;
+    
+    // Special case for settings view
+    if (id === 'settings') {
+      if (rolePermissions[role]) {
+        return rolePermissions[role].includes('access') || rolePermissions[role].includes('integrations');
+      }
+      // Fallback if permissions not loaded
+      if (role === 'editor') return false; // Editor by default doesn't see settings
+      if (role === 'viewer') return false;
+      return false;
+    }
+    
+    // If we have dynamic permissions, use them
+    if (rolePermissions[role]) {
+      return rolePermissions[role].includes(id);
+    }
+    
+    // Fallback to hardcoded logic if permissions haven't loaded yet
+    if (role === 'editor') {
+      return ['leads', 'clients', 'tasks', 'documents', 'generator', 'dashboard', 'finance'].includes(id);
+    }
+    
+    if (role === 'viewer') {
+      return ['leads', 'clients', 'dashboard'].includes(id);
+    }
+    
+    return false;
+  }, [user, rolePermissions]);
+
+  // Redirect if current view is not allowed
+  useEffect(() => {
+    if (isAuthenticated && !isFeatureEnabled(view)) {
+      // Find first enabled feature
+      const features = ['kanban', 'dashboard', 'registrations', 'documents', 'tasks', 'generator', 'finance', 'settings'];
+      const firstEnabled = features.find(f => isFeatureEnabled(f));
+      if (firstEnabled) {
+        setView(firstEnabled as any);
+      }
+    }
+  }, [view, user, isAuthenticated, isFeatureEnabled]);
+
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  const onDragEnd = async (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    if (!destination) return;
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) return;
+
+    const newLeads: Lead[] = Array.from(leads);
+    const leadIndex = newLeads.findIndex(l => l.id === draggableId);
+    if (leadIndex === -1) return;
+
+    const [removed] = newLeads.splice(leadIndex, 1) as Lead[];
+    const oldStatus = removed.status;
+    const newStatus = destination.droppableId as LeadStatus;
+
+    // No longer checking for risk of moving out of 'Assinado'
+
+    removed.status = newStatus;
+
+    // Initialize documentData if moved to 'Assinado'
+    if (removed.status === 'Assinado' && !removed.documentData) {
+      removed.documentData = {
+        code: `C${Math.floor(Math.random() * 1000)}`,
+        documents: [...DEFAULT_DOCUMENTS],
+        observations: [],
+        emailSent: false,
+        notificationSent: false
+      };
+    }
+    
+    // Insert at new index
+    newLeads.push(removed);
+    setLeads(newLeads);
+
+    // Update in DB
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`/api/leads/${removed.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(removed)
+      });
+    } catch (e) {
+      console.error("Error updating lead status", e);
+    }
+  };
+
+  const updateLead = async (updatedLead: Lead, force = false) => {
+    const originalLead = leads.find(l => l.id === updatedLead.id);
+    
+    // No longer checking for risk of moving out of 'Assinado' via form
+
+    // Keeping documentData even after status change
+
+    // Initialize documentData if moved to 'Assinado'
+    if (updatedLead.status === 'Assinado' && !updatedLead.documentData) {
+      updatedLead.documentData = {
+        code: `C${Math.floor(Math.random() * 1000)}`,
+        documents: [...DEFAULT_DOCUMENTS],
+        observations: [],
+        emailSent: false,
+        notificationSent: false
+      };
+    }
+
+    setLeads(prev => prev.map(l => l.id === updatedLead.id ? updatedLead : l));
+    if (selectedLead?.id === updatedLead.id) {
+      setSelectedLead(updatedLead);
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`/api/leads/${updatedLead.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedLead)
+      });
+    } catch (e) {
+      console.error("Error updating lead", e);
+    }
+  };
+
+  const deleteLead = async (id: string) => {
+    setLeads(prev => prev.filter(l => l.id !== id));
+    if (selectedLead?.id === id) setSelectedLead(null);
+
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`/api/leads/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+    } catch (e) {
+      console.error("Error deleting lead", e);
+    }
+  };
+
+  const handleFinalize = (lead: Lead, contract: ContractData) => {
+    const updatedLead = { ...lead, contract };
+    setLeads(prev => prev.map(l => l.id === lead.id ? updatedLead : l));
+    
+    const payload = {
+      timestamp: new Date().toISOString(),
+      lead: updatedLead,
+      contract
+    };
+    console.log('Webhook Payload:', JSON.stringify(payload, null, 2));
+    alert('Contrato finalizado e dados enviados via Webhook!');
+    setSelectedLead(null);
+  };
+
+  const filteredLeads = leads.filter(l => {
+    const matchesSearch = l.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         l.city.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Dashboard date filtering
+    if (view === 'dashboard' && dateRange.start) {
+      const createdAt = new Date(l.createdAt || '').getTime();
+      const start = new Date(dateRange.start).getTime();
+      const end = dateRange.end ? new Date(dateRange.end).getTime() : Infinity;
+      if (createdAt < start || createdAt > end) return false;
+    }
+
+    return matchesSearch;
+  });
+
+  const addNewLead = async (status: string) => {
+    const newLead: Lead = {
+      id: uuidv4(),
+      name: 'Novo Lead',
+      profession: '',
+      phone: '',
+      city: '',
+      state: '',
+      valuePaid: 0,
+      propertyType: 'Imóvel Pronto',
+      brokerage: 0,
+      delays: 0,
+      signedDistrato: 'Não',
+      notes: '',
+      proposal: 0,
+      status,
+      createdAt: new Date().toISOString(),
+      documentData: status === 'Assinado' ? {
+        code: `C${Math.floor(Math.random() * 1000)}`,
+        documents: [...DEFAULT_DOCUMENTS],
+        observations: [],
+        emailSent: false,
+        notificationSent: false
+      } : undefined
+    };
+    setLeads([newLead, ...leads]);
+    setEditingLead(newLead);
+
+    try {
+      const token = localStorage.getItem('token');
+      await fetch('/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(newLead)
+      });
+    } catch (e) {
+      console.error("Error adding new lead", e);
+    }
+  };
+
+  const renameColumn = async (oldName: string, newName: string) => {
+    if (!newName || oldName === newName) {
+      setEditingColumn(null);
+      return;
+    }
+    setColumns(prev => prev.map(c => c === oldName ? newName : c));
+    setLeads(prev => prev.map(l => l.status === oldName ? { ...l, status: newName } : l));
+    setEditingColumn(null);
+
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`/api/columns/${oldName}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ newName })
+      });
+    } catch (e) {
+      console.error("Error renaming column", e);
+    }
+  };
+
+  const addColumn = async () => {
+    const name = `Nova Coluna ${columns.length + 1}`;
+    setColumns([...columns, name]);
+
+    try {
+      const token = localStorage.getItem('token');
+      await fetch('/api/columns', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ name, order: columns.length + 1 })
+      });
+    } catch (e) {
+      console.error("Error adding column", e);
+    }
+  };
+
+  const deleteColumn = async (columnName: string) => {
+    if (window.confirm(`Deseja excluir a coluna "${columnName}"?`)) {
+      setColumns(prev => prev.filter(c => c !== columnName));
+
+      try {
+        const token = localStorage.getItem('token');
+        await fetch(`/api/columns/${columnName}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (e) {
+        console.error("Error deleting column", e);
+      }
+    }
+  };
+
+  const getPredefinedRange = (type: string) => {
+    const now = new Date();
+    switch (type) {
+      case 'este mês':
+        return { 
+          start: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(), 
+          end: now.toISOString(),
+          label: 'Este mês'
+        };
+      case 'mês anterior':
+        return { 
+          start: new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString(), 
+          end: new Date(now.getFullYear(), now.getMonth(), 0).toISOString(),
+          label: 'Mês anterior'
+        };
+      case 'este ano':
+        return { 
+          start: new Date(now.getFullYear(), 0, 1).toISOString(), 
+          end: now.toISOString(),
+          label: 'Este ano'
+        };
+      case 'ano anterior':
+        return { 
+          start: new Date(now.getFullYear() - 1, 0, 1).toISOString(), 
+          end: new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59).toISOString(),
+          label: 'Ano anterior'
+        };
+      case 'desde o início':
+      default:
+        return { start: null, end: now.toISOString(), label: 'Desde o início' };
+    }
+  };
+
+  return (
+    <div className="flex h-screen w-full bg-antique overflow-hidden font-sans text-licorice">
+      {/* Sidebar */}
+      <aside 
+        className={cn(
+          "flex flex-col py-6 border-r border-licorice/10 bg-[#512E2D] text-white transition-all duration-300 relative z-20 shadow-2xl",
+          isSidebarExpanded ? "w-64 px-6" : "w-20 items-center"
+        )}
+      >
+        <div className={cn(
+          "flex items-center mb-10",
+          isSidebarExpanded ? "justify-between" : "justify-center"
+        )}>
+          <img 
+            src="https://zklkmbokwzhbqdoqsnxs.supabase.co/storage/v1/object/public/Imagens/logo_pequena.png" 
+            alt="Logo Distrato Justo" 
+            className="w-10 h-10 object-contain"
+            referrerPolicy="no-referrer"
+          />
+          {isSidebarExpanded && (
+            <span className="font-bold tracking-tight text-lg ml-3 flex-1">Distrato Justo</span>
+          )}
+        </div>
+
+        <nav className="flex flex-col gap-4 w-full flex-1">
+          {isFeatureEnabled('leads') && (
+            <SidebarIcon 
+              icon={<Columns size={20} />} 
+              label="Leads"
+              active={view === 'kanban'} 
+              expanded={isSidebarExpanded}
+              onClick={() => setView('kanban')}
+            />
+          )}
+          {isFeatureEnabled('clients') && (
+            <SidebarIcon 
+              icon={<Users size={20} />} 
+              label="Clientes"
+              active={view === 'registrations'}
+              expanded={isSidebarExpanded}
+              onClick={() => setView('registrations')}
+            />
+          )}
+          {isFeatureEnabled('documents') && (
+            <SidebarIcon 
+              icon={<Activity size={20} />} 
+              label="Operação"
+              active={view === 'documents'}
+              expanded={isSidebarExpanded}
+              onClick={() => setView('documents')}
+            />
+          )}
+          {isFeatureEnabled('finance') && (
+            <SidebarIcon 
+              icon={<DollarSign size={20} />} 
+              label="Financeiro"
+              active={view === 'finance'}
+              expanded={isSidebarExpanded}
+              onClick={() => setView('finance')}
+            />
+          )}
+          {isFeatureEnabled('tasks') && (
+            <SidebarIcon 
+              icon={<CheckSquare size={20} />} 
+              label="Tarefas"
+              active={view === 'tasks'}
+              expanded={isSidebarExpanded}
+              onClick={() => setView('tasks')}
+            />
+          )}
+          {isFeatureEnabled('generator') && (
+            <SidebarIcon 
+              icon={<FilePlus size={20} />} 
+              label="Gerador"
+              active={view === 'generator'}
+              expanded={isSidebarExpanded}
+              onClick={() => setView('generator')}
+            />
+          )}
+          {isFeatureEnabled('dashboard') && (
+            <SidebarIcon 
+              icon={<LayoutDashboard size={20} />} 
+              label="Dashboard"
+              active={view === 'dashboard'} 
+              expanded={isSidebarExpanded}
+              onClick={() => setView('dashboard')}
+            />
+          )}
+          {(isFeatureEnabled('access') || isFeatureEnabled('integrations')) && (
+            <SidebarIcon 
+              icon={<Settings size={20} />} 
+              label="Configurações"
+              active={view === 'settings'}
+              expanded={isSidebarExpanded}
+              onClick={() => setView('settings')}
+            />
+          )}
+        </nav>
+
+        <div className="mt-auto flex flex-col gap-2 w-full">
+          <button 
+            onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+            className="flex items-center justify-center p-2.5 rounded-xl cursor-pointer transition-all duration-200 text-white/70 hover:bg-white/5 w-full"
+          >
+            {isSidebarExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-w-0 relative">
+        {/* Debug Panel (Only for Admin) */}
+        {user?.role === 'admin' && (
+          <div className="absolute top-4 right-4 z-50">
+            <button 
+              onClick={() => {
+                const win = window.open("", "Debug", "width=600,height=800");
+                if (win) {
+                  win.document.write(`
+                    <html>
+                      <head>
+                        <title>Supabase Setup SQL</title>
+                        <style>
+                          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 32px; line-height: 1.6; color: #1a1a1a; background: #fdfcfb; }
+                          h2 { color: #512E2D; border-bottom: 2px solid #512E2D; padding-bottom: 8px; }
+                          pre { background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 12px; overflow-x: auto; font-family: "JetBrains Mono", monospace; font-size: 13px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+                          .note { background: #fff3cd; border-left: 4px solid #ffc107; padding: 16px; margin: 20px 0; border-radius: 4px; }
+                          code { background: #eee; padding: 2px 4px; border-radius: 4px; }
+                          .btn { display: inline-block; padding: 10px 20px; background: #512E2D; color: white; text-decoration: none; border-radius: 8px; margin-top: 20px; cursor: pointer; border: none; }
+                        </style>
+                      </head>
+                      <body>
+                        <h2>Supabase Setup SQL</h2>
+                        <p>Execute this SQL in your <strong>Supabase SQL Editor</strong> to create the necessary tables for the CRM:</p>
+                        
+                        <div class="note">
+                          <strong>Important:</strong> Make sure you have the <code>uuid-ossp</code> extension enabled in your Supabase project (it's usually enabled by default).
+                        </div>
+
+                        <pre>
+-- 1. Users Table
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  role TEXT DEFAULT 'user',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 2. Leads Table
+CREATE TABLE IF NOT EXISTS leads (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
+  company TEXT,
+  status TEXT DEFAULT 'novo',
+  source TEXT,
+  value NUMERIC DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  last_contact TIMESTAMP WITH TIME ZONE,
+  notes TEXT,
+  assigned_to UUID,
+  tags TEXT[] DEFAULT '{}',
+  contract_value NUMERIC DEFAULT 0,
+  contract_start_date DATE,
+  contract_end_date DATE,
+  contract_status TEXT DEFAULT 'pending',
+  contract JSONB,
+  document_data JSONB,
+  financial_record JSONB
+);
+
+-- 3. Tasks Table
+CREATE TABLE IF NOT EXISTS tasks (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  description TEXT,
+  status TEXT DEFAULT 'pendente',
+  priority TEXT DEFAULT 'media',
+  due_date TIMESTAMP WITH TIME ZONE,
+  lead_id UUID REFERENCES leads(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  assigned_to UUID
+);
+
+-- 4. Columns Table
+CREATE TABLE IF NOT EXISTS columns (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  "order" INTEGER NOT NULL,
+  color TEXT
+);
+
+-- 5. Roles & Permissions Table
+CREATE TABLE IF NOT EXISTS roles_permissions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  role TEXT NOT NULL,
+  permissions JSONB NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 6. Insert Initial Admin User (password: password123)
+-- Using bcrypt hash for 'password123'
+INSERT INTO users (name, email, password, role) 
+VALUES ('Admin User', 'admin@crm.com', '$2a$10$Xm8Y.zG6.X6.X6.X6.X6.X6.X6.X6.X6.X6.X6.X6.X6.X6.X6.X6', 'admin')
+ON CONFLICT (email) DO NOTHING;
+
+-- 7. Insert Default Kanban Columns
+INSERT INTO columns (id, title, "order", color) VALUES
+('novo', 'Novo Lead', 0, '#4285F4'),
+('contato', 'Em Contato', 1, '#FBBC05'),
+('proposta', 'Proposta Enviada', 2, '#34A853'),
+('negociacao', 'Em Negociação', 3, '#EA4335'),
+('fechado', 'Contrato Assinado', 4, '#10B981'),
+('perdido', 'Perdido', 5, '#6B7280')
+ON CONFLICT (id) DO NOTHING;
+                        </pre>
+                        
+                        <button class="btn" onclick="window.close()">Close Debug Window</button>
+                      </body>
+                    </html>
+                  `);
+                }
+              }}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-lg flex items-center gap-2 transition-all duration-200 hover:scale-105 active:scale-95"
+            >
+              <Database size={14} />
+              Setup Supabase SQL
+            </button>
+          </div>
+        )}
+
+        {/* Header */}
+        <header className="h-16 border-b border-licorice/5 flex items-center justify-between px-8 bg-white/10">
+          <div className="flex items-center gap-4 flex-1">
+            {view === 'kanban' && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-licorice/30" size={14} />
+                <input 
+                  type="text" 
+                  placeholder="Buscar leads..." 
+                  className="pl-9 pr-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs focus:outline-none focus:border-aventurine/50 w-64"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            )}
+
+            {view === 'registrations' && (
+              <div className="flex items-center justify-between w-full">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-licorice/30" size={14} />
+                  <input 
+                    type="text" 
+                    placeholder="Buscar por nome, CPF ou e-mail..." 
+                    className="pl-9 pr-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
+                    value={regSearchQuery}
+                    onChange={(e) => setRegSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex bg-white/50 p-0.5 rounded-lg border border-licorice/5">
+                    <button 
+                      onClick={() => setRegFilterType('all')}
+                      className={cn("px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all", regFilterType === 'all' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
+                    >Todos</button>
+                    <button 
+                      onClick={() => setRegFilterType('cliente')}
+                      className={cn("px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all", regFilterType === 'cliente' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
+                    >Clientes</button>
+                    <button 
+                      onClick={() => setRegFilterType('lead')}
+                      className={cn("px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all", regFilterType === 'lead' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
+                    >Leads</button>
+                  </div>
+                  <select 
+                    className="bg-white/50 px-3 py-1 rounded-lg border border-licorice/5 text-[10px] font-bold uppercase tracking-widest text-licorice/60 focus:outline-none shadow-sm"
+                    value={regFilterStatus}
+                    onChange={(e) => setRegFilterStatus(e.target.value as LeadStatus | 'all')}
+                  >
+                    <option value="all">Todos os Status</option>
+                    {columns.map(col => (
+                      <option key={col} value={col}>{col}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+
+            {view === 'documents' && (
+              <div className="flex items-center justify-between w-full">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-licorice/30" size={14} />
+                  <input 
+                    type="text" 
+                    placeholder="Filtrar cliente..." 
+                    className="pl-9 pr-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
+                    value={docSearchQuery}
+                    onChange={(e) => setDocSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-center gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <div 
+                      onClick={() => setDocFilterPendencias(!docFilterPendencias)}
+                      className={cn(
+                        "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                        docFilterPendencias ? "bg-aventurine border-aventurine" : "border-licorice/20 bg-white group-hover:border-aventurine/50"
+                      )}
+                    >
+                      {docFilterPendencias && <div className="w-1.5 h-1.5 bg-white rounded-sm" />}
+                    </div>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-licorice/60">Pendências</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <div 
+                      onClick={() => setDocFilterComPrazo(!docFilterComPrazo)}
+                      className={cn(
+                        "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                        docFilterComPrazo ? "bg-aventurine border-aventurine" : "border-licorice/20 bg-white group-hover:border-aventurine/50"
+                      )}
+                    >
+                      {docFilterComPrazo && <div className="w-1.5 h-1.5 bg-white rounded-sm" />}
+                    </div>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-licorice/60">Com Prazo</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {view === 'finance' && (
+              <div className="flex items-center justify-between w-full">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-licorice/30" size={14} />
+                  <input 
+                    type="text" 
+                    placeholder="Buscar por nome, CPF ou e-mail..." 
+                    className="pl-9 pr-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
+                    value={financeSearchQuery}
+                    onChange={(e) => setFinanceSearchQuery(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+
+            {view === 'tasks' && (
+              <div className="flex items-center justify-between w-full">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-licorice/30" size={14} />
+                  <input 
+                    type="text" 
+                    placeholder="Buscar tarefas..." 
+                    className="pl-9 pr-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
+                    value={taskSearchQuery}
+                    onChange={(e) => setTaskSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex bg-white/50 p-0.5 rounded-lg border border-licorice/5">
+                    {(['todos', 'pendente', 'em_andamento', 'concluida'] as const).map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => setTaskFilterStatus(status)}
+                        className={cn(
+                          "px-3 py-1 rounded-md text-[10px] font-bold transition-all",
+                          taskFilterStatus === status ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice"
+                        )}
+                      >
+                        {status === 'todos' && 'Todos'}
+                        {status === 'pendente' && 'Pendentes'}
+                        {status === 'em_andamento' && 'Em andamento'}
+                        {status === 'concluida' && 'Concluídas'}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex bg-white/50 p-0.5 rounded-lg border border-licorice/5">
+                    <button 
+                      onClick={() => setTaskView('list')}
+                      className={cn("p-1.5 rounded-md transition-all", taskView === 'list' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
+                    >
+                      <List size={14} />
+                    </button>
+                    <button 
+                      onClick={() => setTaskView('kanban')}
+                      className={cn("p-1.5 rounded-md transition-all", taskView === 'kanban' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
+                    >
+                      <Columns size={14} />
+                    </button>
+                  </div>
+                  <button 
+                    onClick={() => setTriggerNewTask(Date.now())}
+                    className="bg-aventurine text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm hover:bg-aventurine/90 transition-all flex items-center gap-2"
+                  >
+                    <Plus size={14} />
+                    Nova Tarefa
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          {view === 'kanban' && (
+            <button 
+              onClick={addColumn}
+              className="bg-aventurine text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm hover:bg-aventurine/90 transition-all flex items-center gap-2"
+            >
+              <Plus size={14} />
+              Nova Coluna
+            </button>
+          )}
+          
+            {(view === 'dashboard' || view === 'finance') && (
+              <div className="relative">
+                <button 
+                  onClick={() => setShowDatePicker(!showDatePicker)}
+                  className="flex items-center gap-2 px-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs font-semibold text-licorice/60 hover:bg-white/80 transition-all min-w-[150px] whitespace-nowrap"
+                >
+                  <Calendar size={14} />
+                  <span>{dateRange.label}</span>
+                  <ChevronDown size={14} />
+                </button>
+                
+                <AnimatePresence>
+                  {showDatePicker && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-licorice/5 z-50 overflow-hidden"
+                    >
+                      <div className="flex flex-col">
+                        {['este mês', 'mês anterior', 'este ano', 'ano anterior', 'desde o início'].map((opt) => (
+                          <button 
+                            key={opt}
+                            onClick={() => {
+                              setDateRange(getPredefinedRange(opt));
+                              setShowDatePicker(false);
+                            }}
+                            className="px-4 py-2 text-left text-xs hover:bg-antique/50 transition-colors capitalize"
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                        <div className="border-t border-licorice/5 p-2 flex flex-col gap-2">
+                          <p className="text-[9px] font-bold uppercase text-licorice/30 px-2">Personalizado</p>
+                          <div className="flex flex-col gap-1 px-2">
+                            <input 
+                              type="date" 
+                              className="text-[10px] border border-licorice/5 rounded p-1 outline-none"
+                              onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value ? new Date(e.target.value).toISOString() : null, label: 'Personalizado' }))}
+                            />
+                            <input 
+                              type="date" 
+                              className="text-[10px] border border-licorice/5 rounded p-1 outline-none"
+                              onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value ? new Date(e.target.value).toISOString() : null, label: 'Personalizado' }))}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
+          <button 
+            onClick={handleLogout}
+            className="ml-4 p-2 text-licorice/40 hover:text-red-500 transition-colors flex items-center gap-2"
+            title="Sair"
+          >
+            <LogOut size={16} />
+            <span className="text-xs font-bold uppercase tracking-widest">Sair</span>
+          </button>
+        </header>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {view === 'kanban' ? (
+            <div className="flex-1 h-full overflow-x-auto p-6 no-scrollbar">
+              <DragDropContext onDragEnd={onDragEnd}>
+                <div className="flex gap-4 h-full">
+                  {columns.filter(c => c !== 'Assinado' && c !== 'Churn').map((column) => (
+                    <Droppable key={column} droppableId={column}>
+                      {(provided) => (
+                        <div
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                          className="kanban-column"
+                        >
+                          <div className="p-4 flex items-center justify-between group/col">
+                            {editingColumn === column ? (
+                              <input 
+                                autoFocus
+                                className="text-xs font-bold uppercase tracking-widest text-licorice bg-white border border-aventurine rounded px-1 outline-none w-full mr-2"
+                                defaultValue={column}
+                                onBlur={(e) => renameColumn(column, e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') renameColumn(column, e.currentTarget.value);
+                                  if (e.key === 'Escape') setEditingColumn(null);
+                                }}
+                              />
+                            ) : (
+                              <h2 
+                                onClick={() => setEditingColumn(column)}
+                                className="text-xs font-bold uppercase tracking-widest text-licorice/40 cursor-pointer hover:text-licorice transition-colors truncate flex-1"
+                              >
+                                {column}
+                              </h2>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] bg-licorice/10 px-2 py-0.5 rounded-full font-medium">
+                                {filteredLeads.filter(l => l.status === column).length}
+                              </span>
+                              <button 
+                                onClick={() => addNewLead(column)}
+                                className="p-1 text-licorice/20 hover:text-aventurine hover:bg-aventurine/10 rounded transition-all"
+                                title="Adicionar Lead"
+                              >
+                                <Plus size={12} />
+                              </button>
+                              <button 
+                                onClick={() => deleteColumn(column)}
+                                className="p-1 text-licorice/20 hover:text-exotic hover:bg-exotic/10 rounded transition-all"
+                                title="Excluir Coluna"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex-1 overflow-y-auto px-2 pb-4 no-scrollbar flex flex-col gap-3">
+                            {filteredLeads
+                              .filter(l => l.status === column)
+                              .map((lead, index) => (
+                                <LeadCard 
+                                  key={lead.id} 
+                                  lead={lead} 
+                                  index={index} 
+                                  onClick={() => setSelectedLead(lead)}
+                                  onEdit={() => setEditingLead(lead)}
+                                />
+                              ))}
+                            {provided.placeholder}
+                          </div>
+                        </div>
+                      )}
+                    </Droppable>
+                  ))}
+                </div>
+              </DragDropContext>
+            </div>
+          ) : view === 'dashboard' ? (
+            <Dashboard leads={filteredLeads} />
+          ) : view === 'documents' ? (
+            <Documents 
+              leads={leads} 
+              onUpdateLead={updateLead}
+              onDeleteLead={deleteLead}
+              onEditLead={setEditingLead}
+              searchQuery={docSearchQuery}
+              filterPendencias={docFilterPendencias}
+              filterComPrazo={docFilterComPrazo}
+            />
+          ) : view === 'registrations' ? (
+            <Registrations 
+              leads={leads} 
+              columns={columns}
+              onUpdate={updateLead} 
+              onDelete={deleteLead}
+              onEdit={setEditingLead}
+              externalFilters={{
+                searchQuery: regSearchQuery,
+                filterType: regFilterType,
+                filterStatus: regFilterStatus
+              }}
+            />
+          ) : view === 'tasks' ? (
+            <Tasks 
+              leads={leads} 
+              externalFilters={{
+                searchQuery: taskSearchQuery,
+                filterStatus: taskFilterStatus,
+                view: taskView,
+                triggerNewTask
+              }}
+              onTriggerConsumed={() => setTriggerNewTask(0)}
+            />
+          ) : view === 'generator' ? (
+            <DocumentGenerator leads={leads} />
+          ) : view === 'finance' ? (
+            <Finance 
+              leads={leads} 
+              onUpdate={updateLead} 
+              externalFilters={{
+                searchQuery: financeSearchQuery,
+                dateRange: dateRange
+              }}
+            />
+          ) : (
+            <SettingsView 
+              onLogout={handleLogout} 
+              user={user} 
+              isFeatureEnabled={isFeatureEnabled}
+              onUpdateUser={(updatedUser) => {
+                setUser(updatedUser);
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+              }}
+            />
+          )}
+        </div>
+      </main>
+
+      {/* Global Sidebar */}
+      <EditLeadSidebar 
+        lead={editingLead}
+        columns={columns}
+        onClose={() => setEditingLead(null)}
+        onUpdate={updateLead}
+        onDelete={(id) => {
+          deleteLead(id);
+          if (selectedLead?.id === id) setSelectedLead(null);
+        }}
+      />
+
+      {/* Modals */}
+      <AnimatePresence>
+        {selectedLead && (
+          <UnifiedLeadModal 
+            lead={selectedLead} 
+            columns={columns}
+            onClose={() => setSelectedLead(null)}
+            onUpdate={updateLead}
+            onDelete={(id) => {
+              setShowDeleteConfirm(id);
+            }}
+            onAdvanced={() => setEditingLead(selectedLead)}
+            onFinalize={(contract) => handleFinalize(selectedLead, contract)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <DeleteConfirmModal 
+            onClose={() => setShowDeleteConfirm(null)}
+            onConfirm={() => {
+              deleteLead(showDeleteConfirm);
+              setShowDeleteConfirm(null);
+              if (selectedLead?.id === showDeleteConfirm) setSelectedLead(null);
+              if (editingLead?.id === showDeleteConfirm) setEditingLead(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function DeleteConfirmModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: () => void }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center gap-6"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="w-16 h-16 bg-exotic/10 rounded-full flex items-center justify-center text-exotic">
+          <AlertCircle size={32} />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-licorice">Excluir Registro?</h3>
+          <p className="text-sm text-licorice/60 mt-2">Esta ação não pode ser desfeita. Todos os dados deste lead serão perdidos permanentemente.</p>
+        </div>
+        <div className="flex w-full gap-3">
+          <button 
+            onClick={onClose}
+            className="flex-1 py-3 text-sm font-bold text-licorice/40 hover:text-licorice transition-colors"
+          >
+            Cancelar
+          </button>
+          <button 
+            onClick={onConfirm}
+            className="flex-1 py-3 bg-exotic text-white rounded-xl text-sm font-bold hover:bg-exotic/90 transition-colors"
+          >
+            Sim, Excluir
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+
+function SidebarIcon({ icon, label, active = false, expanded = false, onClick }: { icon: React.ReactNode; label?: string; active?: boolean; expanded?: boolean; onClick?: () => void }) {
+  return (
+    <div 
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all duration-200 group",
+        !expanded && "justify-center",
+        active 
+          ? "bg-[#93774E] text-white shadow-md shadow-black/20" 
+          : "text-white/70 hover:bg-white/5 hover:text-white hover:shadow-xl hover:shadow-black/30"
+      )}
+    >
+      <div className="flex-shrink-0">{icon}</div>
+      {expanded && (
+        <span className={cn(
+          "text-sm font-medium transition-all duration-300 whitespace-nowrap overflow-hidden",
+          active ? "text-white" : "text-white/70 group-hover:text-white"
+        )}>
+          {label}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function LeadCard({ lead, index, onClick, onEdit }: { lead: Lead; index: number; onClick: () => void; onEdit: () => void; key?: string }) {
+  return (
+    <Draggable draggableId={lead.id} index={index}>
+      {(provided) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          onClick={onClick}
+          className="bg-white p-3 rounded-lg shadow-sm border border-licorice/5 hover:border-aventurine/30 transition-all cursor-pointer group relative"
+        >
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-sm font-semibold leading-tight group-hover:text-aventurine transition-colors pr-6">{lead.name}</h3>
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+              className="absolute top-3 right-3 p-1 text-licorice/20 hover:text-aventurine opacity-0 group-hover:opacity-100 transition-all"
+            >
+              <Pencil size={12} />
+            </button>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-1.5 text-[10px] text-licorice/50">
+              <Phone size={10} />
+              <span>{lead.phone ? formatPhone(lead.phone) : 'Sem telefone'}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px] text-licorice/50">
+              <MapPin size={10} />
+              <span>{lead.city ? `${lead.city}/${lead.state}` : 'Sem cidade'}</span>
+            </div>
+          </div>
+          <div className="mt-3 pt-3 border-t border-licorice/5 flex justify-between items-center">
+            <span className="text-[10px] font-bold text-aventurine">{formatCurrency(lead.valuePaid)}</span>
+            <span className="text-[9px] bg-licorice/10 text-licorice/60 px-1.5 py-0.5 rounded uppercase font-bold tracking-tighter">
+              {lead.propertyType}
+            </span>
+          </div>
+        </div>
+      )}
+    </Draggable>
+  );
+}
+
+function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanced, onFinalize }: { 
+  lead: Lead; 
+  columns: string[];
+  onClose: () => void; 
+  onUpdate: (l: Lead) => void;
+  onDelete: (id: string) => void;
+  onAdvanced: () => void;
+  onFinalize: (c: ContractData) => void;
+}) {
+  const [localLead, setLocalLead] = useState(lead);
+  const [contract, setContract] = useState<ContractData>(lead.contract || {
+    percentage: 20,
+    format: 'Parcelado',
+    value: 1200,
+    paymentMethod: 'Boleto Bancário',
+    installments: 12,
+    dueDate: 10,
+    firstInstallmentDate: new Date().toISOString().split('T')[0],
+    generateBilling: true
+  });
+
+  const handleChange = (field: keyof Lead, value: any) => {
+    setLocalLead(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleBlur = () => {
+    onUpdate({ ...localLead, contract });
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-licorice/20 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <motion.div 
+        layout
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 20, opacity: 0 }}
+        className="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="p-6 bg-aventurine text-white flex justify-between items-center">
+          <div className="flex-1 mr-4">
+            <input 
+              className="text-lg font-bold bg-transparent border-none focus:outline-none w-full text-white placeholder:text-white/50"
+              value={localLead.name}
+              onChange={e => handleChange('name', e.target.value)}
+              onBlur={handleBlur}
+              placeholder="Nome do Lead"
+            />
+            <input 
+              className="text-xs opacity-80 bg-transparent border-none focus:outline-none w-full text-white placeholder:text-white/50"
+              value={localLead.profession}
+              onChange={e => handleChange('profession', e.target.value)}
+              onBlur={handleBlur}
+              placeholder="Profissão"
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={() => onFinalize(contract)}
+              className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"
+              title="Gerar Contrato"
+            >
+              <FilePlus size={20} />
+            </button>
+            <button 
+              onClick={onAdvanced} 
+              className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"
+              title="Dados Avançados"
+            >
+              <Pencil size={18} />
+            </button>
+            <button 
+              onClick={() => onDelete(localLead.id)} 
+              className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"
+              title="Excluir Registro"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-8 space-y-8 overflow-y-auto max-h-[calc(100vh-200px)] no-scrollbar">
+          <div className="grid grid-cols-2 gap-8">
+            {/* Left Column: Basic Data */}
+            <div className="space-y-6 border-r border-licorice/10 pr-8">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-licorice/40 border-b border-licorice/5 pb-2">Dados do Cliente</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Telefone</label>
+                <div className="flex gap-2">
+                  <input 
+                    className="input-field w-3/4"
+                    value={formatPhone(localLead.phone)}
+                    onChange={e => handleChange('phone', e.target.value.replace(/\D/g, ''))}
+                    onBlur={handleBlur}
+                  />
+                  {localLead.phone && (
+                    <a 
+                      href={`https://wa.me/55${localLead.phone.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors flex items-center justify-center shadow-lg shadow-green-500/20"
+                    >
+                      <ExternalLink size={14} />
+                    </a>
+                  )}
+                </div>
+              </div>
+              <QuickField label="Cidade/UF" value={`${localLead.city}${localLead.state ? '/' + localLead.state : ''}`} onChange={v => {
+                const [city, state] = v.split('/');
+                handleChange('city', city || '');
+                handleChange('state', state || '');
+              }} onBlur={handleBlur} />
+              
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Valor Pago</label>
+                <input 
+                  className="input-field font-mono"
+                  value={formatCurrency(localLead.valuePaid)}
+                  onChange={e => handleChange('valuePaid', parseCurrency(e.target.value))}
+                  onBlur={handleBlur}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Tipo de Imóvel</label>
+                <select 
+                  className="input-field"
+                  value={localLead.propertyType}
+                  onChange={e => {
+                    handleChange('propertyType', e.target.value);
+                    onUpdate({ ...localLead, propertyType: e.target.value, contract });
+                  }}
+                >
+                  <option>Sem construção</option>
+                  <option>Com construção</option>
+                  <option>Planta</option>
+                  <option>Imóvel Pronto</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Corretagem</label>
+                <input 
+                  className="input-field font-mono"
+                  value={formatCurrency(localLead.brokerage)}
+                  onChange={e => handleChange('brokerage', parseCurrency(e.target.value))}
+                  onBlur={handleBlur}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Atrasos (Meses)</label>
+                <input 
+                  type="number"
+                  className="input-field"
+                  value={localLead.delays}
+                  onChange={e => handleChange('delays', Number(e.target.value))}
+                  onBlur={handleBlur}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Distrato Assinado</label>
+                <select 
+                  className="input-field"
+                  value={localLead.signedDistrato}
+                  onChange={e => {
+                    handleChange('signedDistrato', e.target.value);
+                    onUpdate({ ...localLead, signedDistrato: e.target.value, contract });
+                  }}
+                >
+                  <option>Sim</option>
+                  <option>Não</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Proposta</label>
+                <input 
+                  className="input-field font-mono"
+                  value={formatCurrency(localLead.proposal)}
+                  onChange={e => handleChange('proposal', parseCurrency(e.target.value))}
+                  onBlur={handleBlur}
+                />
+              </div>
+
+            </div>
+          </div>
+
+          {/* Right Column: Contract Data */}
+          <div className="space-y-6">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-licorice/40 border-b border-licorice/5 pb-2">Dados do Contrato</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Porcentagem (%)</label>
+                <input 
+                  className="input-field font-mono" 
+                  value={formatPercent(contract.percentage)}
+                  onChange={e => setContract({...contract, percentage: Number(e.target.value.replace(/\D/g, ''))})}
+                  onBlur={handleBlur}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Formato</label>
+                <select 
+                  className="input-field"
+                  value={contract.format}
+                  onChange={e => {
+                    const newContract = {...contract, format: e.target.value};
+                    setContract(newContract);
+                    onUpdate({ ...localLead, contract: newContract });
+                  }}
+                >
+                  <option>Parcelado</option>
+                  <option>Ao Final</option>
+                  <option>Isento</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Valor (R$)</label>
+                <input 
+                  className="input-field font-mono" 
+                  value={formatCurrency(contract.value)}
+                  onChange={e => setContract({...contract, value: parseCurrency(e.target.value)})}
+                  onBlur={handleBlur}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Meio de Pagamento</label>
+                <select 
+                  className="input-field"
+                  value={contract.paymentMethod}
+                  onChange={e => {
+                    const newContract = {...contract, paymentMethod: e.target.value};
+                    setContract(newContract);
+                    onUpdate({ ...localLead, contract: newContract });
+                  }}
+                >
+                  <option>Boleto Bancário</option>
+                  <option>Cartão de Crédito</option>
+                  <option>PIX</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Parcelas</label>
+                <input 
+                  type="number" 
+                  className="input-field" 
+                  value={contract.installments}
+                  onChange={e => setContract({...contract, installments: Number(e.target.value)})}
+                  onBlur={handleBlur}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Vencimento (Dia)</label>
+                <input 
+                  type="number" 
+                  className="input-field" 
+                  value={contract.dueDate}
+                  onChange={e => setContract({...contract, dueDate: Number(e.target.value)})}
+                  onBlur={handleBlur}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Data 1ª Parcela</label>
+                <input 
+                  type="date" 
+                  className="input-field" 
+                  value={contract.firstInstallmentDate}
+                  onChange={e => setContract({...contract, firstInstallmentDate: e.target.value})}
+                  onBlur={handleBlur}
+                />
+              </div>
+              <div className="flex items-center justify-between pt-4">
+                <span className="text-xs font-bold text-licorice/60">Gerar Cobrança</span>
+                <motion.button 
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => {
+                    const newContract = {...contract, generateBilling: !contract.generateBilling};
+                    setContract(newContract);
+                    onUpdate({ ...localLead, contract: newContract });
+                  }}
+                  className={cn(
+                    "w-10 h-5 rounded-full transition-colors relative",
+                    contract.generateBilling ? "bg-aventurine" : "bg-licorice/10"
+                  )}
+                >
+                  <motion.div 
+                    layout
+                    className={cn(
+                      "absolute top-1 w-3 h-3 bg-white rounded-full transition-all",
+                      contract.generateBilling ? "right-1" : "left-1"
+                    )}
+                  />
+                </motion.button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Full Width Notes */}
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Notas</label>
+          <textarea 
+            className="input-field min-h-[80px] resize-none"
+            value={localLead.notes}
+            onChange={e => handleChange('notes', e.target.value)}
+            onBlur={handleBlur}
+            placeholder="Observações importantes..."
+          />
+        </div>
+
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+function QuickField({ label, value, onChange, onBlur, type = "text" }: { 
+  label: string; 
+  value: any; 
+  onChange: (v: string) => void; 
+  onBlur: () => void;
+  type?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">{label}</label>
+      <input 
+        type={type}
+        className="input-field"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onBlur={onBlur}
+      />
+    </div>
+  );
+}
+
+

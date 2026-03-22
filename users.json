@@ -1,0 +1,16 @@
+[
+  {
+    "id": "1",
+    "name": "Gustavo Igreja",
+    "email": "gdaigreja@gmail.com",
+    "password": "123456", 
+    "role": "admin"
+  },
+  {
+    "id": "2",
+    "name": "Suporte Técnico",
+    "email": "suporte@distrato.com",
+    "password": "123456",
+    "role": "editor"
+  }
+]
