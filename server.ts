@@ -92,6 +92,7 @@ const mapDbLeadToFrontend = (dbLead: any) => ({
 });
 
 const mapFrontendLeadToDb = (lead: any) => ({
+  id: lead.id,
   name: lead.name,
   profession: lead.profession,
   phone: lead.phone,
