@@ -87,13 +87,18 @@ export default function App() {
         if (leadsRes.ok) {
           const data = await leadsRes.json();
           setLeads(prevLeads => {
-            // Merge logic: ensure we don't lose local leads that haven't hit the DB yet
-            const serverIds = new Set(data.map((l: Lead) => l.id));
-            const locallyAddedLeads = prevLeads.filter(p => !serverIds.has(p.id));
+            const serverMap = new Map(data.map((l: Lead) => [l.id, l]));
             
-            // Re-map server data with extra local properties if needed, 
-            // but for now just merging new local leads
-            return [...data, ...locallyAddedLeads];
+            // Keep local leads that haven't hit the server yet
+            const locallyAddedLeads = prevLeads.filter(p => !serverMap.has(p.id));
+            
+            // Construct new list: server items + local items
+            // Then sort by creation date (descending) as before
+            return [...data, ...locallyAddedLeads].sort((a, b) => {
+              const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+              const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+              return dateB - dateA;
+            });
           });
         } else {
           // If the API fails but we are authenticated, don't clear leads immediately
@@ -333,10 +338,13 @@ export default function App() {
     }
 
     setLeads(prev => {
-      const exists = prev.some(l => l.id === updatedLead.id);
-      if (exists) {
-        return prev.map(l => l.id === updatedLead.id ? updatedLead : l);
+      const index = prev.findIndex(l => l.id === updatedLead.id);
+      if (index > -1) {
+        const next = [...prev];
+        next[index] = updatedLead;
+        return next;
       }
+      // Only add if it's truly a new ID (not just a mismatch)
       return [updatedLead, ...prev];
     });
     if (selectedLead?.id === updatedLead.id) {
@@ -411,6 +419,7 @@ export default function App() {
     });
 
   const addNewLead = async (status: string) => {
+    // Generate an ID for local use, but we'll try to sync with server ASAP
     const newLead: Lead = {
       id: uuidv4(),
       name: 'Novo Lead',
@@ -435,12 +444,18 @@ export default function App() {
         notificationSent: false
       } : undefined
     };
-    setLeads([newLead, ...leads]);
+    
+    // Add locally immediately for fast UI response
+    setLeads(prev => {
+      // Check if by any chance this ID already exists (shouldn't happen with UUID)
+      if (prev.some(l => l.id === newLead.id)) return prev;
+      return [newLead, ...prev];
+    });
     setEditingLead(newLead);
 
     try {
       const token = localStorage.getItem('token');
-      await fetch('/api/leads', {
+      const response = await fetch('/api/leads', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -448,8 +463,30 @@ export default function App() {
         },
         body: JSON.stringify(newLead)
       });
+      
+      if (response.ok) {
+        const savedLead = await response.json();
+        setLeads(prev => {
+          // Replace the temporary lead with the server version
+          // Use a Map to quickly filter out the old ID and ensure uniqueness
+          const map = new Map();
+          prev.forEach(l => {
+            if (l.id !== newLead.id) map.set(l.id, l);
+          });
+          map.set(savedLead.id, savedLead);
+          return Array.from(map.values()).sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA;
+          });
+        });
+        
+        // Update editing state if still active
+        setEditingLead(prev => prev?.id === newLead.id ? savedLead : prev);
+        setSelectedLead(prev => prev?.id === newLead.id ? savedLead : prev);
+      }
     } catch (e) {
-      console.error("Error adding new lead", e);
+      console.error("Error creating lead", e);
     }
   };
 
