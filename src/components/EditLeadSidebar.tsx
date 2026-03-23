@@ -192,7 +192,7 @@ export default function EditLeadSidebar({
                         <div className="flex flex-col">
                           <span className="text-sm font-bold text-licorice">{editingLead.spouseInfo.name}</span>
                           <span className="text-[10px] text-licorice/40 font-medium tracking-tight">
-                            {editingLead.spouseInfo.cpf ? formatCPF(editingLead.spouseInfo.cpf) : 'CPF não informado'}
+                            {editingLead.spouseInfo.cpf ? formatCPF(editingLead.spouseInfo.cpf) : ''}
                           </span>
                         </div>
                       </div>
@@ -230,7 +230,8 @@ export default function EditLeadSidebar({
                   onClose={() => setIsSpouseModalOpen(false)}
                   data={editingLead.spouseInfo || null}
                   onSave={(data) => {
-                    const updated = { ...editingLead, spouseInfo: data };
+                    const hasData = Object.values(data).some(v => v && v.trim() !== '');
+                    const updated = { ...editingLead, spouseInfo: hasData ? data : undefined };
                     setEditingLead(updated);
                     onUpdate(updated);
                   }}
