@@ -957,7 +957,19 @@ export default function Settings({ onLogout, user, isFeatureEnabled, onUpdateUse
                   </div>
 
                   <div className="space-y-4">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40">Permissões de Features</label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40">Permissões de Features</label>
+                      <button 
+                        onClick={() => {
+                          const allEnabled = editingPermission.features.every(f => f.enabled);
+                          const newFeatures = editingPermission.features.map(f => ({ ...f, enabled: !allEnabled }));
+                          setEditingPermission({ ...editingPermission, features: newFeatures });
+                        }}
+                        className="text-[10px] font-bold uppercase tracking-widest text-aventurine hover:text-aventurine/80 transition-all px-2 py-1 rounded hover:bg-aventurine/5"
+                      >
+                        {editingPermission.features.every(f => f.enabled) ? 'Desmarcar Tudo' : 'Selecionar Tudo'}
+                      </button>
+                    </div>
                     <div className="grid grid-cols-1 gap-3">
                       {editingPermission.features.map((feature) => (
                         <div key={feature.id} className="flex items-center justify-between p-4 bg-antique/30 rounded-2xl border border-licorice/5">

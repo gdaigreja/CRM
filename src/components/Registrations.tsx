@@ -11,10 +11,12 @@ import {
   User,
   MapPin,
   Phone,
+  MessageCircle,
   Mail,
   Save,
   X,
-  AlertCircle
+  AlertCircle,
+  FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -43,6 +45,7 @@ export default function Registrations({
   const [internalFilterType, setInternalFilterType] = useState<'all' | 'lead' | 'cliente'>('all');
   const [internalFilterStatus, setInternalFilterStatus] = useState<LeadStatus | 'all'>('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [viewingNotes, setViewingNotes] = useState<Lead | null>(null);
 
   const searchQuery = externalFilters?.searchQuery ?? internalSearchQuery;
   const filterType = externalFilters?.filterType ?? internalFilterType;
@@ -80,14 +83,15 @@ export default function Registrations({
           <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="border-b border-licorice/5 bg-antique/30">
-                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Nome</th>
-                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Telefone</th>
-                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Profissão</th>
-                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Classificação</th>
-                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Status Atual</th>
-                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Valor Pago</th>
-                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Criação</th>
-                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Ações</th>
+                <th className="w-[12%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Nome</th>
+                <th className="w-[10%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Telefone</th>
+                <th className="w-[10%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Classificação</th>
+                <th className="w-[12%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Profissão</th>
+                <th className="w-[12%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Tipo de Imóvel</th>
+                <th className="w-[12%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Valor Pago</th>
+                <th className="w-[10%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Status Atual</th>
+                <th className="w-[10%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Criação</th>
+                <th className="w-[10%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-licorice/5">
@@ -111,9 +115,6 @@ export default function Registrations({
                       </span>
                     </td>
                     <td className="px-6 py-3">
-                      <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">{lead.profession || 'Não informada'}</span>
-                    </td>
-                    <td className="px-6 py-3">
                       {isItemCliente ? (
                         <span className="px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 text-[10px] font-bold uppercase">Cliente</span>
                       ) : (
@@ -121,12 +122,18 @@ export default function Registrations({
                       )}
                     </td>
                     <td className="px-6 py-3">
-                      <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">{lead.status}</span>
+                      <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">{lead.profession || 'Não informada'}</span>
+                    </td>
+                    <td className="px-6 py-3">
+                      <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">{lead.propertyType || 'Não informado'}</span>
                     </td>
                     <td className="px-6 py-3">
                       <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">
                         {formatCurrency(lead.valuePaid || 0)}
                       </span>
+                    </td>
+                    <td className="px-6 py-3">
+                      <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">{lead.status}</span>
                     </td>
                     <td className="px-6 py-3">
                       <span className="text-[10px] text-licorice/40 font-mono">
@@ -151,8 +158,18 @@ export default function Registrations({
                           )}
                           title={lead.phone ? "Abrir WhatsApp" : "Telefone não informado"}
                         >
-                          <Phone size={14} />
+                          <MessageCircle size={14} />
                         </a>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewingNotes(lead);
+                          }}
+                          className="p-1.5 hover:bg-blue-500/10 text-blue-600 rounded-lg transition-colors"
+                          title="Ver Briefing"
+                        >
+                          <FileText size={14} />
+                        </button>
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
@@ -178,6 +195,46 @@ export default function Registrations({
         </div>
       </div>
 
+      {/* Notes Modal */}
+      <AnimatePresence>
+        {viewingNotes && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-licorice/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+            onClick={() => setViewingNotes(null)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white w-full max-w-md rounded-[32px] p-8 shadow-2xl flex flex-col gap-6"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 text-blue-600">
+                  <FileText size={24} />
+                  <h3 className="text-xl font-bold text-licorice">Briefing</h3>
+                </div>
+                <button 
+                  onClick={() => setViewingNotes(null)}
+                  className="p-2 text-licorice/20 hover:text-licorice transition-all"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-widest text-licorice/40">{viewingNotes.name}</p>
+                <div className="p-4 bg-antique/30 rounded-2xl border border-licorice/5 text-sm text-licorice/70 leading-relaxed min-h-[150px] max-h-[300px] overflow-y-auto whitespace-pre-wrap no-scrollbar">
+                  {viewingNotes.notes || 'Nenhuma nota registrada para este cliente.'}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Delete Confirmation */}
       <AnimatePresence>
         {showDeleteConfirm && (
@@ -186,12 +243,14 @@ export default function Registrations({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-licorice/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+            onClick={() => setShowDeleteConfirm(null)}
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               className="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center gap-6"
+              onClick={e => e.stopPropagation()}
             >
               <div className="w-16 h-16 bg-exotic/10 rounded-full flex items-center justify-center text-exotic">
                 <AlertCircle size={32} />

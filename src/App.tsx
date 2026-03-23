@@ -86,11 +86,18 @@ export default function App() {
 
         if (leadsRes.ok) {
           const data = await leadsRes.json();
-          setLeads(data);
+          setLeads(prevLeads => {
+            // Merge logic: ensure we don't lose local leads that haven't hit the DB yet
+            const serverIds = new Set(data.map((l: Lead) => l.id));
+            const locallyAddedLeads = prevLeads.filter(p => !serverIds.has(p.id));
+            
+            // Re-map server data with extra local properties if needed, 
+            // but for now just merging new local leads
+            return [...data, ...locallyAddedLeads];
+          });
         } else {
-          // If the API fails but we are authenticated, clear the mock leads
-          // to avoid confusion, or set to empty if it's a real connection.
-          setLeads([]);
+          // If the API fails but we are authenticated, don't clear leads immediately
+          // as it might be a temporary error.
           console.error("Failed to fetch leads from DB:", leadsRes.statusText);
         }
 
@@ -325,7 +332,13 @@ export default function App() {
       };
     }
 
-    setLeads(prev => prev.map(l => l.id === updatedLead.id ? updatedLead : l));
+    setLeads(prev => {
+      const exists = prev.some(l => l.id === updatedLead.id);
+      if (exists) {
+        return prev.map(l => l.id === updatedLead.id ? updatedLead : l);
+      }
+      return [updatedLead, ...prev];
+    });
     if (selectedLead?.id === updatedLead.id) {
       setSelectedLead(updatedLead);
     }
@@ -376,20 +389,26 @@ export default function App() {
     setSelectedLead(null);
   };
 
-  const filteredLeads = leads.filter(l => {
-    const matchesSearch = l.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         l.city.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Dashboard date filtering
-    if (view === 'dashboard' && dateRange.start) {
-      const createdAt = new Date(l.createdAt || '').getTime();
-      const start = new Date(dateRange.start).getTime();
-      const end = dateRange.end ? new Date(dateRange.end).getTime() : Infinity;
-      if (createdAt < start || createdAt > end) return false;
-    }
+  const filteredLeads = leads
+    .filter(l => {
+      const matchesSearch = l.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           l.city.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // Dashboard date filtering
+      if (view === 'dashboard' && dateRange.start) {
+        const createdAt = new Date(l.createdAt || '').getTime();
+        const start = new Date(dateRange.start).getTime();
+        const end = dateRange.end ? new Date(dateRange.end).getTime() : Infinity;
+        if (createdAt < start || createdAt > end) return false;
+      }
 
-    return matchesSearch;
-  });
+      return matchesSearch;
+    })
+    .sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
 
   const addNewLead = async (status: string) => {
     const newLead: Lead = {
@@ -400,7 +419,7 @@ export default function App() {
       city: '',
       state: '',
       valuePaid: 0,
-      propertyType: 'Imóvel Pronto',
+      propertyType: 'Sem construção',
       brokerage: 0,
       delays: 0,
       signedDistrato: 'Não',
@@ -1331,13 +1350,18 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
     onUpdate({ ...localLead, contract });
   };
 
+  const handleClose = () => {
+    onUpdate({ ...localLead, contract });
+    onClose();
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-licorice/20 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <motion.div 
         layout
@@ -1373,7 +1397,10 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
               <FilePlus size={20} />
             </button>
             <button 
-              onClick={onAdvanced} 
+              onClick={() => {
+                onUpdate({ ...localLead, contract });
+                onAdvanced();
+              }} 
               className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"
               title="Dados Avançados"
             >
@@ -1385,6 +1412,13 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
               title="Excluir Registro"
             >
               <Trash2 size={18} />
+            </button>
+            <button 
+              onClick={handleClose}
+              className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"
+              title="Fechar"
+            >
+              <X size={20} />
             </button>
           </div>
         </div>
@@ -1517,7 +1551,19 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
                   className="input-field"
                   value={contract.format}
                   onChange={e => {
-                    const newContract = {...contract, format: e.target.value};
+                    const format = e.target.value;
+                    let newContract = {...contract, format};
+                    if (format === 'Isento' || format === 'Ao Final') {
+                      newContract = {
+                        ...newContract,
+                        value: 0,
+                        paymentMethod: '',
+                        installments: 0,
+                        dueDate: 0,
+                        firstInstallmentDate: '',
+                        generateBilling: false
+                      };
+                    }
                     setContract(newContract);
                     onUpdate({ ...localLead, contract: newContract });
                   }}
@@ -1527,18 +1573,22 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
                   <option>Isento</option>
                 </select>
               </div>
-              <div className="flex flex-col gap-1">
+              
+              {/* Other contract fields - disabled if format is Isento or Ao Final */}
+              <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
                 <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Valor (R$)</label>
                 <input 
+                  disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
                   className="input-field font-mono" 
-                  value={formatCurrency(contract.value)}
+                  value={contract.format === 'Isento' || contract.format === 'Ao Final' ? '' : formatCurrency(contract.value)}
                   onChange={e => setContract({...contract, value: parseCurrency(e.target.value)})}
                   onBlur={handleBlur}
                 />
               </div>
-              <div className="flex flex-col gap-1">
+              <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
                 <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Meio de Pagamento</label>
                 <select 
+                  disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
                   className="input-field"
                   value={contract.paymentMethod}
                   onChange={e => {
@@ -1547,34 +1597,38 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
                     onUpdate({ ...localLead, contract: newContract });
                   }}
                 >
+                  <option value="">Selecione...</option>
                   <option>Boleto Bancário</option>
                   <option>Cartão de Crédito</option>
                   <option>PIX</option>
                 </select>
               </div>
-              <div className="flex flex-col gap-1">
+              <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
                 <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Parcelas</label>
                 <input 
+                  disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
                   type="number" 
                   className="input-field" 
-                  value={contract.installments}
+                  value={contract.format === 'Isento' || contract.format === 'Ao Final' ? '' : contract.installments}
                   onChange={e => setContract({...contract, installments: Number(e.target.value)})}
                   onBlur={handleBlur}
                 />
               </div>
-              <div className="flex flex-col gap-1">
+              <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
                 <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Vencimento (Dia)</label>
                 <input 
+                  disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
                   type="number" 
                   className="input-field" 
-                  value={contract.dueDate}
+                  value={contract.format === 'Isento' || contract.format === 'Ao Final' ? '' : contract.dueDate}
                   onChange={e => setContract({...contract, dueDate: Number(e.target.value)})}
                   onBlur={handleBlur}
                 />
               </div>
-              <div className="flex flex-col gap-1">
+              <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
                 <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Data 1ª Parcela</label>
                 <input 
+                  disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
                   type="date" 
                   className="input-field" 
                   value={contract.firstInstallmentDate}
@@ -1582,9 +1636,10 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
                   onBlur={handleBlur}
                 />
               </div>
-              <div className="flex items-center justify-between pt-4">
+              <div className={cn("flex items-center justify-between pt-4", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
                 <span className="text-xs font-bold text-licorice/60">Gerar Cobrança</span>
                 <motion.button 
+                  disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => {
                     const newContract = {...contract, generateBilling: !contract.generateBilling};

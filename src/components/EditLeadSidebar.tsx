@@ -60,6 +60,12 @@ export default function EditLeadSidebar({
     }
   };
 
+  const handleBlur = () => {
+    if (editingLead) {
+      onUpdate(editingLead);
+    }
+  };
+
   return (
     <AnimatePresence>
       {lead && (
@@ -68,7 +74,10 @@ export default function EditLeadSidebar({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[100] flex items-center justify-end"
-          onClick={onClose}
+          onClick={() => {
+            handleBlur();
+            onClose();
+          }}
         >
           <motion.div 
             initial={{ x: '100%' }}
@@ -89,7 +98,10 @@ export default function EditLeadSidebar({
                 </div>
               </div>
               <button 
-                onClick={onClose}
+                onClick={() => {
+                  handleBlur();
+                  onClose();
+                }}
                 className="p-2 hover:bg-licorice/5 rounded-full transition-colors text-licorice/40"
               >
                 <X size={20} />
@@ -106,10 +118,10 @@ export default function EditLeadSidebar({
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
-                      <Field label="Nome Completo" value={editingLead.name} onChange={v => setEditingLead({...editingLead, name: v})} />
+                      <Field label="Nome Completo" value={editingLead.name} onChange={v => setEditingLead({...editingLead, name: v})} onBlur={handleBlur} />
                     </div>
-                    <Field label="Profissão" value={editingLead.profession} onChange={v => setEditingLead({...editingLead, profession: v})} />
-                    <Field label="E-mail" value={editingLead.email || ''} onChange={v => setEditingLead({...editingLead, email: v})} />
+                    <Field label="Profissão" value={editingLead.profession} onChange={v => setEditingLead({...editingLead, profession: v})} onBlur={handleBlur} />
+                    <Field label="E-mail" value={editingLead.email || ''} onChange={v => setEditingLead({...editingLead, email: v})} onBlur={handleBlur} />
                     <div className="flex flex-col gap-1">
                       <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Telefone (WhatsApp)</label>
                       <div className="flex gap-2">
@@ -117,6 +129,7 @@ export default function EditLeadSidebar({
                           className="input-field flex-1"
                           value={formatPhone(editingLead.phone)}
                           onChange={e => setEditingLead({...editingLead, phone: e.target.value.replace(/\D/g, '')})}
+                          onBlur={handleBlur}
                         />
                         {editingLead.phone && (
                           <a 
@@ -130,8 +143,8 @@ export default function EditLeadSidebar({
                         )}
                       </div>
                     </div>
-                    <Field label="RG" value={formatRG(editingLead.rg || '')} onChange={v => setEditingLead({...editingLead, rg: v.replace(/\D/g, '')})} />
-                    <Field label="CPF" value={formatCPF(editingLead.cpf || '')} onChange={v => setEditingLead({...editingLead, cpf: v.replace(/\D/g, '')})} />
+                    <Field label="RG" value={formatRG(editingLead.rg || '')} onChange={v => setEditingLead({...editingLead, rg: v.replace(/\D/g, '')})} onBlur={handleBlur} />
+                    <Field label="CPF" value={formatCPF(editingLead.cpf || '')} onChange={v => setEditingLead({...editingLead, cpf: v.replace(/\D/g, '')})} onBlur={handleBlur} />
                   </div>
                 </section>
 
@@ -143,19 +156,19 @@ export default function EditLeadSidebar({
                   </div>
                   <div className="grid grid-cols-6 gap-4">
                     <div className="col-span-2">
-                      <Field label="CEP" value={formatCEP(editingLead.zipCode || '')} onChange={v => setEditingLead({...editingLead, zipCode: v.replace(/\D/g, '')})} />
+                      <Field label="CEP" value={formatCEP(editingLead.zipCode || '')} onChange={v => setEditingLead({...editingLead, zipCode: v.replace(/\D/g, '')})} onBlur={handleBlur} />
                     </div>
                     <div className="col-span-4">
-                      <Field label="Logradouro" value={editingLead.address || ''} onChange={v => setEditingLead({...editingLead, address: v})} />
+                      <Field label="Logradouro" value={editingLead.address || ''} onChange={v => setEditingLead({...editingLead, address: v})} onBlur={handleBlur} />
                     </div>
                     <div className="col-span-3">
-                      <Field label="Bairro" value={editingLead.neighborhood || ''} onChange={v => setEditingLead({...editingLead, neighborhood: v})} />
+                      <Field label="Bairro" value={editingLead.neighborhood || ''} onChange={v => setEditingLead({...editingLead, neighborhood: v})} onBlur={handleBlur} />
                     </div>
                     <div className="col-span-2">
-                      <Field label="Cidade" value={editingLead.city} onChange={v => setEditingLead({...editingLead, city: v})} />
+                      <Field label="Cidade" value={editingLead.city} onChange={v => setEditingLead({...editingLead, city: v})} onBlur={handleBlur} />
                     </div>
                     <div className="col-span-1">
-                      <Field label="UF" value={editingLead.state} onChange={v => setEditingLead({...editingLead, state: v})} />
+                      <Field label="UF" value={editingLead.state} onChange={v => setEditingLead({...editingLead, state: v})} onBlur={handleBlur} />
                     </div>
                   </div>
                 </section>
@@ -186,7 +199,9 @@ export default function EditLeadSidebar({
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          setEditingLead({ ...editingLead, spouseInfo: undefined });
+                          const updated = { ...editingLead, spouseInfo: undefined };
+                          setEditingLead(updated);
+                          onUpdate(updated);
                         }}
                         className="p-2 hover:bg-licorice/5 rounded-full text-licorice/20 hover:text-exotic transition-all"
                         title="Remover Cônjuge"
@@ -215,7 +230,9 @@ export default function EditLeadSidebar({
                   onClose={() => setIsSpouseModalOpen(false)}
                   data={editingLead.spouseInfo || null}
                   onSave={(data) => {
-                    setEditingLead({ ...editingLead, spouseInfo: data });
+                    const updated = { ...editingLead, spouseInfo: data };
+                    setEditingLead(updated);
+                    onUpdate(updated);
                   }}
                 />
               )}
@@ -233,7 +250,10 @@ export default function EditLeadSidebar({
               <div className="flex gap-3">
                 <button 
                   type="button"
-                  onClick={onClose}
+                  onClick={() => {
+                    handleBlur();
+                    onClose();
+                  }}
                   className="px-6 py-3 text-sm font-bold text-licorice/40 hover:text-licorice transition-colors"
                 >
                   Cancelar
@@ -331,13 +351,13 @@ function SpouseModal({ open, onClose, data, onSave }: {
         </div>
 
         <div className="space-y-4">
-          <Field label="Nome Completo" value={localData.name} onChange={v => setLocalData({...localData, name: v})} />
+          <Field label="Nome Completo" value={localData.name} onChange={v => setLocalData({...localData, name: v})} onBlur={() => {}} />
           <div className="grid grid-cols-2 gap-4">
-            <Field label="CPF" value={formatCPF(localData.cpf)} onChange={v => setLocalData({...localData, cpf: v.replace(/\D/g, '')})} />
-            <Field label="RG" value={formatRG(localData.rg)} onChange={v => setLocalData({...localData, rg: v.replace(/\D/g, '')})} />
+            <Field label="CPF" value={formatCPF(localData.cpf)} onChange={v => setLocalData({...localData, cpf: v.replace(/\D/g, '')})} onBlur={() => {}} />
+            <Field label="RG" value={formatRG(localData.rg)} onChange={v => setLocalData({...localData, rg: v.replace(/\D/g, '')})} onBlur={() => {}} />
           </div>
-          <Field label="Telefone" value={formatPhone(localData.phone)} onChange={v => setLocalData({...localData, phone: v.replace(/\D/g, '')})} />
-          <Field label="E-mail" value={localData.email} onChange={v => setLocalData({...localData, email: v})} />
+          <Field label="Telefone" value={formatPhone(localData.phone)} onChange={v => setLocalData({...localData, phone: v.replace(/\D/g, '')})} onBlur={() => {}} />
+          <Field label="E-mail" value={localData.email} onChange={v => setLocalData({...localData, email: v})} onBlur={() => {}} />
         </div>
 
         <div className="flex gap-3 pt-4 border-t border-licorice/5">
@@ -364,7 +384,7 @@ function SpouseModal({ open, onClose, data, onSave }: {
   );
 }
 
-function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function Field({ label, value, onChange, onBlur }: { label: string; value: string; onChange: (v: string) => void; onBlur: () => void }) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">{label}</label>
@@ -372,6 +392,7 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
         className="input-field"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
       />
     </div>
   );
