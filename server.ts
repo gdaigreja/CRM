@@ -82,13 +82,13 @@ const mapDbLeadToFrontend = (dbLead: any) => ({
   financialRecord: dbLead.financial_record,
   createdAt: dbLead.created_at,
   notes: dbLead.notes || "",
-  spouseInfo: {
-    name: dbLead.spouse_name || "",
+  spouseInfo: (dbLead.spouse_name && dbLead.spouse_name.trim() !== "") ? {
+    name: dbLead.spouse_name,
     cpf: dbLead.spouse_cpf || "",
     rg: dbLead.spouse_rg || "",
     phone: dbLead.spouse_phone || "",
     email: dbLead.spouse_email || ""
-  }
+  } : undefined
 });
 
 const mapFrontendLeadToDb = (lead: any) => ({

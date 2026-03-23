@@ -180,7 +180,7 @@ export default function EditLeadSidebar({
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-licorice/40">Dados do Cônjuge</h4>
                   </div>
                   
-                  {editingLead.spouseInfo ? (
+                  {editingLead.spouseInfo && editingLead.spouseInfo.name?.trim() ? (
                     <div 
                       onClick={() => setIsSpouseModalOpen(true)}
                       className="w-full p-4 bg-licorice/5 rounded-2xl flex items-center justify-between hover:bg-licorice/10 transition-all cursor-pointer group"
