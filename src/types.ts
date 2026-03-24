@@ -64,6 +64,7 @@ export interface ClientDocumentData {
   documents: DocumentItem[];
   observations: Observation[];
   deadlineFatal?: string;
+  deadlineFatalTask?: string;
   emailSent: boolean;
   notificationSent: boolean;
   rescisaoFormalizada?: boolean;

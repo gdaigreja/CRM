@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Mail, Bell, Plus, Trash2, X, ChevronDown, ChevronUp, Send, Calendar, Pencil, AlertCircle, AlertTriangle, FileText, Archive, Check as LucideCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Lead, DocumentItem, DocumentStatus, Observation, ClientDocumentData } from '../types';
@@ -336,7 +336,7 @@ function Check({ size, className }: { size: number; className?: string }) {
 // Placeholder components to be moved to separate files or implemented below
 const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpdate: (lead: Lead) => void; onDelete: () => void; onEditLead: (lead: Lead) => void }> = ({ client, onClose, onUpdate, onDelete, onEditLead }) => {
   const [isObrigatorioOpen, setIsObrigatorioOpen] = useState(true);
-  const [isEventualOpen, setIsEventualOpen] = useState((client.documentData?.documents || []).filter(d => d.type === 'eventual').length === 0);
+  const [isEventualOpen, setIsEventualOpen] = useState(true);
   const [newObservation, setNewObservation] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showChurnModal, setShowChurnModal] = useState(false);
@@ -344,6 +344,9 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
   const [fineValue, setFineValue] = useState('');
   
   const [showResultModal, setShowResultModal] = useState(false);
+  const [showDeadlineModal, setShowDeadlineModal] = useState(false);
+  const [deadlineDateValue, setDeadlineDateValue] = useState('');
+  const [deadlineTaskValue, setDeadlineTaskValue] = useState('');
   const [resultType, setResultType] = useState<'acordo' | 'sentenca'>('acordo');
   const [restituicaoValue, setRestituicaoValue] = useState('');
   const [sucumbenciaValue, setSucumbenciaValue] = useState('');
@@ -352,6 +355,14 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
   const [paymentDate, setPaymentDate] = useState(new Date().toLocaleDateString('en-CA'));
   
   const docData = client.documentData || { code: '', documents: [], observations: [], emailSent: false, notificationSent: false, minutaHomologada: false };
+
+  // Sync deadline internal state when modal opens
+  useEffect(() => {
+    if (showDeadlineModal) {
+      setDeadlineDateValue(docData.deadlineFatal || '');
+      setDeadlineTaskValue(docData.deadlineFatalTask || '');
+    }
+  }, [showDeadlineModal, docData.deadlineFatal, docData.deadlineFatalTask]);
 
   const handleConfirmChurn = () => {
     const value = parseCurrency(fineValue);
@@ -391,6 +402,18 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
       financialRecord: updatedFinancialRecord,
     });
     setShowResultModal(false);
+  };
+
+  const handleConfirmDeadline = () => {
+    onUpdate({
+      ...client,
+      documentData: {
+        ...docData,
+        deadlineFatal: deadlineDateValue,
+        deadlineFatalTask: deadlineTaskValue
+      }
+    });
+    setShowDeadlineModal(false);
   };
 
   const updateHonorarios = (restitution: string) => {
@@ -553,15 +576,16 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                     )}
 
                     {!client.financialRecord?.tipoResultado && (
-                      <label className="relative p-2 bg-white/5 rounded-lg border border-white/10 cursor-pointer hover:bg-white/10 transition-all group shadow-sm flex items-center justify-center">
-                        <Calendar size={14} className={cn(docData?.deadlineFatal ? "text-exotic" : "text-white/20 group-hover:text-white/40")} />
-                        <input 
-                          type="date" 
-                          className="absolute inset-0 opacity-0 cursor-pointer color-scheme-dark w-full h-full"
-                          value={docData.deadlineFatal || ''}
-                          onChange={(e) => onUpdate({ ...client, documentData: { ...docData, deadlineFatal: e.target.value } })}
-                        />
-                      </label>
+                      <button 
+                        onClick={() => setShowDeadlineModal(true)}
+                        className={cn(
+                          "p-2 rounded-lg border flex items-center justify-center transition-all group shadow-sm",
+                          docData.deadlineFatal ? "bg-exotic/10 border-exotic/30 text-exotic" : "bg-white/5 border-white/10 text-white/20 hover:text-white/40 hover:bg-white/10"
+                        )}
+                        title="Marcar Prazo Fatal"
+                      >
+                        <Calendar size={14} />
+                      </button>
                     )}
                   </>
                 )}
@@ -705,7 +729,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
 
       <AnimatePresence>
         {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(false); }}>
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -741,8 +765,86 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
           </div>
         )}
 
+        {showDeadlineModal && (
+          <div className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={(e) => { e.stopPropagation(); setShowDeadlineModal(false); }}>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl space-y-6 relative"
+              onClick={e => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => {
+                  setDeadlineDateValue('');
+                  setDeadlineTaskValue('');
+                  onUpdate({ ...client, documentData: { ...docData, deadlineFatal: undefined, deadlineFatalTask: undefined } });
+                  setShowDeadlineModal(false);
+                }}
+                className="absolute right-6 top-6 text-licorice/20 hover:text-exotic transition-colors"
+                title="Remover Prazo"
+              >
+                <Trash2 size={20} />
+              </button>
+
+              <div className="text-center space-y-2">
+                <div className="w-12 h-12 bg-exotic/10 rounded-full flex items-center justify-center text-exotic mx-auto mb-2">
+                  <Calendar size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-licorice">Prazo Fatal</h3>
+                <p className="text-sm text-licorice/40">Defina a data e a tarefa correspondente.</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Data do Prazo</label>
+                  <input 
+                    type="date" 
+                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-exotic/50 transition-colors"
+                    value={deadlineDateValue}
+                    onChange={(e) => {
+                      const newDate = e.target.value;
+                      setDeadlineDateValue(newDate);
+                      onUpdate({
+                        ...client,
+                        documentData: {
+                          ...docData,
+                          deadlineFatal: newDate,
+                          deadlineFatalTask: deadlineTaskValue
+                        }
+                      });
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Tarefa/Anotação</label>
+                  <textarea 
+                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-medium focus:outline-none focus:border-exotic/50 transition-colors h-24 resize-none"
+                    placeholder="O que deve ser feito até este prazo?"
+                    value={deadlineTaskValue}
+                    onChange={(e) => setDeadlineTaskValue(e.target.value)}
+                    onBlur={() => {
+                      onUpdate({
+                        ...client,
+                        documentData: {
+                          ...docData,
+                          deadlineFatal: deadlineDateValue,
+                          deadlineFatalTask: deadlineTaskValue
+                        }
+                      });
+                    }}
+                  />
+                </div>
+              </div>
+
+
+            </motion.div>
+          </div>
+        )}
+
         {showResultModal && (
-          <div className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={() => setShowResultModal(false)}>
+          <div className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={(e) => { e.stopPropagation(); setShowResultModal(false); }}>
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -858,7 +960,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
         )}
 
         {showChurnModal && (
-          <div className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={(e) => { e.stopPropagation(); setShowChurnModal(false); }}>
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
