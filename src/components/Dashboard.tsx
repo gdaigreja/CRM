@@ -26,6 +26,9 @@ interface DashboardProps {
 export default function Dashboard({ leads }: DashboardProps) {
   const signedLeads = leads.filter(l => l.status === 'Assinado');
   
+  // 0. Total Pago pelos Clientes: Soma de Valor Pago apenas para Assinados
+  const totalPaid = signedLeads.reduce((acc, curr) => acc + (curr.valuePaid || 0), 0);
+
   // 1. Projeção de Recuperação: Soma de Valor Pago * 0.75
   const recoveryProjection = signedLeads.reduce((acc, curr) => acc + curr.valuePaid, 0) * 0.75;
   
@@ -123,7 +126,13 @@ export default function Dashboard({ leads }: DashboardProps) {
     <div className="h-full overflow-y-auto p-8 no-scrollbar bg-antique/30">
       <div className="max-w-7xl mx-auto flex flex-col gap-8">
         {/* Financial Block */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <MetricCard 
+            title="Total pago pelos clientes" 
+            value={formatCurrency(totalPaid)} 
+            icon={<DollarSign size={20} />}
+            description="Soma total investida pelos leads"
+          />
           <MetricCard 
             title="Projeção de Recuperação" 
             value={formatCurrency(recoveryProjection)} 
