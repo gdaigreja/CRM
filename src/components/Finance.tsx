@@ -355,7 +355,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
             
             <div className="overflow-auto flex-1 no-scrollbar">
               <table className="w-full text-left border-collapse">
-                <thead>
+                <thead className="sticky top-0 z-10 bg-white">
                   <tr className="border-b border-licorice/5 bg-antique/30">
                     <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Cliente</th>
                     <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Resultado</th>
@@ -589,7 +589,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
             
             <div className="overflow-auto flex-1 no-scrollbar">
               <table className="w-full text-left border-collapse">
-                <thead>
+                <thead className="sticky top-0 z-10 bg-white">
                   <tr className="border-b border-licorice/5 bg-antique/30">
                     <th className="pl-6 py-4 w-10">
                       <div 
