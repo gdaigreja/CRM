@@ -351,6 +351,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
   const [deadlineTaskValue, setDeadlineTaskValue] = useState('');
   
   const [processNumber, setProcessNumber] = useState('');
+  const [respondent, setRespondent] = useState('');
   const [court, setCourt] = useState('');
   const [lastMovement, setLastMovement] = useState('');
   const [movementDate, setMovementDate] = useState('');
@@ -376,12 +377,13 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
 
   useEffect(() => {
     if (showLegalModal) {
-      setProcessNumber(client.legalProcess?.processNumber || '');
-      setCourt(client.legalProcess?.court || '');
-      setLastMovement(client.legalProcess?.lastMovement || '');
-      setMovementDate(client.legalProcess?.movementDate || '');
+      setProcessNumber(docData.legalProcess?.processNumber || '');
+      setRespondent(docData.legalProcess?.respondent || '');
+      setCourt(docData.legalProcess?.court || '');
+      setLastMovement(docData.legalProcess?.lastMovement || '');
+      setMovementDate(docData.legalProcess?.movementDate || '');
     }
-  }, [showLegalModal, client.legalProcess]);
+  }, [showLegalModal, docData.legalProcess]);
 
   const maskProcessNumber = (val: string) => {
     const numbers = val.replace(/\D/g, '');
@@ -450,11 +452,15 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
   const handleConfirmLegal = () => {
     onUpdate({
       ...client,
-      legalProcess: {
-        processNumber,
-        court,
-        lastMovement,
-        movementDate
+      documentData: {
+        ...docData,
+        legalProcess: {
+          processNumber,
+          respondent,
+          court,
+          lastMovement,
+          movementDate
+        }
       }
     });
     // Add to shared movement options if new
@@ -832,12 +838,16 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
               <button 
                 onClick={() => {
                   setProcessNumber('');
+                  setRespondent('');
                   setCourt('');
                   setLastMovement('');
                   setMovementDate('');
                   onUpdate({
                     ...client,
-                    legalProcess: undefined
+                    documentData: {
+                      ...docData,
+                      legalProcess: undefined
+                    }
                   });
                   setShowLegalModal(false);
                 }}
@@ -868,11 +878,42 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                       setProcessNumber(masked);
                       onUpdate({
                         ...client,
-                        legalProcess: {
-                          processNumber: masked,
-                          court,
-                          lastMovement,
-                          movementDate
+                        documentData: {
+                          ...docData,
+                          legalProcess: {
+                            processNumber: masked,
+                            respondent,
+                            court,
+                            lastMovement,
+                            movementDate
+                          }
+                        }
+                      });
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Requerido</label>
+                  <input 
+                    type="text" 
+                    placeholder="Nome da parte requerida"
+                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-blue-500/50 transition-colors"
+                    value={respondent}
+                    onChange={(e) => {
+                      const newRespondent = e.target.value;
+                      setRespondent(newRespondent);
+                      onUpdate({
+                        ...client,
+                        documentData: {
+                          ...docData,
+                          legalProcess: {
+                            processNumber,
+                            respondent: newRespondent,
+                            court,
+                            lastMovement,
+                            movementDate
+                          }
                         }
                       });
                     }}
@@ -889,11 +930,15 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                       setCourt(newCourt);
                       onUpdate({
                         ...client,
-                        legalProcess: {
-                          processNumber,
-                          court: newCourt,
-                          lastMovement,
-                          movementDate
+                        documentData: {
+                          ...docData,
+                          legalProcess: {
+                            processNumber,
+                            respondent,
+                            court: newCourt,
+                            lastMovement,
+                            movementDate
+                          }
                         }
                       });
                     }}
@@ -920,11 +965,15 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                       onBlur={() => {
                         onUpdate({
                           ...client,
-                          legalProcess: {
-                            processNumber,
-                            court,
-                            lastMovement,
-                            movementDate
+                          documentData: {
+                            ...docData,
+                            legalProcess: {
+                              processNumber,
+                              respondent,
+                              court,
+                              lastMovement,
+                              movementDate
+                            }
                           }
                         });
                         // Add to shared options
@@ -936,11 +985,15 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                         if (e.key === 'Enter' && lastMovement) {
                           onUpdate({
                             ...client,
-                            legalProcess: {
-                              processNumber,
-                              court,
-                              lastMovement,
-                              movementDate
+                            documentData: {
+                              ...docData,
+                              legalProcess: {
+                                processNumber,
+                                respondent,
+                                court,
+                                lastMovement,
+                                movementDate
+                              }
                             }
                           });
                           if (!movementOptions.includes(lastMovement)) {
@@ -966,11 +1019,15 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                       setMovementDate(newDate);
                       onUpdate({
                         ...client,
-                        legalProcess: {
-                          processNumber,
-                          court,
-                          lastMovement,
-                          movementDate: newDate
+                        documentData: {
+                          ...docData,
+                          legalProcess: {
+                            processNumber,
+                            respondent,
+                            court,
+                            lastMovement,
+                            movementDate: newDate
+                          }
                         }
                       });
                     }}
