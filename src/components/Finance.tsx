@@ -146,8 +146,11 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
   }, [leads, searchQuery, churnStatusFilter]);
 
   // Filter leads for Results block
-  const resultsLeads = useMemo(() => 
-    leads.filter(l => {
+  const resultsLeads = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const filtered = leads.filter(l => {
       if (!l.financialRecord?.tipoResultado) return false;
       
       const query = searchQuery.toLowerCase();
@@ -163,9 +166,18 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
       if (!isWithinRange(l.createdAt)) return false;
 
       return matchesSearch && matchesStatus;
-    }),
-    [leads, searchQuery, statusFilter, dateRange]
-  );
+    });
+
+    return filtered.sort((a, b) => {
+      const dateA = a.financialRecord?.dataPagamento ? new Date(a.financialRecord.dataPagamento + 'T00:00:00') : new Date(8640000000000000);
+      const dateB = b.financialRecord?.dataPagamento ? new Date(b.financialRecord.dataPagamento + 'T00:00:00') : new Date(8640000000000000);
+
+      const diffA = Math.abs(dateA.getTime() - today.getTime());
+      const diffB = Math.abs(dateB.getTime() - today.getTime());
+
+      return diffA - diffB;
+    });
+  }, [leads, searchQuery, statusFilter, dateRange]);
 
   // Metrics
   const metrics = useMemo(() => {
@@ -366,15 +378,9 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                     const isFinalizado = record.statusResultado === 'finalizado';
                      
                     return (
-                      <tr key={lead.id} className={cn(
-                        "hover:bg-antique/10 transition-colors group",
-                        isFinalizado ? "bg-aventurine/10" : ""
-                      )}>
+                      <tr key={lead.id} className="hover:bg-antique/10 transition-colors group">
                         <td className="px-6 py-3">
-                          <span className={cn(
-                            "text-sm font-semibold",
-                            isFinalizado ? "text-aventurine" : "text-licorice"
-                          )}>{lead.name}</span>
+                          <span className="text-sm font-semibold text-licorice">{lead.name}</span>
                         </td>
                         <td className="px-6 py-3">
                           {record.tipoResultado === 'acordo' && (
@@ -396,7 +402,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                             onChange={(e) => handleStatusChange(lead, e.target.value as any)}
                             className={cn(
                               "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase cursor-pointer focus:outline-none bg-transparent transition-all border-none outline-none",
-                              record.statusResultado === 'finalizado' ? "text-aventurine" : "text-orange-400"
+                              record.statusResultado === 'finalizado' ? "text-[#00A63E]" : "text-orange-400"
                             )}
                           >
                             <option value="em_pagamento">Em Pagamento</option>
@@ -412,10 +418,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                               onChange={(e) => setEditValues({ ...editValues!, valorRestituicao: parseCurrency(e.target.value) })}
                             />
                           ) : (
-                            <span className={cn(
-                              "text-sm font-mono",
-                              isFinalizado ? "text-aventurine" : "text-licorice/60"
-                            )}>
+                            <span className="text-sm font-mono text-licorice/60">
                               {isImprocedente ? (
                                 <span className={cn(
                                   "text-xs italic",
@@ -436,10 +439,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                               onChange={(e) => setEditValues({ ...editValues!, honorariosSucumbenciaisContratuais: parseCurrency(e.target.value) })}
                             />
                           ) : (
-                            <span className={cn(
-                              "text-sm font-mono",
-                              isFinalizado ? "text-aventurine" : "text-licorice/60"
-                            )}>
+                            <span className="text-sm font-mono text-licorice/60">
                               {formatCurrency(record.honorariosSucumbenciaisContratuais || 0)}
                             </span>
                           )}
@@ -453,10 +453,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                               onChange={(e) => setEditValues({ ...editValues!, valorHonorarios: parseCurrency(e.target.value) })}
                             />
                           ) : (
-                            <span className={cn(
-                              "text-xs font-bold",
-                              isFinalizado ? "text-aventurine" : "text-aventurine"
-                            )}>
+                            <span className="text-xs font-bold text-aventurine">
                               {formatCurrency(record.valorHonorarios || 0) || '-'}
                             </span>
                           )}
@@ -498,29 +495,20 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                               </button>
                             </div>
                           ) : (
-                            <span className={cn(
-                              "text-xs font-semibold",
-                              isFinalizado ? "text-aventurine" : "text-licorice/60"
-                            )}>
+                            <span className="text-xs font-semibold text-licorice/60">
                               {record.parcelasPagas || 1}/{record.parcelasResultado || 1}
                             </span>
                           )}
                         </td>
                         <td className="px-6 py-3">
-                          <span className={cn(
-                            "text-sm font-mono",
-                            isFinalizado ? "text-aventurine" : "text-licorice/40"
-                          )}>
+                          <span className="text-sm font-mono text-licorice/40">
                             {formatCurrency((currentRecord.valorRestituicao || 0) / (currentRecord.parcelasResultado || 1))}
                           </span>
                         </td>
                         <td className="px-6 py-3">
                           <div className="flex flex-col gap-0.5">
                             {currentRecord.dataPagamento && (
-                              <span className={cn(
-                                "text-sm font-mono",
-                                isFinalizado ? "text-aventurine font-semibold" : "text-licorice/40"
-                              )}>{new Date(currentRecord.dataPagamento + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
+                              <span className="text-sm font-mono text-licorice/40">{new Date(currentRecord.dataPagamento + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
                             )}
                             {record.anexoSentenca && !isEditing && (
                               <button className="text-[10px] font-bold text-aventurine uppercase flex items-center gap-1 hover:underline">
@@ -543,10 +531,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                               <>
                                 <button 
                                   onClick={() => handleStartEdit(lead)}
-                                  className={cn(
-                                    "p-1.5 rounded-lg transition-colors",
-                                    isFinalizado ? "text-aventurine hover:bg-white/50" : "text-licorice/40 hover:text-aventurine hover:bg-aventurine/10"
-                                  )}
+                                  className="p-1.5 rounded-lg transition-colors text-licorice/40 hover:text-aventurine hover:bg-aventurine/10"
                                   title="Editar"
                                 >
                                   <Pencil size={14} />

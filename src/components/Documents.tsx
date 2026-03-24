@@ -370,8 +370,8 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
     setShowResultModal(false);
   };
 
-  const updateHonorarios = (restitution: string, sucumbencia: string) => {
-    const total = parseCurrency(restitution) + parseCurrency(sucumbencia);
+  const updateHonorarios = (restitution: string) => {
+    const total = parseCurrency(restitution);
     const perc = (client.contract?.percentage || 20) / 100;
     setHonorariosValue(formatCurrency(total * perc));
   };
@@ -739,7 +739,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                     onChange={(e) => {
                       const val = formatCurrency(parseCurrency(e.target.value));
                       setRestituicaoValue(val);
-                      updateHonorarios(val, sucumbenciaValue);
+                      updateHonorarios(val);
                     }}
                   />
                 </div>
@@ -754,7 +754,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                     onChange={(e) => {
                       const val = formatCurrency(parseCurrency(e.target.value));
                       setSucumbenciaValue(val);
-                      updateHonorarios(restituicaoValue, val);
+                      updateHonorarios(restituicaoValue);
                     }}
                   />
                 </div>
