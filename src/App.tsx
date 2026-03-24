@@ -384,18 +384,77 @@ export default function App() {
     }
   };
 
-  const handleFinalize = (lead: Lead, contract: ContractData) => {
+  const handleFinalize = async (lead: Lead, contract: ContractData) => {
     const updatedLead = { ...lead, contract };
     setLeads(prev => prev.map(l => l.id === lead.id ? updatedLead : l));
     
+    const webhookUrl = "https://n8n.srv1077266.hstgr.cloud/webhook/distratojusto";
+    
     const payload = {
-      timestamp: new Date().toISOString(),
-      lead: updatedLead,
-      contract
+      nome: updatedLead.name,
+      profissao: updatedLead.profession,
+      dados_cliente: {
+        telefone: updatedLead.phone,
+        cidade: updatedLead.city,
+        estado: updatedLead.state,
+        valor_pago: updatedLead.valuePaid,
+        tipo_imovel: updatedLead.propertyType,
+        corretagem: updatedLead.brokerage,
+        atrasos: updatedLead.delays,
+        distrato_assinado: updatedLead.signedDistrato,
+        proposta: updatedLead.proposal,
+        origem: updatedLead.status,
+        criado_em: updatedLead.createdAt
+      },
+      dados_contrato: {
+        percentual: contract.percentage,
+        formato: contract.format,
+        valor_fixo: contract.value,
+        metodo_pagamento: contract.paymentMethod,
+        parcelas: contract.installments,
+        dia_vencimento: contract.dueDate,
+        data_primeira_parcela: contract.firstInstallmentDate,
+        gerar_cobranca: contract.generateBilling
+      },
+      notas: updatedLead.notes,
+      dados_avancados: {
+        dados_pessoais: {
+          email: updatedLead.email,
+          rg: updatedLead.rg,
+          cpf: updatedLead.cpf
+        },
+        endereco: {
+          cep: updatedLead.zipCode,
+          logradouro: updatedLead.address,
+          bairro: updatedLead.neighborhood,
+          cidade: updatedLead.city,
+          uf: updatedLead.state
+        },
+        conjuge: updatedLead.spouseInfo
+      }
     };
-    console.log('Webhook Payload:', JSON.stringify(payload, null, 2));
-    alert('Contrato finalizado e dados enviados via Webhook!');
-    setSelectedLead(null);
+
+    try {
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        alert('Contrato gerado e dados enviados com sucesso!');
+        setSelectedLead(null);
+      } else {
+        throw new Error('Falha ao enviar dados para o webhook.');
+      }
+    } catch (error) {
+      console.error('Webhook error:', error);
+      alert('Contrato finalizado, mas houve um erro ao enviar os dados para o servidor.');
+      // Still close modal since data is saved locally/on db (via setLeads)
+      setSelectedLead(null);
+    }
   };
 
   const filteredLeads = leads
