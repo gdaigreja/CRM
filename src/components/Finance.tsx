@@ -329,7 +329,8 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
 
       <div className="flex-1 overflow-hidden px-6 pb-6 flex flex-col gap-6">
         {/* Bloco A: Resultados Contra Loteadora */}
-        <section className="flex-1 overflow-hidden flex flex-col bg-white rounded-2xl border border-licorice/5 shadow-sm">
+        {/* Bloco A: Resultados Contra Loteadora */}
+        <section className="h-[308px] flex-shrink-0 overflow-hidden flex flex-col bg-white rounded-2xl border border-licorice/5 shadow-sm">
           <div className="bg-antique/50 text-licorice/60 px-6 py-3 min-h-[48px] flex items-center justify-between border-b border-licorice/5 flex-shrink-0">
             <div className="flex items-center gap-2">
               <CheckCircle2 size={14} className="opacity-50" />
