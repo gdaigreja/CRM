@@ -265,10 +265,10 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
               }}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border",
-                docData.minutaHomologada ? "bg-aventurine/10 border-aventurine/20 text-aventurine" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10"
+                docData.minutaHomologada ? "bg-[#00A63E]/10 border-[#00A63E]/20 text-[#00A63E]" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10"
               )}
             >
-              <div className={cn("w-3 h-3 rounded-sm border flex items-center justify-center", docData.minutaHomologada ? "bg-aventurine border-aventurine" : "border-licorice/20 bg-white")}>
+              <div className={cn("w-3 h-3 rounded-sm border flex items-center justify-center", docData.minutaHomologada ? "bg-[#00A63E] border-[#00A63E]" : "border-licorice/20 bg-white")}>
                 {docData.minutaHomologada && <Check size={8} className="text-white" />}
               </div>
               <FileText size={12} />
@@ -505,7 +505,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                         onClick={() => onUpdate({ ...client, documentData: { ...docData, minutaHomologada: !docData.minutaHomologada } })}
                         className={cn(
                           "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border w-[180px]",
-                          docData.minutaHomologada ? "bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-900/40" : "bg-white/5 border-white/10 text-white/40"
+                          docData.minutaHomologada ? "bg-[#00A63E]/10 border-[#00A63E]/20 text-[#00A63E] shadow-lg shadow-[#00A63E]/10" : "bg-white/5 border-white/10 text-white/40"
                         )}
                       >
                         <FileText size={12} />
