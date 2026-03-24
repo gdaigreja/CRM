@@ -181,19 +181,7 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
             )}
           </div>
         </div>
-        <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            onUpdate({ ...client, archived: !client.archived });
-          }}
-          className={cn(
-            "p-1.5 rounded-lg transition-all",
-            client.archived ? "text-aventurine bg-aventurine/10" : "text-licorice/20 hover:text-aventurine hover:bg-aventurine/5"
-          )}
-          title={client.archived ? "Desarquivar" : "Arquivar"}
-        >
-          <Archive size={14} />
-        </button>
+
       </div>
 
       <div className="space-y-4">
@@ -243,7 +231,12 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
           <button 
             onClick={(e) => {
               e.stopPropagation();
-              onUpdate({ ...client, documentData: { ...docData, rescisaoFormalizada: !docData.rescisaoFormalizada } });
+              const newValue = !docData.rescisaoFormalizada;
+              onUpdate({ 
+                ...client, 
+                archived: newValue,
+                documentData: { ...docData, rescisaoFormalizada: newValue } 
+              });
             }}
             className={cn(
               "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border",
@@ -261,7 +254,12 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
             <button 
               onClick={(e) => {
                 e.stopPropagation();
-                onUpdate({ ...client, documentData: { ...docData, minutaHomologada: !docData.minutaHomologada } });
+                const newValue = !docData.minutaHomologada;
+                onUpdate({ 
+                  ...client, 
+                  archived: newValue,
+                  documentData: { ...docData, minutaHomologada: newValue } 
+                });
               }}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border",
@@ -488,7 +486,14 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
               <div className="flex items-center gap-2">
                 {client.status === 'Churn' ? (
                   <button 
-                    onClick={() => onUpdate({ ...client, documentData: { ...docData, rescisaoFormalizada: !docData.rescisaoFormalizada } })}
+                    onClick={() => {
+                      const newValue = !docData.rescisaoFormalizada;
+                      onUpdate({ 
+                        ...client, 
+                        archived: newValue,
+                        documentData: { ...docData, rescisaoFormalizada: newValue } 
+                      });
+                    }}
                     className={cn(
                       "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border w-[180px]",
                       docData.rescisaoFormalizada ? "bg-red-600 border-red-500 text-white shadow-lg shadow-red-900/40" : "bg-white/5 border-white/10 text-white/40"
@@ -502,7 +507,14 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                   <>
                     {(client.financialRecord?.tipoResultado === 'acordo' || client.financialRecord?.tipoResultado === 'sentenca_procedente') ? (
                       <button 
-                        onClick={() => onUpdate({ ...client, documentData: { ...docData, minutaHomologada: !docData.minutaHomologada } })}
+                        onClick={() => {
+                          const newValue = !docData.minutaHomologada;
+                          onUpdate({ 
+                            ...client, 
+                            archived: newValue,
+                            documentData: { ...docData, minutaHomologada: newValue } 
+                          });
+                        }}
                         className={cn(
                           "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border w-[180px]",
                           docData.minutaHomologada ? "bg-[#00A63E]/10 border-[#00A63E]/20 text-[#00A63E] shadow-lg shadow-[#00A63E]/10" : "bg-white/5 border-white/10 text-white/40"
