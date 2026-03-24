@@ -53,10 +53,13 @@ export default function Registrations({
 
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
+      const query = searchQuery.toLowerCase();
+      const queryDigits = searchQuery.replace(/\D/g, '');
+      
       const matchesSearch = 
-        lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (lead.cpf || '').includes(searchQuery.replace(/\D/g, '')) ||
-        (lead.email || '').toLowerCase().includes(searchQuery.toLowerCase());
+        lead.name.toLowerCase().includes(query) ||
+        (lead.email || '').toLowerCase().includes(query) ||
+        (queryDigits !== '' && (lead.cpf || '').includes(queryDigits));
       
       const isCliente = lead.status === 'Assinado' || lead.status === 'Churn';
       const matchesType = 
