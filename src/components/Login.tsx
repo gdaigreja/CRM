@@ -62,21 +62,21 @@ export default function Login({ onLogin }: LoginProps) {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
+        className="w-full max-w-sm"
       >
-        <div className="bg-[#151619] border border-white/10 rounded-3xl p-8 shadow-2xl relative z-10">
-          <div className="text-center mb-10">
+        <div className="bg-[#151619] border border-white/10 rounded-3xl p-6 shadow-2xl relative z-10">
+          <div className="text-center mb-6">
             <img 
               src="https://zklkmbokwzhbqdoqsnxs.supabase.co/storage/v1/object/public/Imagens/logo_pequena.png" 
               alt="Logo Distrato Justo" 
-              className="w-16 h-16 object-contain mb-6 mx-auto"
+              className="w-12 h-12 object-contain mb-4 mx-auto"
               referrerPolicy="no-referrer"
             />
-            <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Distrato Justo</h1>
-            <p className="text-white/50 text-sm">Acesse sua conta para gerenciar leads e documentos</p>
+            <h1 className="text-2xl font-bold text-white mb-1 tracking-tight">Distrato Justo</h1>
+            <p className="text-white/50 text-[11px]">Acesse sua conta para gerenciar leads e documentos</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <AnimatePresence mode="wait">
               {error && (
                 <motion.div 
@@ -102,7 +102,7 @@ export default function Login({ onLogin }: LoginProps) {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:border-[#93774E]/50 focus:ring-1 focus:ring-[#93774E]/50 transition-all"
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:border-[#93774E]/50 focus:ring-1 focus:ring-[#93774E]/50 transition-all text-sm"
                   placeholder="seu@email.com"
                 />
               </div>
@@ -119,7 +119,7 @@ export default function Login({ onLogin }: LoginProps) {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-white placeholder:text-white/20 focus:outline-none focus:border-[#93774E]/50 focus:ring-1 focus:ring-[#93774E]/50 transition-all"
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 pl-12 pr-12 text-white placeholder:text-white/20 focus:outline-none focus:border-[#93774E]/50 focus:ring-1 focus:ring-[#93774E]/50 transition-all text-sm"
                   placeholder="••••••••"
                 />
                 <button
@@ -135,7 +135,7 @@ export default function Login({ onLogin }: LoginProps) {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#93774E] hover:bg-[#A68B63] text-white font-bold py-4 rounded-2xl shadow-lg shadow-[#93774E]/20 transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group"
+              className="w-full bg-[#93774E] hover:bg-[#A68B63] text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-[#93774E]/20 transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group text-sm"
             >
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -148,9 +148,9 @@ export default function Login({ onLogin }: LoginProps) {
             </button>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-white/5 text-center">
-            <p className="text-white/30 text-sm">
-              Esqueceu sua senha? <span className="text-[#93774E] cursor-pointer hover:underline">Recuperar acesso</span>
+          <div className="mt-6 pt-6 border-t border-white/5 text-center">
+            <p className="text-white/30 text-[11px]">
+              Esqueceu sua senha? <span className="text-[#93774E] cursor-pointer hover:underline text-[11px]">Recuperar acesso</span>
             </p>
           </div>
         </div>
