@@ -67,6 +67,7 @@ export interface ClientDocumentData {
   emailSent: boolean;
   notificationSent: boolean;
   rescisaoFormalizada?: boolean;
+  minutaHomologada?: boolean;
 }
 
 export interface ContractData {

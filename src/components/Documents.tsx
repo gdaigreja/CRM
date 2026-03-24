@@ -25,8 +25,8 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
   const clients = leads.filter(l => l.documentData && (l.status === 'Assinado' || l.status === 'Churn'));
 
   const filteredClients = clients.filter(c => {
-    const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          c.documentData?.code.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (c.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          c.documentData?.code?.toLowerCase().includes(searchQuery.toLowerCase());
     
     if (!matchesSearch) return false;
 
@@ -38,13 +38,18 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
     }
 
     if (filterPendencias) {
-      if (c.status === 'Churn') return false;
-      const hasPendencias = c.documentData?.documents.some(d => d.status !== 'Recebido');
-      if (!hasPendencias) return false;
+      if (c.status === 'Churn') {
+        if (c.documentData?.rescisaoFormalizada) return false;
+      } else if (c.financialRecord?.tipoResultado === 'acordo' || c.financialRecord?.tipoResultado === 'sentenca_procedente') {
+        if (c.documentData?.minutaHomologada) return false;
+      } else {
+        const hasPendencias = (c.documentData?.documents || []).some(d => d.status !== 'Recebido');
+        if (!hasPendencias) return false;
+      }
     }
 
     if (filterComPrazo) {
-      const hasPrazo = c.documentData?.deadlineFatal || c.documentData?.documents.some(d => d.deadline);
+      const hasPrazo = c.documentData?.deadlineFatal || (c.documentData?.documents || []).some(d => d.deadline);
       if (!hasPrazo) return false;
     }
 
@@ -102,7 +107,8 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
                     documents: [...DEFAULT_DOCUMENTS],
                     observations: [],
                     emailSent: false,
-                    notificationSent: false
+                    notificationSent: false,
+                    minutaHomologada: false
                   }
                 };
                 onUpdateLead(updatedLead);
@@ -117,10 +123,10 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
 }
 
 const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead: Lead) => void }> = ({ client, onClick, onUpdate }) => {
-  const docData = client.documentData!;
+  const docData = client.documentData || { code: '', documents: [], observations: [], emailSent: false, notificationSent: false, minutaHomologada: false };
   
   const getProgress = (type: 'obrigatório' | 'eventual') => {
-    const docs = docData.documents.filter(d => d.type === type);
+    const docs = (docData.documents || []).filter(d => d.type === type);
     if (docs.length === 0) return { current: 0, total: 0, percent: 0 };
     const completed = docs.filter(d => d.status === 'Recebido').length;
     return { current: completed, total: docs.length, percent: (completed / docs.length) * 100 };
@@ -141,11 +147,11 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
       onClick={onClick}
       className={cn(
         "bg-white p-5 rounded-2xl border shadow-sm hover:shadow-lg transition-all cursor-pointer group flex flex-col gap-4 relative overflow-hidden",
-        docData.deadlineFatal ? "border-exotic/30" : 
+        docData?.deadlineFatal ? "border-exotic/30" : 
         client.financialRecord?.tipoResultado ? "border-[#00A63E]/30" : "border-licorice/5 hover:border-aventurine/20"
       )}
     >
-      {docData.deadlineFatal && (
+      {docData?.deadlineFatal && (
         <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none">
           <div className="absolute top-2 right-[-25px] bg-exotic text-white text-[10px] font-bold py-1 w-[100px] text-center rotate-45 shadow-sm">
             {docData.deadlineFatal.split('-').slice(1).reverse().join('/')}
@@ -169,8 +175,8 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
       <div className="flex justify-between items-start">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold text-licorice group-hover:text-aventurine transition-colors truncate max-w-[150px]">{client.name}</h3>
-            {docData.deadlineFatal && (
+            <h3 className="text-sm font-bold text-licorice group-hover:text-aventurine transition-colors truncate max-w-[150px]">{client.name || 'Sem Nome'}</h3>
+            {docData?.deadlineFatal && (
               <div className="w-2 h-2 rounded-full bg-exotic animate-pulse" />
             )}
           </div>
@@ -251,41 +257,60 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
             Rescisão Formalizada
           </button>
         ) : (
-          <>
+          (client.financialRecord?.tipoResultado === 'acordo' || client.financialRecord?.tipoResultado === 'sentenca_procedente') ? (
             <button 
               onClick={(e) => {
                 e.stopPropagation();
-                onUpdate({ ...client, documentData: { ...docData, emailSent: !docData.emailSent } });
+                onUpdate({ ...client, documentData: { ...docData, minutaHomologada: !docData.minutaHomologada } });
               }}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border",
-                docData.emailSent ? "bg-aventurine/10 border-aventurine/20 text-aventurine" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10"
+                docData.minutaHomologada ? "bg-aventurine/10 border-aventurine/20 text-aventurine" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10"
               )}
             >
-              <div className={cn("w-3 h-3 rounded-sm border flex items-center justify-center", docData.emailSent ? "bg-aventurine border-aventurine" : "border-licorice/20 bg-white")}>
-                {docData.emailSent && <Check size={8} className="text-white" />}
+              <div className={cn("w-3 h-3 rounded-sm border flex items-center justify-center", docData.minutaHomologada ? "bg-aventurine border-aventurine" : "border-licorice/20 bg-white")}>
+                {docData.minutaHomologada && <Check size={8} className="text-white" />}
               </div>
-              <Mail size={12} />
-              Email
+              <FileText size={12} />
+              Minuta Homologada
             </button>
+          ) : (
+            <>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUpdate({ ...client, documentData: { ...docData, emailSent: !docData.emailSent } });
+                }}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border",
+                  docData.emailSent ? "bg-aventurine/10 border-aventurine/20 text-aventurine" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10"
+                )}
+              >
+                <div className={cn("w-3 h-3 rounded-sm border flex items-center justify-center", docData.emailSent ? "bg-aventurine border-aventurine" : "border-licorice/20 bg-white")}>
+                  {docData.emailSent && <Check size={8} className="text-white" />}
+                </div>
+                <Mail size={12} />
+                Email
+              </button>
 
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                onUpdate({ ...client, documentData: { ...docData, notificationSent: !docData.notificationSent } });
-              }}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border",
-                docData.notificationSent ? "bg-aventurine/10 border-aventurine/20 text-aventurine" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10"
-              )}
-            >
-              <div className={cn("w-3 h-3 rounded-sm border flex items-center justify-center", docData.notificationSent ? "bg-aventurine border-aventurine" : "border-licorice/20 bg-white")}>
-                {docData.notificationSent && <Check size={8} className="text-white" />}
-              </div>
-              <Bell size={12} />
-              Notificação
-            </button>
-          </>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUpdate({ ...client, documentData: { ...docData, notificationSent: !docData.notificationSent } });
+                }}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border",
+                  docData.notificationSent ? "bg-aventurine/10 border-aventurine/20 text-aventurine" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10"
+                )}
+              >
+                <div className={cn("w-3 h-3 rounded-sm border flex items-center justify-center", docData.notificationSent ? "bg-aventurine border-aventurine" : "border-licorice/20 bg-white")}>
+                  {docData.notificationSent && <Check size={8} className="text-white" />}
+                </div>
+                <Bell size={12} />
+                Notificação
+              </button>
+            </>
+          )
         )}
       </div>
     </motion.div>
@@ -313,7 +338,7 @@ function Check({ size, className }: { size: number; className?: string }) {
 // Placeholder components to be moved to separate files or implemented below
 const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpdate: (lead: Lead) => void; onDelete: () => void; onEditLead: (lead: Lead) => void }> = ({ client, onClose, onUpdate, onDelete, onEditLead }) => {
   const [isObrigatorioOpen, setIsObrigatorioOpen] = useState(true);
-  const [isEventualOpen, setIsEventualOpen] = useState(client.documentData?.documents.filter(d => d.type === 'eventual').length === 0);
+  const [isEventualOpen, setIsEventualOpen] = useState((client.documentData?.documents || []).filter(d => d.type === 'eventual').length === 0);
   const [newObservation, setNewObservation] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showChurnModal, setShowChurnModal] = useState(false);
@@ -328,7 +353,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
   const [honorariosValue, setHonorariosValue] = useState('');
   const [paymentDate, setPaymentDate] = useState(new Date().toLocaleDateString('en-CA'));
   
-  const docData = client.documentData!;
+  const docData = client.documentData || { code: '', documents: [], observations: [], emailSent: false, notificationSent: false, minutaHomologada: false };
 
   const handleConfirmChurn = () => {
     const value = parseCurrency(fineValue);
@@ -385,7 +410,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
   };
 
   const handleUpdateDoc = (docId: string, updates: Partial<DocumentItem>) => {
-    const updatedDocs = docData.documents.map(d => d.id === docId ? { ...d, ...updates } : d);
+    const updatedDocs = (docData.documents || []).map(d => d.id === docId ? { ...d, ...updates } : d);
     onUpdate({
       ...client,
       documentData: { ...docData, documents: updatedDocs }
@@ -402,7 +427,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
     };
     onUpdate({
       ...client,
-      documentData: { ...docData, observations: [obs, ...docData.observations] }
+      documentData: { ...docData, observations: [obs, ...(docData.observations || [])] }
     });
     setNewObservation('');
   };
@@ -416,14 +441,14 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
     };
     onUpdate({
       ...client,
-      documentData: { ...docData, documents: [...docData.documents, newDoc] }
+      documentData: { ...docData, documents: [...(docData.documents || []), newDoc] }
     });
   };
 
   const handleDeleteDoc = (docId: string) => {
     onUpdate({
       ...client,
-      documentData: { ...docData, documents: docData.documents.filter(d => d.id !== docId) }
+      documentData: { ...docData, documents: (docData.documents || []).filter(d => d.id !== docId) }
     });
   };
 
@@ -475,39 +500,57 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                   </button>
                 ) : (
                   <>
-                    <button 
-                      onClick={() => onUpdate({ ...client, documentData: { ...docData, emailSent: !docData.emailSent } })}
-                      className={cn(
-                        "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border w-[120px]",
-                        docData.emailSent ? "bg-orange-500 border-orange-500 text-white" : "bg-white/5 border-white/10 text-white/40"
-                      )}
-                    >
-                      <Mail size={12} />
-                      <span>Email</span>
-                      {docData.emailSent && <Check size={8} />}
-                    </button>
+                    {(client.financialRecord?.tipoResultado === 'acordo' || client.financialRecord?.tipoResultado === 'sentenca_procedente') ? (
+                      <button 
+                        onClick={() => onUpdate({ ...client, documentData: { ...docData, minutaHomologada: !docData.minutaHomologada } })}
+                        className={cn(
+                          "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border w-[180px]",
+                          docData.minutaHomologada ? "bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-900/40" : "bg-white/5 border-white/10 text-white/40"
+                        )}
+                      >
+                        <FileText size={12} />
+                        <span>Minuta Homologada</span>
+                        {docData.minutaHomologada && <Check size={8} />}
+                      </button>
+                    ) : (
+                      <>
+                        <button 
+                          onClick={() => onUpdate({ ...client, documentData: { ...docData, emailSent: !docData.emailSent } })}
+                          className={cn(
+                            "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border w-[120px]",
+                            docData.emailSent ? "bg-orange-500 border-orange-500 text-white" : "bg-white/5 border-white/10 text-white/40"
+                          )}
+                        >
+                          <Mail size={12} />
+                          <span>Email</span>
+                          {docData.emailSent && <Check size={8} />}
+                        </button>
 
-                    <button 
-                      onClick={() => onUpdate({ ...client, documentData: { ...docData, notificationSent: !docData.notificationSent } })}
-                      className={cn(
-                        "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border w-[120px]",
-                        docData.notificationSent ? "bg-orange-500 border-orange-500 text-white" : "bg-white/5 border-white/10 text-white/40"
-                      )}
-                    >
-                      <Bell size={12} />
-                      <span>Notificação</span>
-                      {docData.notificationSent && <Check size={8} />}
-                    </button>
+                        <button 
+                          onClick={() => onUpdate({ ...client, documentData: { ...docData, notificationSent: !docData.notificationSent } })}
+                          className={cn(
+                            "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border w-[120px]",
+                            docData.notificationSent ? "bg-orange-500 border-orange-500 text-white" : "bg-white/5 border-white/10 text-white/40"
+                          )}
+                        >
+                          <Bell size={12} />
+                          <span>Notificação</span>
+                          {docData.notificationSent && <Check size={8} />}
+                        </button>
+                      </>
+                    )}
 
-                    <label className="relative p-2 bg-white/5 rounded-lg border border-white/10 cursor-pointer hover:bg-white/10 transition-all group shadow-sm flex items-center justify-center">
-                      <Calendar size={14} className={cn(docData.deadlineFatal ? "text-exotic" : "text-white/20 group-hover:text-white/40")} />
-                      <input 
-                        type="date" 
-                        className="absolute inset-0 opacity-0 cursor-pointer color-scheme-dark w-full h-full"
-                        value={docData.deadlineFatal || ''}
-                        onChange={(e) => onUpdate({ ...client, documentData: { ...docData, deadlineFatal: e.target.value } })}
-                      />
-                    </label>
+                    {!client.financialRecord?.tipoResultado && (
+                      <label className="relative p-2 bg-white/5 rounded-lg border border-white/10 cursor-pointer hover:bg-white/10 transition-all group shadow-sm flex items-center justify-center">
+                        <Calendar size={14} className={cn(docData?.deadlineFatal ? "text-exotic" : "text-white/20 group-hover:text-white/40")} />
+                        <input 
+                          type="date" 
+                          className="absolute inset-0 opacity-0 cursor-pointer color-scheme-dark w-full h-full"
+                          value={docData.deadlineFatal || ''}
+                          onChange={(e) => onUpdate({ ...client, documentData: { ...docData, deadlineFatal: e.target.value } })}
+                        />
+                      </label>
+                    )}
                   </>
                 )}
               </div>
@@ -562,7 +605,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                     exit={{ height: 0, opacity: 0 }}
                     className="overflow-hidden space-y-3"
                   >
-                    {docData.documents.filter(d => d.type === 'obrigatório').map(doc => (
+                    {(docData.documents || []).filter(d => d.type === 'obrigatório').map(doc => (
                       <DocumentRow key={doc.id} doc={doc} onUpdate={(u) => handleUpdateDoc(doc.id, u)} />
                     ))}
                   </motion.div>
@@ -590,7 +633,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                     exit={{ height: 0, opacity: 0 }}
                     className="overflow-hidden space-y-3"
                   >
-                    {docData.documents.filter(d => d.type === 'eventual').map(doc => (
+                    {(docData.documents || []).filter(d => d.type === 'eventual').map(doc => (
                       <DocumentRow key={doc.id} doc={doc} onUpdate={(u) => handleUpdateDoc(doc.id, u)} onDelete={() => handleDeleteDoc(doc.id)} />
                     ))}
                     <button 
@@ -614,7 +657,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
           </div>
 
           <div className="flex-1 overflow-y-auto p-6 no-scrollbar space-y-6">
-            {docData.observations.map(obs => (
+            {(docData.observations || []).map(obs => (
               <div key={obs.id} className="space-y-1.5">
                 <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-widest">
                   <span className="text-licorice/60">{obs.author}</span>
