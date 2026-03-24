@@ -31,7 +31,15 @@ export interface Lead {
   financialRecord?: FinancialRecord;
   userId?: string;
   spouseInfo?: SpouseInfo;
+  legalProcess?: LegalProcessInfo;
   archived?: boolean;
+}
+
+export interface LegalProcessInfo {
+  processNumber?: string;
+  court?: string;
+  lastMovement?: string;
+  movementDate?: string;
 }
 
 export interface SpouseInfo {

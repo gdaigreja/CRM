@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Mail, Bell, Plus, Trash2, X, ChevronDown, ChevronUp, Send, Calendar, Pencil, AlertCircle, AlertTriangle, FileText, Archive, Check as LucideCheck } from 'lucide-react';
+import { Search, Mail, Bell, Plus, Trash2, X, ChevronDown, ChevronUp, Send, Calendar, Pencil, AlertCircle, AlertTriangle, FileText, Archive, Activity, Scale, Check as LucideCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Lead, DocumentItem, DocumentStatus, Observation, ClientDocumentData } from '../types';
 import { DEFAULT_DOCUMENTS } from '../constants';
@@ -345,8 +345,18 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
   
   const [showResultModal, setShowResultModal] = useState(false);
   const [showDeadlineModal, setShowDeadlineModal] = useState(false);
+  const [showLegalModal, setShowLegalModal] = useState(false);
+  
   const [deadlineDateValue, setDeadlineDateValue] = useState('');
   const [deadlineTaskValue, setDeadlineTaskValue] = useState('');
+  
+  const [processNumber, setProcessNumber] = useState('');
+  const [court, setCourt] = useState('');
+  const [lastMovement, setLastMovement] = useState('');
+  const [movementDate, setMovementDate] = useState('');
+  
+  const [movementOptions, setMovementOptions] = useState<string[]>(['Inicial Protocolada', 'Aguardando Citação', 'Contestação Apresentada', 'Decisão Interlocutória', 'Sentença Proferida']);
+  
   const [resultType, setResultType] = useState<'acordo' | 'sentenca'>('acordo');
   const [restituicaoValue, setRestituicaoValue] = useState('');
   const [sucumbenciaValue, setSucumbenciaValue] = useState('');
@@ -356,13 +366,34 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
   
   const docData = client.documentData || { code: '', documents: [], observations: [], emailSent: false, notificationSent: false, minutaHomologada: false };
 
-  // Sync deadline internal state when modal opens
+  // Sync search internal state when modals open
   useEffect(() => {
     if (showDeadlineModal) {
       setDeadlineDateValue(docData.deadlineFatal || '');
       setDeadlineTaskValue(docData.deadlineFatalTask || '');
     }
   }, [showDeadlineModal, docData.deadlineFatal, docData.deadlineFatalTask]);
+
+  useEffect(() => {
+    if (showLegalModal) {
+      setProcessNumber(client.legalProcess?.processNumber || '');
+      setCourt(client.legalProcess?.court || '');
+      setLastMovement(client.legalProcess?.lastMovement || '');
+      setMovementDate(client.legalProcess?.movementDate || '');
+    }
+  }, [showLegalModal, client.legalProcess]);
+
+  const maskProcessNumber = (val: string) => {
+    const numbers = val.replace(/\D/g, '');
+    let masked = '';
+    if (numbers.length > 0) masked += numbers.substring(0, 7);
+    if (numbers.length > 7) masked += '-' + numbers.substring(7, 9);
+    if (numbers.length > 9) masked += '.' + numbers.substring(9, 13);
+    if (numbers.length > 13) masked += '.' + numbers.substring(13, 14);
+    if (numbers.length > 14) masked += '.' + numbers.substring(14, 16);
+    if (numbers.length > 16) masked += '.' + numbers.substring(16, 20);
+    return masked.substring(0, 25);
+  };
 
   const handleConfirmChurn = () => {
     const value = parseCurrency(fineValue);
@@ -414,6 +445,23 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
       }
     });
     setShowDeadlineModal(false);
+  };
+
+  const handleConfirmLegal = () => {
+    onUpdate({
+      ...client,
+      legalProcess: {
+        processNumber,
+        court,
+        lastMovement,
+        movementDate
+      }
+    });
+    // Add to shared movement options if new
+    if (lastMovement && !movementOptions.includes(lastMovement)) {
+      setMovementOptions([...movementOptions, lastMovement]);
+    }
+    setShowLegalModal(false);
   };
 
   const updateHonorarios = (restitution: string) => {
@@ -596,6 +644,13 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
               {client.status !== 'Churn' && !client.financialRecord?.tipoResultado && (
                 <div className="flex items-center gap-2">
                   <button 
+                    onClick={() => setShowLegalModal(true)}
+                    className="w-10 h-10 flex items-center justify-center rounded-lg transition-all bg-transparent border-2 border-blue-500/30 text-blue-500 hover:bg-blue-500/10 hover:border-blue-500/50 hover:scale-105 active:scale-95"
+                    title="Alterar Status / Processo"
+                  >
+                    <Scale size={16} />
+                  </button>
+                  <button 
                     onClick={() => setShowChurnModal(true)}
                     className="w-10 h-10 flex items-center justify-center rounded-lg transition-all bg-transparent border-2 border-red-500/30 text-red-500 hover:bg-red-500/10 hover:border-red-500/50 hover:scale-105 active:scale-95"
                     title="Marcar Churn"
@@ -760,6 +815,167 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                 >
                   Sim, Excluir
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {showLegalModal && (
+          <div className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={(e) => { e.stopPropagation(); setShowLegalModal(false); }}>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl relative"
+              onClick={e => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => {
+                  setProcessNumber('');
+                  setCourt('');
+                  setLastMovement('');
+                  setMovementDate('');
+                  onUpdate({
+                    ...client,
+                    legalProcess: undefined
+                  });
+                  setShowLegalModal(false);
+                }}
+                className="absolute right-6 top-6 text-licorice/20 hover:text-exotic transition-colors"
+                title="Limpar Informações"
+              >
+                <Trash2 size={20} />
+              </button>
+
+              <div className="text-center mb-8">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mx-auto mb-4">
+                  <Scale size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-licorice">Informações do Processo</h3>
+                <p className="text-sm text-licorice/40">Atualize os dados judiciais do cliente.</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Número do Processo</label>
+                  <input 
+                    type="text" 
+                    placeholder="0000000-00.0000.0.00.0000"
+                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-blue-500/50 transition-colors"
+                    value={processNumber}
+                    onChange={(e) => {
+                      const masked = maskProcessNumber(e.target.value);
+                      setProcessNumber(masked);
+                      onUpdate({
+                        ...client,
+                        legalProcess: {
+                          processNumber: masked,
+                          court,
+                          lastMovement,
+                          movementDate
+                        }
+                      });
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Tribunal (TJ)</label>
+                  <select 
+                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-blue-500/50 transition-colors appearance-none cursor-pointer"
+                    value={court}
+                    onChange={(e) => {
+                      const newCourt = e.target.value;
+                      setCourt(newCourt);
+                      onUpdate({
+                        ...client,
+                        legalProcess: {
+                          processNumber,
+                          court: newCourt,
+                          lastMovement,
+                          movementDate
+                        }
+                      });
+                    }}
+                  >
+                    <option value="">Selecione o Tribunal</option>
+                    {['AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO'].map(uf => (
+                      <option key={uf} value={`TJ${uf}`}>TJ{uf}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Última Movimentação</label>
+                  <div className="relative">
+                    <input 
+                      list="movements-list"
+                      placeholder="Escrava ou selecione..."
+                      className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-blue-500/50 transition-colors"
+                      value={lastMovement}
+                      onChange={(e) => {
+                        const newMovement = e.target.value;
+                        setLastMovement(newMovement);
+                      }}
+                      onBlur={() => {
+                        onUpdate({
+                          ...client,
+                          legalProcess: {
+                            processNumber,
+                            court,
+                            lastMovement,
+                            movementDate
+                          }
+                        });
+                        // Add to shared options
+                        if (lastMovement && !movementOptions.includes(lastMovement)) {
+                          setMovementOptions([lastMovement, ...movementOptions]);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && lastMovement) {
+                          onUpdate({
+                            ...client,
+                            legalProcess: {
+                              processNumber,
+                              court,
+                              lastMovement,
+                              movementDate
+                            }
+                          });
+                          if (!movementOptions.includes(lastMovement)) {
+                            setMovementOptions([lastMovement, ...movementOptions]);
+                          }
+                        }
+                      }}
+                    />
+                    <datalist id="movements-list">
+                      {movementOptions.map(opt => <option key={opt} value={opt} />)}
+                    </datalist>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Data da Movimentação</label>
+                  <input 
+                    type="date" 
+                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-blue-500/50 transition-colors"
+                    value={movementDate}
+                    onChange={(e) => {
+                      const newDate = e.target.value;
+                      setMovementDate(newDate);
+                      onUpdate({
+                        ...client,
+                        legalProcess: {
+                          processNumber,
+                          court,
+                          lastMovement,
+                          movementDate: newDate
+                        }
+                      });
+                    }}
+                  />
+                </div>
               </div>
             </motion.div>
           </div>
