@@ -40,22 +40,6 @@ app.get(["/api/health", "/health"], (req, res) => {
   res.json({ status: "ok", version: "1.0.0", env: process.env.NODE_ENV });
 });
 
-// Debug endpoint to check Supabase connection
-app.get(["/api/debug/supabase", "/debug/supabase"], async (req, res) => {
-  try {
-    const { data, error, count } = await supabase.from('leads').select('*', { count: 'exact', head: true });
-    if (error) throw error;
-    res.json({ 
-      status: "connected", 
-      leadsCount: count,
-      url: supabaseUrl.substring(0, 10) + "..."
-    });
-  } catch (error: any) {
-    console.error("DEBUG ERROR:", error);
-    res.status(500).json({ status: "error", message: error.message, details: error });
-  }
-});
-
 // Helpers for Lead Mapping (Frontend <-> Database)
 const mapDbLeadToFrontend = (dbLead: any) => ({
   id: dbLead.id,
@@ -82,6 +66,7 @@ const mapDbLeadToFrontend = (dbLead: any) => ({
   financialRecord: dbLead.financial_record,
   createdAt: dbLead.created_at,
   notes: dbLead.notes || "",
+  archived: dbLead.archived || false,
   spouseInfo: (dbLead.spouse_name && dbLead.spouse_name.trim() !== "") ? {
     name: dbLead.spouse_name,
     cpf: dbLead.spouse_cpf || "",
@@ -119,7 +104,8 @@ const mapFrontendLeadToDb = (lead: any) => ({
   spouse_cpf: lead.spouseInfo?.cpf || null,
   spouse_rg: lead.spouseInfo?.rg || null,
   spouse_phone: lead.spouseInfo?.phone || null,
-  spouse_email: lead.spouseInfo?.email || null
+  spouse_email: lead.spouseInfo?.email || null,
+  archived: lead.archived || false
 });
 
 // Helpers for Task Mapping
@@ -354,19 +340,30 @@ app.get(["/api/leads", "/leads"], authenticateToken, async (req, res) => {
 
 app.put(["/api/leads/:id", "/leads/:id"], authenticateToken, async (req, res) => {
   const { id } = req.params;
+  console.log(`Updating lead ${id}...`);
   const updatedLead = mapFrontendLeadToDb(req.body);
+  
+  // Remove ID from updatedLead to avoid potential issues with updating PK
+  const { id: _, ...updateData } = updatedLead;
 
   try {
     const { data, error } = await supabase
       .from('leads')
-      .update(updatedLead)
+      .update(updateData)
       .eq('id', id)
       .select();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase Update Error:", error);
+      throw error;
+    }
+    
     if (!data || data.length === 0) {
+      console.warn("Lead not found for update:", id);
       return res.status(404).json({ error: "Lead not found" });
     }
+    
+    console.log("Lead updated successfully:", id);
     res.json(mapDbLeadToFrontend(data[0]));
   } catch (error) {
     console.error("Error updating lead:", error);

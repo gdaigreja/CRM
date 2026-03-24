@@ -186,6 +186,7 @@ export default function App() {
   const [docSearchQuery, setDocSearchQuery] = useState('');
   const [docFilterPendencias, setDocFilterPendencias] = useState(false);
   const [docFilterComPrazo, setDocFilterComPrazo] = useState(false);
+  const [docFilterArquivados, setDocFilterArquivados] = useState(false);
 
   // Tasks Filters
   const [taskSearchQuery, setTaskSearchQuery] = useState('');
@@ -892,6 +893,19 @@ ON CONFLICT (id) DO NOTHING;
                 <div className="flex items-center gap-6">
                   <label className="flex items-center gap-2 cursor-pointer group">
                     <div 
+                      onClick={() => setDocFilterArquivados(!docFilterArquivados)}
+                      className={cn(
+                        "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                        docFilterArquivados ? "bg-aventurine border-aventurine" : "border-licorice/20 bg-white group-hover:border-aventurine/50"
+                      )}
+                    >
+                      {docFilterArquivados && <div className="w-1.5 h-1.5 bg-white rounded-sm" />}
+                    </div>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-licorice/60">Arquivados</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <div 
                       onClick={() => setDocFilterPendencias(!docFilterPendencias)}
                       className={cn(
                         "w-4 h-4 rounded border flex items-center justify-center transition-all",
@@ -1149,6 +1163,7 @@ ON CONFLICT (id) DO NOTHING;
               searchQuery={docSearchQuery}
               filterPendencias={docFilterPendencias}
               filterComPrazo={docFilterComPrazo}
+              filterArquivados={docFilterArquivados}
             />
           ) : view === 'registrations' ? (
             <Registrations 

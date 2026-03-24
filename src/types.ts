@@ -31,6 +31,7 @@ export interface Lead {
   financialRecord?: FinancialRecord;
   userId?: string;
   spouseInfo?: SpouseInfo;
+  archived?: boolean;
 }
 
 export interface SpouseInfo {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Mail, Bell, Plus, Trash2, X, ChevronDown, ChevronUp, Send, Calendar, Pencil, AlertCircle, AlertTriangle, FileText, Check as LucideCheck } from 'lucide-react';
+import { Search, Mail, Bell, Plus, Trash2, X, ChevronDown, ChevronUp, Send, Calendar, Pencil, AlertCircle, AlertTriangle, FileText, Archive, Check as LucideCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Lead, DocumentItem, DocumentStatus, Observation, ClientDocumentData } from '../types';
 import { DEFAULT_DOCUMENTS } from '../constants';
@@ -14,9 +14,10 @@ interface DocumentsProps {
   searchQuery: string;
   filterPendencias: boolean;
   filterComPrazo: boolean;
+  filterArquivados: boolean;
 }
 
-export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLead, searchQuery, filterPendencias, filterComPrazo }: DocumentsProps) {
+export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLead, searchQuery, filterPendencias, filterComPrazo, filterArquivados }: DocumentsProps) {
   const [selectedClient, setSelectedClient] = useState<Lead | null>(null);
   const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
 
@@ -28,6 +29,13 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
                           c.documentData?.code.toLowerCase().includes(searchQuery.toLowerCase());
     
     if (!matchesSearch) return false;
+
+    // Filter by archived status
+    if (filterArquivados) {
+      if (!c.archived) return false;
+    } else {
+      if (c.archived) return false;
+    }
 
     if (filterPendencias) {
       if (c.status === 'Churn') return false;
@@ -41,6 +49,10 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
     }
 
     return true;
+  }).sort((a, b) => {
+    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return dateB - dateA;
   });
 
   return (
@@ -118,7 +130,7 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
   const eveProgress = getProgress('eventual');
 
   const getBarColor = (percent: number) => {
-    if (percent === 100) return 'bg-aventurine';
+    if (percent === 100) return '#00A63E';
     if (percent > 50) return 'bg-orange-400';
     return 'bg-exotic';
   };
@@ -163,19 +175,38 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
             )}
           </div>
         </div>
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            onUpdate({ ...client, archived: !client.archived });
+          }}
+          className={cn(
+            "p-1.5 rounded-lg transition-all",
+            client.archived ? "text-aventurine bg-aventurine/10" : "text-licorice/20 hover:text-aventurine hover:bg-aventurine/5"
+          )}
+          title={client.archived ? "Desarquivar" : "Arquivar"}
+        >
+          <Archive size={14} />
+        </button>
       </div>
 
       <div className="space-y-4">
         <div className="space-y-1.5">
           <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-widest">
             <span className="text-licorice/40">Obrigatórios</span>
-            <span className={cn(obrProgress.percent === 100 ? "text-aventurine" : "text-exotic")}>{obrProgress.current}/{obrProgress.total}</span>
+            <span 
+              className={cn("font-bold")} 
+              style={{ color: obrProgress.percent === 100 ? '#00A63E' : 'var(--color-exotic)' }}
+            >
+              {obrProgress.current}/{obrProgress.total}
+            </span>
           </div>
           <div className="h-1 w-full bg-licorice/5 rounded-full overflow-hidden">
             <motion.div 
               initial={{ width: 0 }}
               animate={{ width: `${obrProgress.percent}%` }}
-              className={cn("h-full transition-all duration-500", getBarColor(obrProgress.percent))}
+              className={cn("h-full transition-all duration-500", obrProgress.percent !== 100 && getBarColor(obrProgress.percent))}
+              style={{ backgroundColor: obrProgress.percent === 100 ? '#00A63E' : undefined }}
             />
           </div>
         </div>
@@ -183,13 +214,19 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
         <div className="space-y-1.5">
           <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-widest">
             <span className="text-licorice/40">Eventuais</span>
-            <span className={cn(eveProgress.percent === 100 ? "text-aventurine" : "text-exotic")}>{eveProgress.current}/{eveProgress.total}</span>
+            <span 
+              className={cn("font-bold")} 
+              style={{ color: eveProgress.percent === 100 ? '#00A63E' : 'var(--color-exotic)' }}
+            >
+              {eveProgress.current}/{eveProgress.total}
+            </span>
           </div>
           <div className="h-1 w-full bg-licorice/5 rounded-full overflow-hidden">
             <motion.div 
               initial={{ width: 0 }}
               animate={{ width: `${eveProgress.percent}%` }}
-              className={cn("h-full transition-all duration-500", getBarColor(eveProgress.percent))}
+              className={cn("h-full transition-all duration-500", eveProgress.percent !== 100 && getBarColor(eveProgress.percent))}
+              style={{ backgroundColor: eveProgress.percent === 100 ? '#00A63E' : undefined }}
             />
           </div>
         </div>
