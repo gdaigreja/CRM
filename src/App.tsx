@@ -495,7 +495,7 @@ export default function App() {
       notes: '',
       proposal: 0,
       status,
-      drive: "",
+
       createdAt: new Date().toISOString(),
       documentData: status === 'Assinado' ? {
         code: `C${Math.floor(Math.random() * 1000)}`,
@@ -817,7 +817,14 @@ CREATE TABLE IF NOT EXISTS leads (
   contract_status TEXT DEFAULT 'pending',
   contract JSONB,
   document_data JSONB,
-  financial_record JSONB
+  financial_record JSONB,
+  spouse_name TEXT,
+  spouse_cpf TEXT,
+  spouse_rg TEXT,
+  spouse_phone TEXT,
+  spouse_email TEXT,
+  archived BOOLEAN DEFAULT false,
+  drive TEXT
 );
 
 -- 3. Tasks Table
@@ -1454,6 +1461,11 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
     generateBilling: true
   });
 
+  useEffect(() => {
+    setLocalLead(lead);
+    if (lead.contract) setContract(lead.contract);
+  }, [lead]);
+
   const handleChange = (field: keyof Lead, value: any) => {
     setLocalLead(prev => ({ ...prev, [field]: value }));
   };
@@ -1525,13 +1537,7 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
             >
               <Trash2 size={18} />
             </button>
-            <button 
-              onClick={handleClose}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"
-              title="Fechar"
-            >
-              <X size={20} />
-            </button>
+
           </div>
         </div>
 

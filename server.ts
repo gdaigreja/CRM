@@ -68,8 +68,14 @@ const mapDbLeadToFrontend = (dbLead: any) => ({
   notes: dbLead.notes || "",
   archived: dbLead.archived || false,
   drive: dbLead.drive || "",
-  spouseInfo: (dbLead.spouse_name && dbLead.spouse_name.trim() !== "") ? {
-    name: dbLead.spouse_name,
+  spouseInfo: (
+    (dbLead.spouse_name && dbLead.spouse_name.trim() !== "") ||
+    (dbLead.spouse_cpf && dbLead.spouse_cpf.trim() !== "") ||
+    (dbLead.spouse_rg && dbLead.spouse_rg.trim() !== "") ||
+    (dbLead.spouse_phone && dbLead.spouse_phone.trim() !== "") ||
+    (dbLead.spouse_email && dbLead.spouse_email.trim() !== "")
+  ) ? {
+    name: dbLead.spouse_name || "",
     cpf: dbLead.spouse_cpf || "",
     rg: dbLead.spouse_rg || "",
     phone: dbLead.spouse_phone || "",
