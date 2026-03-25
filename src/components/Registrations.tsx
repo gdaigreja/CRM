@@ -86,15 +86,14 @@ export default function Registrations({
           <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="border-b border-licorice/5 bg-antique/30">
-                <th className="w-[12%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Nome</th>
-                <th className="w-[10%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Telefone</th>
-                <th className="w-[10%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Classificação</th>
-                <th className="w-[12%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Profissão</th>
-                <th className="w-[12%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Tipo de Imóvel</th>
-                <th className="w-[12%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Valor Pago</th>
-                <th className="w-[10%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Status Atual</th>
-                <th className="w-[10%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Criação</th>
-                <th className="w-[10%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Ações</th>
+                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Nome</th>
+                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Telefone</th>
+                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Classificação</th>
+                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Profissão</th>
+                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Tipo de Imóvel</th>
+                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Valor Pago</th>
+                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Status Atual</th>
+                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-licorice/5">
@@ -137,11 +136,6 @@ export default function Registrations({
                     </td>
                     <td className="px-6 py-3">
                       <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">{lead.status}</span>
-                    </td>
-                    <td className="px-6 py-3">
-                      <span className="text-[10px] text-licorice/40 font-mono">
-                        {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('pt-BR') : '--/--/----'}
-                      </span>
                     </td>
                     <td className="px-6 py-3">
                       <div className="flex items-center justify-start gap-2 transition-opacity">
