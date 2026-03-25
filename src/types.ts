@@ -41,6 +41,8 @@ export interface LegalProcessInfo {
   court?: string;
   lastMovement?: string;
   movementDate?: string;
+  counterpartEmail?: string;
+  enterprise?: string;
 }
 
 export interface SpouseInfo {

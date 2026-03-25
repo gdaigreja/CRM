@@ -20,6 +20,83 @@ interface DocumentsProps {
 export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLead, searchQuery, filterPendencias, filterComPrazo, filterArquivados }: DocumentsProps) {
   const [selectedClient, setSelectedClient] = useState<Lead | null>(null);
   const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
+  const [isEmailConfirmOpen, setIsEmailConfirmOpen] = useState(false);
+  const [pendingEmailClient, setPendingEmailClient] = useState<Lead | null>(null);
+
+  const handleEmailClick = (client: Lead) => {
+    // Only show confirmation if email hasn't been sent yet
+    if (!client.documentData?.emailSent) {
+      setPendingEmailClient(client);
+      setIsEmailConfirmOpen(true);
+    } else {
+      // If already sent, just toggle off
+      onUpdateLead({
+        ...client,
+        documentData: {
+          ...client.documentData!,
+          emailSent: false
+        }
+      });
+    }
+  };
+
+  const sendEmailWebhook = async (client: Lead) => {
+    try {
+      const payload = {
+        processo: client.documentData?.legalProcess || {},
+        cliente: {
+          id: client.id,
+          name: client.name,
+          profession: client.profession,
+          phone: client.phone,
+          city: client.city,
+          state: client.state,
+          email: client.email,
+          address: client.address,
+          neighborhood: client.neighborhood,
+          zipCode: client.zipCode,
+          rg: client.rg,
+          cpf: client.cpf,
+          spouseInfo: client.spouseInfo
+        }
+      };
+
+      const response = await fetch('https://n8n.srv1077266.hstgr.cloud/webhook/enviar-email-dj', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        onUpdateLead({
+          ...client,
+          documentData: {
+            ...client.documentData!,
+            emailSent: true
+          }
+        });
+        if (selectedClient?.id === client.id) {
+          setSelectedClient({
+            ...client,
+            documentData: {
+              ...client.documentData!,
+              emailSent: true
+            }
+          });
+        }
+      } else {
+        alert('Erro ao enviar e-mail. Por favor, tente novamente.');
+      }
+    } catch (error) {
+      console.error('Error sending webhook:', error);
+      alert('Erro de conexão ao enviar e-mail.');
+    } finally {
+      setIsEmailConfirmOpen(false);
+      setPendingEmailClient(null);
+    }
+  };
 
   // Filter leads that have documentData and status is 'Assinado' or 'Churn'
   const clients = leads.filter(l => l.documentData && (l.status === 'Assinado' || l.status === 'Churn'));
@@ -71,6 +148,7 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
               client={client} 
               onClick={() => setSelectedClient(client)}
               onUpdate={onUpdateLead}
+              onEmailClick={() => handleEmailClick(client)}
             />
           ))}
         </div>
@@ -91,6 +169,7 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
               onUpdateLead(updatedLead);
               setSelectedClient(updatedLead);
             }}
+            onEmailClick={() => handleEmailClick(selectedClient)}
           />
         )}
         {isNewClientModalOpen && (
@@ -117,12 +196,45 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
             }}
           />
         )}
+        {isEmailConfirmOpen && pendingEmailClient && (
+          <div className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[300] flex items-center justify-center p-4" onClick={() => setIsEmailConfirmOpen(false)}>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl flex flex-col items-center text-center gap-6"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-16 h-16 bg-aventurine/10 rounded-full flex items-center justify-center text-aventurine">
+                <Mail size={32} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-licorice">Confirmar Envio?</h3>
+                <p className="text-sm text-licorice/60 mt-2">Deseja enviar o e-mail para a contraparte informando os dados do processo e do cliente?</p>
+              </div>
+              <div className="flex w-full gap-3">
+                <button 
+                  onClick={() => setIsEmailConfirmOpen(false)}
+                  className="flex-1 py-4 text-sm font-bold text-licorice/40 hover:text-licorice transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={() => sendEmailWebhook(pendingEmailClient)}
+                  className="flex-1 py-4 bg-aventurine text-white rounded-2xl text-sm font-bold shadow-lg shadow-aventurine/20 hover:scale-105 active:scale-95 transition-all"
+                >
+                  Sim, Enviar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
     </div>
   );
 }
 
-const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead: Lead) => void }> = ({ client, onClick, onUpdate }) => {
+const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead: Lead) => void; onEmailClick: () => void }> = ({ client, onClick, onUpdate, onEmailClick }) => {
   const docData = client.documentData || { code: '', documents: [], observations: [], emailSent: false, notificationSent: false, minutaHomologada: false };
   
   const getProgress = (type: 'obrigatório' | 'eventual') => {
@@ -296,7 +408,7 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  onUpdate({ ...client, documentData: { ...docData, emailSent: !docData.emailSent } });
+                  onEmailClick();
                 }}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border",
@@ -353,7 +465,7 @@ function Check({ size, className }: { size: number; className?: string }) {
 }
 
 // Placeholder components to be moved to separate files or implemented below
-const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpdate: (lead: Lead) => void; onDelete: () => void; onEditLead: (lead: Lead) => void }> = ({ client, onClose, onUpdate, onDelete, onEditLead }) => {
+const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpdate: (lead: Lead) => void; onDelete: () => void; onEditLead: (lead: Lead) => void; onEmailClick: () => void }> = ({ client, onClose, onUpdate, onDelete, onEditLead, onEmailClick }) => {
   const [isObrigatorioOpen, setIsObrigatorioOpen] = useState(true);
   const [isEventualOpen, setIsEventualOpen] = useState(true);
   const [newObservation, setNewObservation] = useState('');
@@ -374,6 +486,8 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
   const [court, setCourt] = useState('');
   const [lastMovement, setLastMovement] = useState('');
   const [movementDate, setMovementDate] = useState('');
+  const [counterpartEmail, setCounterpartEmail] = useState('');
+  const [enterprise, setEnterprise] = useState('');
   
   const [movementOptions, setMovementOptions] = useState<string[]>(['Inicial Protocolada', 'Aguardando Citação', 'Contestação Apresentada', 'Decisão Interlocutória', 'Sentença Proferida']);
   
@@ -401,6 +515,8 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
       setCourt(docData.legalProcess?.court || '');
       setLastMovement(docData.legalProcess?.lastMovement || '');
       setMovementDate(docData.legalProcess?.movementDate || '');
+      setCounterpartEmail(docData.legalProcess?.counterpartEmail || '');
+      setEnterprise(docData.legalProcess?.enterprise || '');
     }
   }, [showLegalModal, docData.legalProcess]);
 
@@ -478,7 +594,9 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
           respondent,
           court,
           lastMovement,
-          movementDate
+          movementDate,
+          counterpartEmail,
+          enterprise
         }
       }
     });
@@ -632,7 +750,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                     ) : (
                       <>
                         <button 
-                          onClick={() => onUpdate({ ...client, documentData: { ...docData, emailSent: !docData.emailSent } })}
+                          onClick={() => onEmailClick()}
                           className={cn(
                             "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border w-[120px]",
                             docData.emailSent ? "bg-orange-500 border-orange-500 text-white" : "bg-white/5 border-white/10 text-white/40"
@@ -863,6 +981,8 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                   setCourt('');
                   setLastMovement('');
                   setMovementDate('');
+                  setCounterpartEmail('');
+                  setEnterprise('');
                   onUpdate({
                     ...client,
                     documentData: {
@@ -906,7 +1026,9 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                             respondent,
                             court,
                             lastMovement,
-                            movementDate
+                            movementDate,
+                            counterpartEmail,
+                            enterprise
                           }
                         }
                       });
@@ -933,7 +1055,9 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                             respondent: newRespondent,
                             court,
                             lastMovement,
-                            movementDate
+                            movementDate,
+                            counterpartEmail,
+                            enterprise
                           }
                         }
                       });
@@ -958,7 +1082,9 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                             respondent,
                             court: newCourt,
                             lastMovement,
-                            movementDate
+                            movementDate,
+                            counterpartEmail,
+                            enterprise
                           }
                         }
                       });
@@ -993,7 +1119,9 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                               respondent,
                               court,
                               lastMovement,
-                              movementDate
+                              movementDate,
+                              counterpartEmail,
+                              enterprise
                             }
                           }
                         });
@@ -1013,7 +1141,9 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                                 respondent,
                                 court,
                                 lastMovement,
-                                movementDate
+                                movementDate,
+                                counterpartEmail,
+                                enterprise
                               }
                             }
                           });
@@ -1047,7 +1177,67 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                             respondent,
                             court,
                             lastMovement,
-                            movementDate: newDate
+                            movementDate: newDate,
+                            counterpartEmail,
+                            enterprise
+                          }
+                        }
+                      });
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">E-mail da Contraparte</label>
+                  <input 
+                    type="email" 
+                    placeholder="email@empresa.com"
+                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-blue-500/50 transition-colors"
+                    value={counterpartEmail}
+                    onChange={(e) => {
+                      const newEmail = e.target.value;
+                      setCounterpartEmail(newEmail);
+                      onUpdate({
+                        ...client,
+                        documentData: {
+                          ...docData,
+                          legalProcess: {
+                            processNumber,
+                            respondent,
+                            court,
+                            lastMovement,
+                            movementDate,
+                            counterpartEmail: newEmail,
+                            enterprise
+                          }
+                        }
+                      });
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Empreendimento</label>
+                  <input 
+                    type="text" 
+                    placeholder="Nome do empreendimento"
+                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-blue-500/50 transition-colors"
+                    value={enterprise}
+                    onChange={(e) => {
+                      const newEnterprise = e.target.value;
+                      setEnterprise(newEnterprise);
+                      onUpdate({
+                        ...client,
+                        documentData: {
+                          ...docData,
+                          legalProcess: {
+                            processNumber,
+                            respondent,
+                            court,
+                            lastMovement,
+                            movementDate,
+                            counterpartEmail,
+                            enterprise: newEnterprise
                           }
                         }
                       });
