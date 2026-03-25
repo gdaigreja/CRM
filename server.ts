@@ -67,6 +67,7 @@ const mapDbLeadToFrontend = (dbLead: any) => ({
   createdAt: dbLead.created_at,
   notes: dbLead.notes || "",
   archived: dbLead.archived || false,
+  drive: dbLead.drive || "",
   spouseInfo: (dbLead.spouse_name && dbLead.spouse_name.trim() !== "") ? {
     name: dbLead.spouse_name,
     cpf: dbLead.spouse_cpf || "",
@@ -105,7 +106,8 @@ const mapFrontendLeadToDb = (lead: any) => ({
   spouse_rg: lead.spouseInfo?.rg || null,
   spouse_phone: lead.spouseInfo?.phone || null,
   spouse_email: lead.spouseInfo?.email || null,
-  archived: lead.archived || false
+  archived: lead.archived || false,
+  drive: lead.drive || null
 });
 
 // Helpers for Task Mapping

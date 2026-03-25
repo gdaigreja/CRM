@@ -32,6 +32,7 @@ export interface Lead {
   userId?: string;
   spouseInfo?: SpouseInfo;
   archived?: boolean;
+  drive?: string;
 }
 
 export interface LegalProcessInfo {

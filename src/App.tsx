@@ -495,6 +495,7 @@ export default function App() {
       notes: '',
       proposal: 0,
       status,
+      drive: "",
       createdAt: new Date().toISOString(),
       documentData: status === 'Assinado' ? {
         code: `C${Math.floor(Math.random() * 1000)}`,

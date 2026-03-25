@@ -182,6 +182,25 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
           </div>
         </div>
 
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            if (client.drive) {
+              const url = client.drive.startsWith('http') ? client.drive : `https://${client.drive}`;
+              window.open(url, '_blank');
+            } else {
+              alert('O link do Google Drive não foi cadastrado.');
+            }
+          }}
+          className="p-1.5 rounded-lg hover:bg-licorice/5 transition-all hover:scale-110 active:scale-90 group/drive"
+          title="Abrir Google Drive"
+        >
+          <img 
+            src="https://zklkmbokwzhbqdoqsnxs.supabase.co/storage/v1/object/public/Imagens/drive-cinza.png" 
+            alt="Drive" 
+            className="w-4 h-4 object-contain opacity-20 group-hover/drive:opacity-100 transition-opacity"
+          />
+        </button>
       </div>
 
       <div className="space-y-4">
@@ -547,17 +566,26 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
         <div className="flex-[0.65] flex flex-col border-r border-licorice/5 bg-antique/20 overflow-hidden">
           {/* Header */}
           <div className="p-5 bg-[#512E2D] text-white flex justify-between items-stretch">
-            <div className="flex flex-col justify-between gap-6">
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg font-bold tracking-tight">{client.name}</h2>
-                <div className="flex items-center gap-1">
+            <div className="flex flex-col justify-between gap-4">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-3">
                   <button 
                     onClick={() => onEditLead(client)}
-                    className="p-1 text-white/40 hover:text-white transition-colors"
+                    className="text-lg font-bold tracking-tight hover:text-white/80 transition-colors text-left"
                   >
-                    <Pencil size={14} />
+                    {client.name}
                   </button>
                 </div>
+                <button 
+                  onClick={() => setShowLegalModal(true)}
+                  className="text-[10px] text-white/40 hover:text-white/60 transition-all font-medium flex items-center gap-1 w-fit group text-left"
+                >
+                  {docData.legalProcess?.processNumber ? (
+                    <span className="group-hover:underline decoration-white/30">{docData.legalProcess.processNumber}</span>
+                  ) : (
+                    <span className="group-hover:text-white/80">+ adicionar processo</span>
+                  )}
+                </button>
               </div>
 
               <div className="flex items-center gap-2">
@@ -649,13 +677,6 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
             <div className="flex flex-col justify-start items-end gap-4 min-h-[64px]">
               {client.status !== 'Churn' && !client.financialRecord?.tipoResultado && (
                 <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => setShowLegalModal(true)}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg transition-all bg-transparent border-2 border-blue-500/30 text-blue-500 hover:bg-blue-500/10 hover:border-blue-500/50 hover:scale-105 active:scale-95"
-                    title="Alterar Status / Processo"
-                  >
-                    <Scale size={16} />
-                  </button>
                   <button 
                     onClick={() => setShowChurnModal(true)}
                     className="w-10 h-10 flex items-center justify-center rounded-lg transition-all bg-transparent border-2 border-red-500/30 text-red-500 hover:bg-red-500/10 hover:border-red-500/50 hover:scale-105 active:scale-95"
@@ -832,7 +853,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl relative"
+              className="bg-white w-full max-w-[360px] rounded-[32px] p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto no-scrollbar"
               onClick={e => e.stopPropagation()}
             >
               <button 
@@ -857,7 +878,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                 <Trash2 size={20} />
               </button>
 
-              <div className="text-center mb-8">
+              <div className="text-center mb-6">
                 <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mx-auto mb-4">
                   <Scale size={24} />
                 </div>

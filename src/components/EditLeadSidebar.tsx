@@ -145,6 +145,17 @@ export default function EditLeadSidebar({
                     </div>
                     <Field label="RG" value={formatRG(editingLead.rg || '')} onChange={v => setEditingLead({...editingLead, rg: v.replace(/\D/g, '')})} onBlur={handleBlur} />
                     <Field label="CPF" value={formatCPF(editingLead.cpf || '')} onChange={v => setEditingLead({...editingLead, cpf: v.replace(/\D/g, '')})} onBlur={handleBlur} />
+                    <div className="col-span-2">
+                       <Field 
+                        label="Link do Google Drive" 
+                        value={editingLead.drive || ''} 
+                        onChange={v => setEditingLead({
+                          ...editingLead, 
+                          drive: v
+                        })} 
+                        onBlur={handleBlur} 
+                      />
+                    </div>
                   </div>
                 </section>
 
