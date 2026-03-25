@@ -28,16 +28,8 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
     if (!client.documentData?.emailSent) {
       setPendingEmailClient(client);
       setIsEmailConfirmOpen(true);
-    } else {
-      // If already sent, just toggle off
-      onUpdateLead({
-        ...client,
-        documentData: {
-          ...client.documentData!,
-          emailSent: false
-        }
-      });
     }
+    // If already sent, do nothing (don't allow toggling off)
   };
 
   const sendEmailWebhook = async (client: Lead) => {
@@ -158,7 +150,7 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
       <AnimatePresence>
         {selectedClient && (
           <DocumentDetailOverlay 
-            client={selectedClient} 
+            client={leads.find(l => l.id === selectedClient.id) || selectedClient} 
             onClose={() => setSelectedClient(null)}
             onEditLead={onEditLead}
             onDelete={() => {
@@ -169,7 +161,10 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
               onUpdateLead(updatedLead);
               setSelectedClient(updatedLead);
             }}
-            onEmailClick={() => handleEmailClick(selectedClient)}
+            onEmailClick={() => {
+              const current = leads.find(l => l.id === selectedClient.id);
+              if (current) handleEmailClick(current);
+            }}
           />
         )}
         {isNewClientModalOpen && (
@@ -425,7 +420,9 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  onUpdate({ ...client, documentData: { ...docData, notificationSent: !docData.notificationSent } });
+                  if (!docData.notificationSent) {
+                    onUpdate({ ...client, documentData: { ...docData, notificationSent: true } });
+                  }
                 }}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border",
@@ -762,7 +759,11 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                         </button>
 
                         <button 
-                          onClick={() => onUpdate({ ...client, documentData: { ...docData, notificationSent: !docData.notificationSent } })}
+                          onClick={() => {
+                            if (!docData.notificationSent) {
+                              onUpdate({ ...client, documentData: { ...docData, notificationSent: true } });
+                            }
+                          }}
                           className={cn(
                             "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border w-[120px]",
                             docData.notificationSent ? "bg-orange-500 border-orange-500 text-white" : "bg-white/5 border-white/10 text-white/40"
