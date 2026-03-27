@@ -1,18 +1,18 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { 
-  DragDropContext, 
-  Droppable, 
-  Draggable, 
-  DropResult 
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult
 } from '@hello-pangea/dnd';
-import { 
-  LayoutDashboard, 
-  Users, 
+import {
+  LayoutDashboard,
+  Users,
   Columns,
-  FileText, 
-  Settings, 
-  Plus, 
-  Search, 
+  FileText,
+  Settings,
+  Plus,
+  Search,
   MoreHorizontal,
   Phone,
   MapPin,
@@ -77,7 +77,7 @@ export default function App() {
         // Fetch Leads
         const leadsRes = await fetch('/api/leads', { headers });
         console.log("Leads API Status:", leadsRes.status);
-        
+
         if (leadsRes.status === 401 || leadsRes.status === 403) {
           console.warn("Session expired or invalid. Logging out...");
           handleLogout();
@@ -88,10 +88,10 @@ export default function App() {
           const data = await leadsRes.json();
           setLeads(prevLeads => {
             const serverMap = new Map(data.map((l: Lead) => [l.id, l]));
-            
+
             // Keep local leads that haven't hit the server yet
             const locallyAddedLeads = prevLeads.filter(p => !serverMap.has(p.id));
-            
+
             // Construct new list: server items + local items
             // Then sort by creation date (descending) as before
             return [...data, ...locallyAddedLeads].sort((a, b) => {
@@ -135,11 +135,11 @@ export default function App() {
               const enabledFeatures = p.permissions.features
                 .filter((f: any) => f.enabled)
                 .map((f: any) => f.id);
-              
+
               let roleId = p.role_id.toLowerCase();
               if (roleId === 'administrador') roleId = 'admin';
               if (roleId === 'visualizador') roleId = 'viewer';
-              
+
               permsMap[roleId] = enabledFeatures;
             }
           });
@@ -211,23 +211,23 @@ export default function App() {
 
   const isFeatureEnabled = useCallback((featureId: string) => {
     if (!user) return false;
-    
+
     // Normalize role to match permission IDs
     let role = user.role?.toLowerCase();
     if (role === 'administrador') role = 'admin';
     if (role === 'visualizador') role = 'viewer';
-    
+
     // Admin always has access to everything
     if (role === 'admin') return true;
-    
+
     // Map view IDs to feature IDs if necessary
     const map: Record<string, string> = {
       'kanban': 'leads',
       'registrations': 'clients',
     };
-    
+
     const id = map[featureId] || featureId;
-    
+
     // Special case for settings view
     if (id === 'settings') {
       if (rolePermissions[role]) {
@@ -238,21 +238,21 @@ export default function App() {
       if (role === 'viewer') return false;
       return false;
     }
-    
+
     // If we have dynamic permissions, use them
     if (rolePermissions[role]) {
       return rolePermissions[role].includes(id);
     }
-    
+
     // Fallback to hardcoded logic if permissions haven't loaded yet
     if (role === 'editor') {
       return ['leads', 'clients', 'tasks', 'documents', 'generator', 'dashboard', 'finance'].includes(id);
     }
-    
+
     if (role === 'viewer') {
       return ['leads', 'clients', 'dashboard'].includes(id);
     }
-    
+
     return false;
   }, [user, rolePermissions]);
 
@@ -303,7 +303,7 @@ export default function App() {
         notificationSent: false
       };
     }
-    
+
     // Insert at new index
     newLeads.push(removed);
     setLeads(newLeads);
@@ -326,7 +326,7 @@ export default function App() {
 
   const updateLead = async (updatedLead: Lead, force = false) => {
     const originalLead = leads.find(l => l.id === updatedLead.id);
-    
+
     // No longer checking for risk of moving out of 'Assinado' via form
 
     // Keeping documentData even after status change
@@ -391,9 +391,9 @@ export default function App() {
   const handleFinalize = async (lead: Lead, contract: ContractData) => {
     const updatedLead = { ...lead, contract };
     setLeads(prev => prev.map(l => l.id === lead.id ? updatedLead : l));
-    
+
     const webhookUrl = "https://n8n.srv1077266.hstgr.cloud/webhook/distratojusto";
-    
+
     const payload = {
       nome: updatedLead.name,
       profissao: updatedLead.profession,
@@ -464,8 +464,8 @@ export default function App() {
   const filteredLeads = leads
     .filter(l => {
       const matchesSearch = l.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           l.city.toLowerCase().includes(searchQuery.toLowerCase());
-      
+        l.city.toLowerCase().includes(searchQuery.toLowerCase());
+
       // Dashboard date filtering
       if (view === 'dashboard' && dateRange.start) {
         const createdAt = new Date(l.createdAt || '').getTime();
@@ -509,7 +509,7 @@ export default function App() {
         notificationSent: false
       } : undefined
     };
-    
+
     // Add locally immediately for fast UI response
     setLeads(prev => {
       // Check if by any chance this ID already exists (shouldn't happen with UUID)
@@ -528,7 +528,7 @@ export default function App() {
         },
         body: JSON.stringify(newLead)
       });
-      
+
       if (response.ok) {
         const savedLead = await response.json();
         setLeads(prev => {
@@ -545,7 +545,7 @@ export default function App() {
             return dateB - dateA;
           });
         });
-        
+
         // Update editing state if still active
         setEditingLead(prev => prev?.id === newLead.id ? savedLead : prev);
         setSelectedLead(prev => prev?.id === newLead.id ? savedLead : prev);
@@ -620,26 +620,26 @@ export default function App() {
     const now = new Date();
     switch (type) {
       case 'este mês':
-        return { 
-          start: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(), 
+        return {
+          start: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(),
           end: now.toISOString(),
           label: 'Este mês'
         };
       case 'mês anterior':
-        return { 
-          start: new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString(), 
+        return {
+          start: new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString(),
           end: new Date(now.getFullYear(), now.getMonth(), 0).toISOString(),
           label: 'Mês anterior'
         };
       case 'este ano':
-        return { 
-          start: new Date(now.getFullYear(), 0, 1).toISOString(), 
+        return {
+          start: new Date(now.getFullYear(), 0, 1).toISOString(),
           end: now.toISOString(),
           label: 'Este ano'
         };
       case 'ano anterior':
-        return { 
-          start: new Date(now.getFullYear() - 1, 0, 1).toISOString(), 
+        return {
+          start: new Date(now.getFullYear() - 1, 0, 1).toISOString(),
           end: new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59).toISOString(),
           label: 'Ano anterior'
         };
@@ -652,7 +652,7 @@ export default function App() {
   return (
     <div className="flex h-screen w-full bg-antique overflow-hidden font-sans text-licorice">
       {/* Sidebar */}
-      <aside 
+      <aside
         className={cn(
           "flex flex-col py-6 border-r border-licorice/10 bg-[#512E2D] text-white transition-all duration-300 relative z-20 shadow-2xl",
           isSidebarExpanded ? "w-64 px-6" : "w-20 items-center"
@@ -662,9 +662,9 @@ export default function App() {
           "flex items-center mb-10",
           isSidebarExpanded ? "justify-between" : "justify-center"
         )}>
-          <img 
-            src="https://zklkmbokwzhbqdoqsnxs.supabase.co/storage/v1/object/public/Imagens/logo_pequena.png" 
-            alt="Logo Distrato Justo" 
+          <img
+            src="https://zklkmbokwzhbqdoqsnxs.supabase.co/storage/v1/object/public/Imagens/logo_pequena.png"
+            alt="Logo Distrato Justo"
             className="w-10 h-10 object-contain"
             referrerPolicy="no-referrer"
           />
@@ -675,17 +675,17 @@ export default function App() {
 
         <nav className="flex flex-col gap-4 w-full flex-1">
           {isFeatureEnabled('leads') && (
-            <SidebarIcon 
-              icon={<Columns size={20} />} 
+            <SidebarIcon
+              icon={<Columns size={20} />}
               label="Leads"
-              active={view === 'kanban'} 
+              active={view === 'kanban'}
               expanded={isSidebarExpanded}
               onClick={() => setView('kanban')}
             />
           )}
           {isFeatureEnabled('clients') && (
-            <SidebarIcon 
-              icon={<Users size={20} />} 
+            <SidebarIcon
+              icon={<Users size={20} />}
               label="Clientes"
               active={view === 'registrations'}
               expanded={isSidebarExpanded}
@@ -693,8 +693,8 @@ export default function App() {
             />
           )}
           {isFeatureEnabled('documents') && (
-            <SidebarIcon 
-              icon={<Activity size={20} />} 
+            <SidebarIcon
+              icon={<Activity size={20} />}
               label="Operação"
               active={view === 'documents'}
               expanded={isSidebarExpanded}
@@ -702,8 +702,8 @@ export default function App() {
             />
           )}
           {isFeatureEnabled('finance') && (
-            <SidebarIcon 
-              icon={<DollarSign size={20} />} 
+            <SidebarIcon
+              icon={<DollarSign size={20} />}
               label="Financeiro"
               active={view === 'finance'}
               expanded={isSidebarExpanded}
@@ -711,8 +711,8 @@ export default function App() {
             />
           )}
           {isFeatureEnabled('tasks') && (
-            <SidebarIcon 
-              icon={<CheckSquare size={20} />} 
+            <SidebarIcon
+              icon={<CheckSquare size={20} />}
               label="Tarefas"
               active={view === 'tasks'}
               expanded={isSidebarExpanded}
@@ -720,8 +720,8 @@ export default function App() {
             />
           )}
           {isFeatureEnabled('generator') && (
-            <SidebarIcon 
-              icon={<FilePlus size={20} />} 
+            <SidebarIcon
+              icon={<FilePlus size={20} />}
               label="Gerador"
               active={view === 'generator'}
               expanded={isSidebarExpanded}
@@ -729,17 +729,17 @@ export default function App() {
             />
           )}
           {isFeatureEnabled('dashboard') && (
-            <SidebarIcon 
-              icon={<LayoutDashboard size={20} />} 
+            <SidebarIcon
+              icon={<LayoutDashboard size={20} />}
               label="Dashboard"
-              active={view === 'dashboard'} 
+              active={view === 'dashboard'}
               expanded={isSidebarExpanded}
               onClick={() => setView('dashboard')}
             />
           )}
           {(isFeatureEnabled('access') || isFeatureEnabled('integrations')) && (
-            <SidebarIcon 
-              icon={<Settings size={20} />} 
+            <SidebarIcon
+              icon={<Settings size={20} />}
               label="Configurações"
               active={view === 'settings'}
               expanded={isSidebarExpanded}
@@ -749,7 +749,7 @@ export default function App() {
         </nav>
 
         <div className="mt-auto flex flex-col gap-2 w-full">
-          <button 
+          <button
             onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
             className="flex items-center justify-center p-2.5 rounded-xl cursor-pointer transition-all duration-200 text-white/70 hover:bg-white/5 w-full"
           >
@@ -763,7 +763,7 @@ export default function App() {
         {/* Debug Panel (Only for Admin) */}
         {user?.role === 'admin' && (
           <div className="absolute top-4 right-4 z-50">
-            <button 
+            <button
               onClick={() => {
                 const win = window.open("", "Debug", "width=600,height=800");
                 if (win) {
@@ -897,9 +897,9 @@ ON CONFLICT (id) DO NOTHING;
             {view === 'kanban' && (
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-licorice/30" size={14} />
-                <input 
-                  type="text" 
-                  placeholder="Buscar leads..." 
+                <input
+                  type="text"
+                  placeholder="Buscar leads..."
                   className="pl-9 pr-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs focus:outline-none focus:border-aventurine/50 w-64"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -911,9 +911,9 @@ ON CONFLICT (id) DO NOTHING;
               <div className="flex items-center justify-between w-full">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-licorice/30" size={14} />
-                  <input 
-                    type="text" 
-                    placeholder="Buscar por nome, CPF ou e-mail..." 
+                  <input
+                    type="text"
+                    placeholder="Buscar por nome, CPF ou e-mail..."
                     className="pl-9 pr-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
                     value={regSearchQuery}
                     onChange={(e) => setRegSearchQuery(e.target.value)}
@@ -921,20 +921,20 @@ ON CONFLICT (id) DO NOTHING;
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="flex bg-white/50 p-0.5 rounded-lg border border-licorice/5">
-                    <button 
+                    <button
                       onClick={() => setRegFilterType('all')}
                       className={cn("px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all", regFilterType === 'all' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
                     >Todos</button>
-                    <button 
+                    <button
                       onClick={() => setRegFilterType('cliente')}
                       className={cn("px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all", regFilterType === 'cliente' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
                     >Clientes</button>
-                    <button 
+                    <button
                       onClick={() => setRegFilterType('lead')}
                       className={cn("px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all", regFilterType === 'lead' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
                     >Leads</button>
                   </div>
-                  <select 
+                  <select
                     className="bg-white/50 px-3 py-1 rounded-lg border border-licorice/5 text-[10px] font-bold uppercase tracking-widest text-licorice/60 focus:outline-none shadow-sm"
                     value={regFilterStatus}
                     onChange={(e) => setRegFilterStatus(e.target.value as LeadStatus | 'all')}
@@ -953,21 +953,21 @@ ON CONFLICT (id) DO NOTHING;
               <div className="flex items-center justify-between w-full">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-licorice/30" size={14} />
-                  <input 
-                    type="text" 
-                    placeholder="Filtrar cliente..." 
+                  <input
+                    type="text"
+                    placeholder="Filtrar cliente..."
                     className="pl-9 pr-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
                     value={docSearchQuery}
                     onChange={(e) => setDocSearchQuery(e.target.value)}
                   />
                 </div>
                 <div className="relative">
-                  <button 
+                  <button
                     onClick={() => setShowDocFilter(!showDocFilter)}
                     className={cn(
                       "flex items-center gap-2 px-4 py-1.5 bg-white/50 border rounded-full text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm",
-                      (docFilterArquivados || docFilterPendencias || docFilterComPrazo || docFilterDistribuidos || docFilterNaoDistribuidos || docFilterTodos) 
-                        ? "border-[#512E2D] text-[#512E2D] shadow-md shadow-[#512E2D]/10 bg-white" 
+                      (docFilterArquivados || docFilterPendencias || docFilterComPrazo || docFilterDistribuidos || docFilterNaoDistribuidos || docFilterTodos)
+                        ? "border-[#512E2D] text-[#512E2D] shadow-md shadow-[#512E2D]/10 bg-white"
                         : "border-licorice/5 text-licorice/40 hover:bg-white/80"
                     )}
                   >
@@ -985,7 +985,7 @@ ON CONFLICT (id) DO NOTHING;
                     {showDocFilter && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setShowDocFilter(false)} />
-                        <motion.div 
+                        <motion.div
                           initial={{ opacity: 0, y: 10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -996,7 +996,7 @@ ON CONFLICT (id) DO NOTHING;
                             <div className="pb-6 border-b border-licorice/5 mb-6">
                               <label className="flex items-center gap-6 cursor-pointer group">
                                 <span className={cn("flex-1 text-[11px] font-bold uppercase tracking-[0.2em] transition-colors", docFilterTodos ? "text-[#512E2D]" : "text-licorice/20 group-hover:text-licorice/40")}>Todos</span>
-                                <div 
+                                <div
                                   onClick={(e) => {
                                     e.preventDefault();
                                     const next = !docFilterTodos;
@@ -1018,16 +1018,16 @@ ON CONFLICT (id) DO NOTHING;
                                 </div>
                               </label>
                             </div>
-                            
+
                             {/* Bloco 2: Colunas */}
                             <div className="flex gap-10">
                               {/* Coluna Esquerda: Exclusivos */}
                               <div className="flex-1 space-y-5">
                                 <h4 className="text-[9px] font-bold uppercase tracking-widest text-licorice/20 mb-2">Exibição</h4>
-                                
+
                                 <label className="flex items-center gap-6 cursor-pointer group">
                                   <span className={cn("flex-1 text-[10px] font-bold uppercase tracking-widest transition-colors", docFilterDistribuidos ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice text-[10px]")}>Distribuídos</span>
-                                  <div 
+                                  <div
                                     onClick={(e) => {
                                       e.preventDefault();
                                       setDocFilterDistribuidos(true);
@@ -1046,7 +1046,7 @@ ON CONFLICT (id) DO NOTHING;
 
                                 <label className="flex items-center gap-6 cursor-pointer group">
                                   <span className={cn("flex-1 text-[10px] font-bold uppercase tracking-widest transition-colors", docFilterNaoDistribuidos ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice shadow-none")}>Não Distribuídos</span>
-                                  <div 
+                                  <div
                                     onClick={(e) => {
                                       e.preventDefault();
                                       setDocFilterNaoDistribuidos(true);
@@ -1065,7 +1065,7 @@ ON CONFLICT (id) DO NOTHING;
 
                                 <label className="flex items-center gap-6 cursor-pointer group">
                                   <span className={cn("flex-1 text-[10px] font-bold uppercase tracking-widest transition-colors", docFilterArquivados ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Arquivados</span>
-                                  <div 
+                                  <div
                                     onClick={(e) => {
                                       e.preventDefault();
                                       setDocFilterArquivados(true);
@@ -1089,10 +1089,10 @@ ON CONFLICT (id) DO NOTHING;
                               {/* Coluna Direita: Acumulativos */}
                               <div className="space-y-5">
                                 <h4 className="text-[9px] font-bold uppercase tracking-widest text-licorice/20 mb-2">Filtros</h4>
-                                
+
                                 <label className="flex items-center gap-6 cursor-pointer group">
                                   <span className={cn("flex-1 text-[10px] font-bold uppercase tracking-widest transition-colors", docFilterPendencias ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Pendências</span>
-                                  <div 
+                                  <div
                                     onClick={(e) => {
                                       e.preventDefault();
                                       setDocFilterPendencias(!docFilterPendencias);
@@ -1109,7 +1109,7 @@ ON CONFLICT (id) DO NOTHING;
 
                                 <label className="flex items-center gap-6 cursor-pointer group">
                                   <span className={cn("flex-1 text-[10px] font-bold uppercase tracking-widest transition-colors", docFilterComPrazo ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Prazos</span>
-                                  <div 
+                                  <div
                                     onClick={(e) => {
                                       e.preventDefault();
                                       setDocFilterComPrazo(!docFilterComPrazo);
@@ -1126,9 +1126,9 @@ ON CONFLICT (id) DO NOTHING;
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="bg-antique/30 p-4 px-8 border-t border-licorice/5 flex items-center justify-between">
-                            <button 
+                            <button
                               onClick={() => {
                                 setDocFilterArquivados(false);
                                 setDocFilterPendencias(false);
@@ -1141,7 +1141,7 @@ ON CONFLICT (id) DO NOTHING;
                             >
                               Limpar
                             </button>
-                            <button 
+                            <button
                               onClick={() => setShowDocFilter(false)}
                               className="bg-[#512E2D] text-white px-8 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-[#512E2D]/20 hover:scale-105 active:scale-95 transition-all"
                             >
@@ -1160,9 +1160,9 @@ ON CONFLICT (id) DO NOTHING;
               <div className="flex items-center justify-between w-full">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-licorice/30" size={14} />
-                  <input 
-                    type="text" 
-                    placeholder="Buscar por nome, CPF ou e-mail..." 
+                  <input
+                    type="text"
+                    placeholder="Buscar por nome, CPF ou e-mail..."
                     className="pl-9 pr-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
                     value={financeSearchQuery}
                     onChange={(e) => setFinanceSearchQuery(e.target.value)}
@@ -1175,9 +1175,9 @@ ON CONFLICT (id) DO NOTHING;
               <div className="flex items-center justify-between w-full">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-licorice/30" size={14} />
-                  <input 
-                    type="text" 
-                    placeholder="Buscar tarefas..." 
+                  <input
+                    type="text"
+                    placeholder="Buscar tarefas..."
                     className="pl-9 pr-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
                     value={taskSearchQuery}
                     onChange={(e) => setTaskSearchQuery(e.target.value)}
@@ -1202,20 +1202,20 @@ ON CONFLICT (id) DO NOTHING;
                     ))}
                   </div>
                   <div className="flex bg-white/50 p-0.5 rounded-lg border border-licorice/5">
-                    <button 
+                    <button
                       onClick={() => setTaskView('list')}
                       className={cn("p-1.5 rounded-md transition-all", taskView === 'list' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
                     >
                       <List size={14} />
                     </button>
-                    <button 
+                    <button
                       onClick={() => setTaskView('kanban')}
                       className={cn("p-1.5 rounded-md transition-all", taskView === 'kanban' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
                     >
                       <Columns size={14} />
                     </button>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setTriggerNewTask(Date.now())}
                     className="bg-aventurine text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm hover:bg-aventurine/90 transition-all flex items-center gap-2"
                   >
@@ -1227,7 +1227,7 @@ ON CONFLICT (id) DO NOTHING;
             )}
           </div>
           {view === 'kanban' && (
-            <button 
+            <button
               onClick={addColumn}
               className="bg-aventurine text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm hover:bg-aventurine/90 transition-all flex items-center gap-2"
             >
@@ -1235,62 +1235,62 @@ ON CONFLICT (id) DO NOTHING;
               Nova Coluna
             </button>
           )}
-          
-            {(view === 'dashboard' || view === 'finance') && (
-              <div className="relative">
-                <button 
-                  onClick={() => setShowDatePicker(!showDatePicker)}
-                  className="flex items-center gap-2 px-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs font-semibold text-licorice/60 hover:bg-white/80 transition-all min-w-[150px] whitespace-nowrap"
-                >
-                  <Calendar size={14} />
-                  <span>{dateRange.label}</span>
-                  <ChevronDown size={14} />
-                </button>
-                
-                <AnimatePresence>
-                  {showDatePicker && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-licorice/5 z-50 overflow-hidden"
-                    >
-                      <div className="flex flex-col">
-                        {['este mês', 'mês anterior', 'este ano', 'ano anterior', 'desde o início'].map((opt) => (
-                          <button 
-                            key={opt}
-                            onClick={() => {
-                              setDateRange(getPredefinedRange(opt));
-                              setShowDatePicker(false);
-                            }}
-                            className="px-4 py-2 text-left text-xs hover:bg-antique/50 transition-colors capitalize"
-                          >
-                            {opt}
-                          </button>
-                        ))}
-                        <div className="border-t border-licorice/5 p-2 flex flex-col gap-2">
-                          <p className="text-[9px] font-bold uppercase text-licorice/30 px-2">Personalizado</p>
-                          <div className="flex flex-col gap-1 px-2">
-                            <input 
-                              type="date" 
-                              className="text-[10px] border border-licorice/5 rounded p-1 outline-none"
-                              onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value ? new Date(e.target.value).toISOString() : null, label: 'Personalizado' }))}
-                            />
-                            <input 
-                              type="date" 
-                              className="text-[10px] border border-licorice/5 rounded p-1 outline-none"
-                              onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value ? new Date(e.target.value).toISOString() : null, label: 'Personalizado' }))}
-                            />
-                          </div>
+
+          {(view === 'dashboard' || view === 'finance') && (
+            <div className="relative">
+              <button
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className="flex items-center gap-2 px-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs font-semibold text-licorice/60 hover:bg-white/80 transition-all min-w-[150px] whitespace-nowrap"
+              >
+                <Calendar size={14} />
+                <span>{dateRange.label}</span>
+                <ChevronDown size={14} />
+              </button>
+
+              <AnimatePresence>
+                {showDatePicker && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-licorice/5 z-50 overflow-hidden"
+                  >
+                    <div className="flex flex-col">
+                      {['este mês', 'mês anterior', 'este ano', 'ano anterior', 'desde o início'].map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => {
+                            setDateRange(getPredefinedRange(opt));
+                            setShowDatePicker(false);
+                          }}
+                          className="px-4 py-2 text-left text-xs hover:bg-antique/50 transition-colors capitalize"
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                      <div className="border-t border-licorice/5 p-2 flex flex-col gap-2">
+                        <p className="text-[9px] font-bold uppercase text-licorice/30 px-2">Personalizado</p>
+                        <div className="flex flex-col gap-1 px-2">
+                          <input
+                            type="date"
+                            className="text-[10px] border border-licorice/5 rounded p-1 outline-none"
+                            onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value ? new Date(e.target.value).toISOString() : null, label: 'Personalizado' }))}
+                          />
+                          <input
+                            type="date"
+                            className="text-[10px] border border-licorice/5 rounded p-1 outline-none"
+                            onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value ? new Date(e.target.value).toISOString() : null, label: 'Personalizado' }))}
+                          />
                         </div>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
 
-          <button 
+          <button
             onClick={handleLogout}
             className="ml-4 p-2 text-licorice/40 hover:text-red-500 transition-colors flex items-center gap-2"
             title="Sair"
@@ -1316,7 +1316,7 @@ ON CONFLICT (id) DO NOTHING;
                         >
                           <div className="p-4 flex items-center justify-between group/col">
                             {editingColumn === column ? (
-                              <input 
+                              <input
                                 autoFocus
                                 className="text-xs font-bold uppercase tracking-widest text-licorice bg-white border border-aventurine rounded px-1 outline-none w-full mr-2"
                                 defaultValue={column}
@@ -1327,7 +1327,7 @@ ON CONFLICT (id) DO NOTHING;
                                 }}
                               />
                             ) : (
-                              <h2 
+                              <h2
                                 onClick={() => setEditingColumn(column)}
                                 className="text-xs font-bold uppercase tracking-widest text-licorice/40 cursor-pointer hover:text-licorice transition-colors truncate flex-1"
                               >
@@ -1338,14 +1338,14 @@ ON CONFLICT (id) DO NOTHING;
                               <span className="text-[10px] bg-licorice/10 px-2 py-0.5 rounded-full font-medium">
                                 {filteredLeads.filter(l => l.status === column).length}
                               </span>
-                              <button 
+                              <button
                                 onClick={() => addNewLead(column)}
                                 className="p-1 text-licorice/20 hover:text-aventurine hover:bg-aventurine/10 rounded transition-all"
                                 title="Adicionar Lead"
                               >
                                 <Plus size={12} />
                               </button>
-                              <button 
+                              <button
                                 onClick={() => deleteColumn(column)}
                                 className="p-1 text-licorice/20 hover:text-exotic hover:bg-exotic/10 rounded transition-all"
                                 title="Excluir Coluna"
@@ -1358,10 +1358,10 @@ ON CONFLICT (id) DO NOTHING;
                             {filteredLeads
                               .filter(l => l.status === column)
                               .map((lead, index) => (
-                                <LeadCard 
-                                  key={lead.id} 
-                                  lead={lead} 
-                                  index={index} 
+                                <LeadCard
+                                  key={lead.id}
+                                  lead={lead}
+                                  index={index}
                                   onClick={() => setSelectedLead(lead)}
                                   onEdit={() => setEditingLead(lead)}
                                 />
@@ -1378,8 +1378,8 @@ ON CONFLICT (id) DO NOTHING;
           ) : view === 'dashboard' ? (
             <Dashboard leads={filteredLeads} />
           ) : view === 'documents' ? (
-            <Documents 
-              leads={leads} 
+            <Documents
+              leads={leads}
               onUpdateLead={updateLead}
               onDeleteLead={deleteLead}
               onEditLead={setEditingLead}
@@ -1392,10 +1392,10 @@ ON CONFLICT (id) DO NOTHING;
               filterTodos={docFilterTodos}
             />
           ) : view === 'registrations' ? (
-            <Registrations 
-              leads={leads} 
+            <Registrations
+              leads={leads}
               columns={columns}
-              onUpdate={updateLead} 
+              onUpdate={updateLead}
               onDelete={deleteLead}
               onEdit={setEditingLead}
               externalFilters={{
@@ -1405,8 +1405,8 @@ ON CONFLICT (id) DO NOTHING;
               }}
             />
           ) : view === 'tasks' ? (
-            <Tasks 
-              leads={leads} 
+            <Tasks
+              leads={leads}
               externalFilters={{
                 searchQuery: taskSearchQuery,
                 filterStatus: taskFilterStatus,
@@ -1418,18 +1418,18 @@ ON CONFLICT (id) DO NOTHING;
           ) : view === 'generator' ? (
             <DocumentGenerator leads={leads} />
           ) : view === 'finance' ? (
-            <Finance 
-              leads={leads} 
-              onUpdate={updateLead} 
+            <Finance
+              leads={leads}
+              onUpdate={updateLead}
               externalFilters={{
                 searchQuery: financeSearchQuery,
                 dateRange: dateRange
               }}
             />
           ) : (
-            <SettingsView 
-              onLogout={handleLogout} 
-              user={user} 
+            <SettingsView
+              onLogout={handleLogout}
+              user={user}
               isFeatureEnabled={isFeatureEnabled}
               onUpdateUser={(updatedUser) => {
                 setUser(updatedUser);
@@ -1441,7 +1441,7 @@ ON CONFLICT (id) DO NOTHING;
       </main>
 
       {/* Global Sidebar */}
-      <EditLeadSidebar 
+      <EditLeadSidebar
         lead={editingLead}
         columns={columns}
         onClose={() => setEditingLead(null)}
@@ -1455,8 +1455,8 @@ ON CONFLICT (id) DO NOTHING;
       {/* Modals */}
       <AnimatePresence>
         {selectedLead && (
-          <UnifiedLeadModal 
-            lead={selectedLead} 
+          <UnifiedLeadModal
+            lead={selectedLead}
             columns={columns}
             onClose={() => setSelectedLead(null)}
             onUpdate={updateLead}
@@ -1471,7 +1471,7 @@ ON CONFLICT (id) DO NOTHING;
 
       <AnimatePresence>
         {showDeleteConfirm && (
-          <DeleteConfirmModal 
+          <DeleteConfirmModal
             onClose={() => setShowDeleteConfirm(null)}
             onConfirm={() => {
               deleteLead(showDeleteConfirm);
@@ -1488,14 +1488,14 @@ ON CONFLICT (id) DO NOTHING;
 
 function DeleteConfirmModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: () => void }) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
       onClick={onClose}
     >
-      <motion.div 
+      <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
@@ -1510,13 +1510,13 @@ function DeleteConfirmModal({ onClose, onConfirm }: { onClose: () => void; onCon
           <p className="text-sm text-licorice/60 mt-2">Esta ação não pode ser desfeita. Todos os dados deste lead serão perdidos permanentemente.</p>
         </div>
         <div className="flex w-full gap-3">
-          <button 
+          <button
             onClick={onClose}
             className="flex-1 py-3 text-sm font-bold text-licorice/40 hover:text-licorice transition-colors"
           >
             Cancelar
           </button>
-          <button 
+          <button
             onClick={onConfirm}
             className="flex-1 py-3 bg-exotic text-white rounded-xl text-sm font-bold hover:bg-exotic/90 transition-colors"
           >
@@ -1531,13 +1531,13 @@ function DeleteConfirmModal({ onClose, onConfirm }: { onClose: () => void; onCon
 
 function SidebarIcon({ icon, label, active = false, expanded = false, onClick }: { icon: React.ReactNode; label?: string; active?: boolean; expanded?: boolean; onClick?: () => void }) {
   return (
-    <div 
+    <div
       onClick={onClick}
       className={cn(
         "flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all duration-200 group",
         !expanded && "justify-center",
-        active 
-          ? "bg-[#93774E] text-white shadow-md shadow-black/20" 
+        active
+          ? "bg-[#93774E] text-white shadow-md shadow-black/20"
           : "text-white/70 hover:bg-white/5 hover:text-white hover:shadow-xl hover:shadow-black/30"
       )}
     >
@@ -1567,7 +1567,7 @@ function LeadCard({ lead, index, onClick, onEdit }: { lead: Lead; index: number;
         >
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-sm font-semibold leading-tight group-hover:text-aventurine transition-colors pr-6">{lead.name}</h3>
-            <button 
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 onEdit();
@@ -1599,10 +1599,10 @@ function LeadCard({ lead, index, onClick, onEdit }: { lead: Lead; index: number;
   );
 }
 
-function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanced, onFinalize }: { 
-  lead: Lead; 
+function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanced, onFinalize }: {
+  lead: Lead;
   columns: string[];
-  onClose: () => void; 
+  onClose: () => void;
   onUpdate: (l: Lead) => void;
   onDelete: (id: string) => void;
   onAdvanced: () => void;
@@ -1639,14 +1639,14 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-licorice/20 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={handleClose}
     >
-      <motion.div 
+      <motion.div
         layout
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -1656,14 +1656,14 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
       >
         <div className="p-6 bg-aventurine text-white flex justify-between items-center">
           <div className="flex-1 mr-4">
-            <input 
+            <input
               className="text-lg font-bold bg-transparent border-none focus:outline-none w-full text-white placeholder:text-white/50"
               value={localLead.name}
               onChange={e => handleChange('name', e.target.value)}
               onBlur={handleBlur}
               placeholder="Nome do Lead"
             />
-            <input 
+            <input
               className="text-xs opacity-80 bg-transparent border-none focus:outline-none w-full text-white placeholder:text-white/50"
               value={localLead.profession}
               onChange={e => handleChange('profession', e.target.value)}
@@ -1672,25 +1672,25 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
             />
           </div>
           <div className="flex items-center gap-1">
-            <button 
+            <button
               onClick={() => onFinalize(contract)}
               className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"
               title="Gerar Contrato"
             >
               <FilePlus size={20} />
             </button>
-            <button 
+            <button
               onClick={() => {
                 onUpdate({ ...localLead, contract });
                 onAdvanced();
-              }} 
+              }}
               className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"
               title="Dados Avançados"
             >
               <Pencil size={18} />
             </button>
-            <button 
-              onClick={() => onDelete(localLead.id)} 
+            <button
+              onClick={() => onDelete(localLead.id)}
               className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"
               title="Excluir Registro"
             >
@@ -1705,270 +1705,270 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
             {/* Left Column: Basic Data */}
             <div className="space-y-6 border-r border-licorice/10 pr-8">
               <h3 className="text-xs font-bold uppercase tracking-widest text-licorice/40 border-b border-licorice/5 pb-2">Dados do Cliente</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Telefone</label>
-                <div className="flex gap-2">
-                  <input 
-                    className="input-field w-3/4"
-                    value={formatPhone(localLead.phone)}
-                    onChange={e => handleChange('phone', e.target.value.replace(/\D/g, ''))}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Telefone</label>
+                  <div className="flex gap-2">
+                    <input
+                      className="input-field w-3/4"
+                      value={formatPhone(localLead.phone)}
+                      onChange={e => handleChange('phone', e.target.value.replace(/\D/g, ''))}
+                      onBlur={handleBlur}
+                    />
+                    {localLead.phone && (
+                      <a
+                        href={`https://wa.me/55${localLead.phone.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors flex items-center justify-center shadow-lg shadow-green-500/20"
+                      >
+                        <ExternalLink size={14} />
+                      </a>
+                    )}
+                  </div>
+                </div>
+                <QuickField label="Cidade/UF" value={`${localLead.city}${localLead.state ? '/' + localLead.state : ''}`} onChange={v => {
+                  const [city, state] = v.split('/');
+                  handleChange('city', city || '');
+                  handleChange('state', state || '');
+                }} onBlur={handleBlur} />
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Valor Pago</label>
+                  <input
+                    className="input-field font-mono"
+                    value={formatCurrency(localLead.valuePaid)}
+                    onChange={e => handleChange('valuePaid', parseCurrency(e.target.value))}
                     onBlur={handleBlur}
                   />
-                  {localLead.phone && (
-                    <a 
-                      href={`https://wa.me/55${localLead.phone.replace(/\D/g, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors flex items-center justify-center shadow-lg shadow-green-500/20"
-                    >
-                      <ExternalLink size={14} />
-                    </a>
-                  )}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Tipo de Imóvel</label>
+                  <select
+                    className="input-field"
+                    value={localLead.propertyType}
+                    onChange={e => {
+                      handleChange('propertyType', e.target.value);
+                      onUpdate({ ...localLead, propertyType: e.target.value, contract });
+                    }}
+                  >
+                    <option>Sem construção</option>
+                    <option>Com construção</option>
+                    <option>Planta</option>
+                    <option>Imóvel Pronto</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Corretagem</label>
+                  <input
+                    className="input-field font-mono"
+                    value={formatCurrency(localLead.brokerage)}
+                    onChange={e => handleChange('brokerage', parseCurrency(e.target.value))}
+                    onBlur={handleBlur}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Atrasos (Meses)</label>
+                  <input
+                    type="number"
+                    className="input-field"
+                    value={localLead.delays}
+                    onChange={e => handleChange('delays', Number(e.target.value))}
+                    onBlur={handleBlur}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Distrato Assinado</label>
+                  <select
+                    className="input-field"
+                    value={localLead.signedDistrato}
+                    onChange={e => {
+                      handleChange('signedDistrato', e.target.value);
+                      onUpdate({ ...localLead, signedDistrato: e.target.value, contract });
+                    }}
+                  >
+                    <option>Sim</option>
+                    <option>Não</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Proposta</label>
+                  <input
+                    className="input-field font-mono"
+                    value={formatCurrency(localLead.proposal)}
+                    onChange={e => handleChange('proposal', parseCurrency(e.target.value))}
+                    onBlur={handleBlur}
+                  />
+                </div>
+
+              </div>
+            </div>
+
+            {/* Right Column: Contract Data */}
+            <div className="space-y-6">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-licorice/40 border-b border-licorice/5 pb-2">Dados do Contrato</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Porcentagem (%)</label>
+                  <input
+                    className="input-field font-mono"
+                    value={formatPercent(contract.percentage)}
+                    onChange={e => setContract({ ...contract, percentage: Number(e.target.value.replace(/\D/g, '')) })}
+                    onBlur={handleBlur}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Formato</label>
+                  <select
+                    className="input-field"
+                    value={contract.format}
+                    onChange={e => {
+                      const format = e.target.value;
+                      let newContract = { ...contract, format };
+                      if (format === 'Isento' || format === 'Ao Final') {
+                        newContract = {
+                          ...newContract,
+                          value: 0,
+                          paymentMethod: '',
+                          installments: 0,
+                          dueDate: 0,
+                          firstInstallmentDate: '',
+                          generateBilling: false
+                        };
+                      }
+                      setContract(newContract);
+                      onUpdate({ ...localLead, contract: newContract });
+                    }}
+                  >
+                    <option>Parcelado</option>
+                    <option>Ao Final</option>
+                    <option>Isento</option>
+                  </select>
+                </div>
+
+                {/* Other contract fields - disabled if format is Isento or Ao Final */}
+                <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Valor (R$)</label>
+                  <input
+                    disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
+                    className="input-field font-mono"
+                    value={contract.format === 'Isento' || contract.format === 'Ao Final' ? '' : formatCurrency(contract.value)}
+                    onChange={e => setContract({ ...contract, value: parseCurrency(e.target.value) })}
+                    onBlur={handleBlur}
+                  />
+                </div>
+                <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Meio de Pagamento</label>
+                  <select
+                    disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
+                    className="input-field"
+                    value={contract.paymentMethod}
+                    onChange={e => {
+                      const newContract = { ...contract, paymentMethod: e.target.value };
+                      setContract(newContract);
+                      onUpdate({ ...localLead, contract: newContract });
+                    }}
+                  >
+                    <option value="">Selecione...</option>
+                    <option>Boleto Bancário</option>
+                    <option>Cartão de Crédito</option>
+                    <option>PIX</option>
+                  </select>
+                </div>
+                <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Parcelas</label>
+                  <input
+                    disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
+                    type="number"
+                    className="input-field"
+                    value={contract.format === 'Isento' || contract.format === 'Ao Final' ? '' : contract.installments}
+                    onChange={e => setContract({ ...contract, installments: Number(e.target.value) })}
+                    onBlur={handleBlur}
+                  />
+                </div>
+                <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Vencimento (Dia)</label>
+                  <input
+                    disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
+                    type="number"
+                    className="input-field"
+                    value={contract.format === 'Isento' || contract.format === 'Ao Final' ? '' : contract.dueDate}
+                    onChange={e => setContract({ ...contract, dueDate: Number(e.target.value) })}
+                    onBlur={handleBlur}
+                  />
+                </div>
+                <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Data 1ª Parcela</label>
+                  <input
+                    disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
+                    type="date"
+                    className="input-field"
+                    value={contract.firstInstallmentDate}
+                    onChange={e => setContract({ ...contract, firstInstallmentDate: e.target.value })}
+                    onBlur={handleBlur}
+                  />
+                </div>
+                <div className={cn("flex items-center justify-between pt-4", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
+                  <span className="text-xs font-bold text-licorice/60">Gerar Cobrança</span>
+                  <motion.button
+                    disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => {
+                      const newContract = { ...contract, generateBilling: !contract.generateBilling };
+                      setContract(newContract);
+                      onUpdate({ ...localLead, contract: newContract });
+                    }}
+                    className={cn(
+                      "w-10 h-5 rounded-full transition-colors relative",
+                      contract.generateBilling ? "bg-aventurine" : "bg-licorice/10"
+                    )}
+                  >
+                    <motion.div
+                      layout
+                      className={cn(
+                        "absolute top-1 w-3 h-3 bg-white rounded-full transition-all",
+                        contract.generateBilling ? "right-1" : "left-1"
+                      )}
+                    />
+                  </motion.button>
                 </div>
               </div>
-              <QuickField label="Cidade/UF" value={`${localLead.city}${localLead.state ? '/' + localLead.state : ''}`} onChange={v => {
-                const [city, state] = v.split('/');
-                handleChange('city', city || '');
-                handleChange('state', state || '');
-              }} onBlur={handleBlur} />
-              
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Valor Pago</label>
-                <input 
-                  className="input-field font-mono"
-                  value={formatCurrency(localLead.valuePaid)}
-                  onChange={e => handleChange('valuePaid', parseCurrency(e.target.value))}
-                  onBlur={handleBlur}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Tipo de Imóvel</label>
-                <select 
-                  className="input-field"
-                  value={localLead.propertyType}
-                  onChange={e => {
-                    handleChange('propertyType', e.target.value);
-                    onUpdate({ ...localLead, propertyType: e.target.value, contract });
-                  }}
-                >
-                  <option>Sem construção</option>
-                  <option>Com construção</option>
-                  <option>Planta</option>
-                  <option>Imóvel Pronto</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Corretagem</label>
-                <input 
-                  className="input-field font-mono"
-                  value={formatCurrency(localLead.brokerage)}
-                  onChange={e => handleChange('brokerage', parseCurrency(e.target.value))}
-                  onBlur={handleBlur}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Atrasos (Meses)</label>
-                <input 
-                  type="number"
-                  className="input-field"
-                  value={localLead.delays}
-                  onChange={e => handleChange('delays', Number(e.target.value))}
-                  onBlur={handleBlur}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Distrato Assinado</label>
-                <select 
-                  className="input-field"
-                  value={localLead.signedDistrato}
-                  onChange={e => {
-                    handleChange('signedDistrato', e.target.value);
-                    onUpdate({ ...localLead, signedDistrato: e.target.value, contract });
-                  }}
-                >
-                  <option>Sim</option>
-                  <option>Não</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Proposta</label>
-                <input 
-                  className="input-field font-mono"
-                  value={formatCurrency(localLead.proposal)}
-                  onChange={e => handleChange('proposal', parseCurrency(e.target.value))}
-                  onBlur={handleBlur}
-                />
-              </div>
-
             </div>
           </div>
 
-          {/* Right Column: Contract Data */}
-          <div className="space-y-6">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-licorice/40 border-b border-licorice/5 pb-2">Dados do Contrato</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Porcentagem (%)</label>
-                <input 
-                  className="input-field font-mono" 
-                  value={formatPercent(contract.percentage)}
-                  onChange={e => setContract({...contract, percentage: Number(e.target.value.replace(/\D/g, ''))})}
-                  onBlur={handleBlur}
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Formato</label>
-                <select 
-                  className="input-field"
-                  value={contract.format}
-                  onChange={e => {
-                    const format = e.target.value;
-                    let newContract = {...contract, format};
-                    if (format === 'Isento' || format === 'Ao Final') {
-                      newContract = {
-                        ...newContract,
-                        value: 0,
-                        paymentMethod: '',
-                        installments: 0,
-                        dueDate: 0,
-                        firstInstallmentDate: '',
-                        generateBilling: false
-                      };
-                    }
-                    setContract(newContract);
-                    onUpdate({ ...localLead, contract: newContract });
-                  }}
-                >
-                  <option>Parcelado</option>
-                  <option>Ao Final</option>
-                  <option>Isento</option>
-                </select>
-              </div>
-              
-              {/* Other contract fields - disabled if format is Isento or Ao Final */}
-              <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
-                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Valor (R$)</label>
-                <input 
-                  disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
-                  className="input-field font-mono" 
-                  value={contract.format === 'Isento' || contract.format === 'Ao Final' ? '' : formatCurrency(contract.value)}
-                  onChange={e => setContract({...contract, value: parseCurrency(e.target.value)})}
-                  onBlur={handleBlur}
-                />
-              </div>
-              <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
-                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Meio de Pagamento</label>
-                <select 
-                  disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
-                  className="input-field"
-                  value={contract.paymentMethod}
-                  onChange={e => {
-                    const newContract = {...contract, paymentMethod: e.target.value};
-                    setContract(newContract);
-                    onUpdate({ ...localLead, contract: newContract });
-                  }}
-                >
-                  <option value="">Selecione...</option>
-                  <option>Boleto Bancário</option>
-                  <option>Cartão de Crédito</option>
-                  <option>PIX</option>
-                </select>
-              </div>
-              <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
-                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Parcelas</label>
-                <input 
-                  disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
-                  type="number" 
-                  className="input-field" 
-                  value={contract.format === 'Isento' || contract.format === 'Ao Final' ? '' : contract.installments}
-                  onChange={e => setContract({...contract, installments: Number(e.target.value)})}
-                  onBlur={handleBlur}
-                />
-              </div>
-              <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
-                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Vencimento (Dia)</label>
-                <input 
-                  disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
-                  type="number" 
-                  className="input-field" 
-                  value={contract.format === 'Isento' || contract.format === 'Ao Final' ? '' : contract.dueDate}
-                  onChange={e => setContract({...contract, dueDate: Number(e.target.value)})}
-                  onBlur={handleBlur}
-                />
-              </div>
-              <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
-                <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Data 1ª Parcela</label>
-                <input 
-                  disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
-                  type="date" 
-                  className="input-field" 
-                  value={contract.firstInstallmentDate}
-                  onChange={e => setContract({...contract, firstInstallmentDate: e.target.value})}
-                  onBlur={handleBlur}
-                />
-              </div>
-              <div className={cn("flex items-center justify-between pt-4", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
-                <span className="text-xs font-bold text-licorice/60">Gerar Cobrança</span>
-                <motion.button 
-                  disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => {
-                    const newContract = {...contract, generateBilling: !contract.generateBilling};
-                    setContract(newContract);
-                    onUpdate({ ...localLead, contract: newContract });
-                  }}
-                  className={cn(
-                    "w-10 h-5 rounded-full transition-colors relative",
-                    contract.generateBilling ? "bg-aventurine" : "bg-licorice/10"
-                  )}
-                >
-                  <motion.div 
-                    layout
-                    className={cn(
-                      "absolute top-1 w-3 h-3 bg-white rounded-full transition-all",
-                      contract.generateBilling ? "right-1" : "left-1"
-                    )}
-                  />
-                </motion.button>
-              </div>
-            </div>
+          {/* Full Width Notes */}
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Notas</label>
+            <textarea
+              className="input-field min-h-[80px] resize-none"
+              value={localLead.notes}
+              onChange={e => handleChange('notes', e.target.value)}
+              onBlur={handleBlur}
+              placeholder="Observações importantes..."
+            />
           </div>
-        </div>
-
-        {/* Full Width Notes */}
-        <div className="flex flex-col gap-1">
-          <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Notas</label>
-          <textarea 
-            className="input-field min-h-[80px] resize-none"
-            value={localLead.notes}
-            onChange={e => handleChange('notes', e.target.value)}
-            onBlur={handleBlur}
-            placeholder="Observações importantes..."
-          />
-        </div>
 
         </div>
       </motion.div>
     </motion.div>
   );
 }
-function QuickField({ label, value, onChange, onBlur, type = "text" }: { 
-  label: string; 
-  value: any; 
-  onChange: (v: string) => void; 
+function QuickField({ label, value, onChange, onBlur, type = "text" }: {
+  label: string;
+  value: any;
+  onChange: (v: string) => void;
   onBlur: () => void;
   type?: string;
 }) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">{label}</label>
-      <input 
+      <input
         type={type}
         className="input-field"
         value={value}
