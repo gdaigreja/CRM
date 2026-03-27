@@ -187,6 +187,10 @@ export default function App() {
   const [docFilterPendencias, setDocFilterPendencias] = useState(false);
   const [docFilterComPrazo, setDocFilterComPrazo] = useState(false);
   const [docFilterArquivados, setDocFilterArquivados] = useState(false);
+  const [docFilterDistribuidos, setDocFilterDistribuidos] = useState(false);
+  const [docFilterNaoDistribuidos, setDocFilterNaoDistribuidos] = useState(false);
+  const [docFilterTodos, setDocFilterTodos] = useState(true);
+  const [showDocFilter, setShowDocFilter] = useState(false);
 
   // Tasks Filters
   const [taskSearchQuery, setTaskSearchQuery] = useState('');
@@ -957,45 +961,197 @@ ON CONFLICT (id) DO NOTHING;
                     onChange={(e) => setDocSearchQuery(e.target.value)}
                   />
                 </div>
-                <div className="flex items-center gap-6">
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <div 
-                      onClick={() => setDocFilterArquivados(!docFilterArquivados)}
-                      className={cn(
-                        "w-4 h-4 rounded border flex items-center justify-center transition-all",
-                        docFilterArquivados ? "bg-aventurine border-aventurine" : "border-licorice/20 bg-white group-hover:border-aventurine/50"
-                      )}
-                    >
-                      {docFilterArquivados && <div className="w-1.5 h-1.5 bg-white rounded-sm" />}
-                    </div>
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-licorice/60">Arquivados</span>
-                  </label>
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowDocFilter(!showDocFilter)}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-1.5 bg-white/50 border rounded-full text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm",
+                      (docFilterArquivados || docFilterPendencias || docFilterComPrazo || docFilterDistribuidos || docFilterNaoDistribuidos || docFilterTodos) 
+                        ? "border-[#512E2D] text-[#512E2D] shadow-md shadow-[#512E2D]/10 bg-white" 
+                        : "border-licorice/5 text-licorice/40 hover:bg-white/80"
+                    )}
+                  >
+                    <Filter size={12} />
+                    <span>Filtros</span>
+                    {(docFilterArquivados || docFilterPendencias || docFilterComPrazo || docFilterDistribuidos || docFilterNaoDistribuidos || docFilterTodos) && (
+                      <span className="bg-[#512E2D] text-white text-[10px] px-1.5 rounded-full min-w-[18px]">
+                        {[docFilterArquivados, docFilterPendencias, docFilterComPrazo, docFilterDistribuidos, docFilterNaoDistribuidos, docFilterTodos].filter(Boolean).length}
+                      </span>
+                    )}
+                    <ChevronDown size={12} className={cn("transition-transform duration-200", showDocFilter && "rotate-180")} />
+                  </button>
 
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <div 
-                      onClick={() => setDocFilterPendencias(!docFilterPendencias)}
-                      className={cn(
-                        "w-4 h-4 rounded border flex items-center justify-center transition-all",
-                        docFilterPendencias ? "bg-aventurine border-aventurine" : "border-licorice/20 bg-white group-hover:border-aventurine/50"
-                      )}
-                    >
-                      {docFilterPendencias && <div className="w-1.5 h-1.5 bg-white rounded-sm" />}
-                    </div>
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-licorice/60">Pendências</span>
-                  </label>
+                  <AnimatePresence>
+                    {showDocFilter && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setShowDocFilter(false)} />
+                        <motion.div 
+                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                          className="absolute top-full right-0 mt-3 w-[420px] bg-white rounded-[32px] shadow-2xl border border-licorice/5 z-50 overflow-hidden"
+                        >
+                          <div className="p-8">
+                            {/* Bloco 1: Todos */}
+                            <div className="pb-6 border-b border-licorice/5 mb-6">
+                              <label className="flex items-center gap-6 cursor-pointer group">
+                                <span className={cn("flex-1 text-[11px] font-bold uppercase tracking-[0.2em] transition-colors", docFilterTodos ? "text-[#512E2D]" : "text-licorice/20 group-hover:text-licorice/40")}>Todos</span>
+                                <div 
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    const next = !docFilterTodos;
+                                    setDocFilterTodos(next);
+                                    if (next) {
+                                      setDocFilterArquivados(false);
+                                      setDocFilterDistribuidos(false);
+                                      setDocFilterNaoDistribuidos(false);
+                                      setDocFilterPendencias(false);
+                                      setDocFilterComPrazo(false);
+                                    }
+                                  }}
+                                  className={cn(
+                                    "w-5 h-5 rounded-lg border flex items-center justify-center transition-all",
+                                    docFilterTodos ? "bg-[#512E2D] border-[#512E2D]" : "border-licorice/10 bg-white group-hover:border-[#512E2D]/30 shadow-inner"
+                                  )}
+                                >
+                                  {docFilterTodos && <Check size={12} className="text-white" />}
+                                </div>
+                              </label>
+                            </div>
+                            
+                            {/* Bloco 2: Colunas */}
+                            <div className="flex gap-10">
+                              {/* Coluna Esquerda: Exclusivos */}
+                              <div className="flex-1 space-y-5">
+                                <h4 className="text-[9px] font-bold uppercase tracking-widest text-licorice/20 mb-2">Exibição</h4>
+                                
+                                <label className="flex items-center gap-6 cursor-pointer group">
+                                  <span className={cn("flex-1 text-[10px] font-bold uppercase tracking-widest transition-colors", docFilterDistribuidos ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice text-[10px]")}>Distribuídos</span>
+                                  <div 
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setDocFilterDistribuidos(true);
+                                      setDocFilterNaoDistribuidos(false);
+                                      setDocFilterArquivados(false);
+                                      setDocFilterTodos(false);
+                                    }}
+                                    className={cn(
+                                      "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
+                                      docFilterDistribuidos ? "border-[#512E2D] p-0.5" : "border-licorice/10 bg-white"
+                                    )}
+                                  >
+                                    {docFilterDistribuidos && <div className="w-full h-full rounded-full bg-[#512E2D]" />}
+                                  </div>
+                                </label>
 
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <div 
-                      onClick={() => setDocFilterComPrazo(!docFilterComPrazo)}
-                      className={cn(
-                        "w-4 h-4 rounded border flex items-center justify-center transition-all",
-                        docFilterComPrazo ? "bg-aventurine border-aventurine" : "border-licorice/20 bg-white group-hover:border-aventurine/50"
-                      )}
-                    >
-                      {docFilterComPrazo && <div className="w-1.5 h-1.5 bg-white rounded-sm" />}
-                    </div>
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-licorice/60">Com Prazo</span>
-                  </label>
+                                <label className="flex items-center gap-6 cursor-pointer group">
+                                  <span className={cn("flex-1 text-[10px] font-bold uppercase tracking-widest transition-colors", docFilterNaoDistribuidos ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice shadow-none")}>Não Distribuídos</span>
+                                  <div 
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setDocFilterNaoDistribuidos(true);
+                                      setDocFilterDistribuidos(false);
+                                      setDocFilterArquivados(false);
+                                      setDocFilterTodos(false);
+                                    }}
+                                    className={cn(
+                                      "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
+                                      docFilterNaoDistribuidos ? "border-[#512E2D] p-0.5" : "border-licorice/10 bg-white"
+                                    )}
+                                  >
+                                    {docFilterNaoDistribuidos && <div className="w-full h-full rounded-full bg-[#512E2D]" />}
+                                  </div>
+                                </label>
+
+                                <label className="flex items-center gap-6 cursor-pointer group">
+                                  <span className={cn("flex-1 text-[10px] font-bold uppercase tracking-widest transition-colors", docFilterArquivados ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Arquivados</span>
+                                  <div 
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setDocFilterArquivados(true);
+                                      setDocFilterDistribuidos(false);
+                                      setDocFilterNaoDistribuidos(false);
+                                      setDocFilterTodos(false);
+                                    }}
+                                    className={cn(
+                                      "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
+                                      docFilterArquivados ? "border-[#512E2D] p-0.5" : "border-licorice/10 bg-white"
+                                    )}
+                                  >
+                                    {docFilterArquivados && <div className="w-full h-full rounded-full bg-[#512E2D]" />}
+                                  </div>
+                                </label>
+                              </div>
+
+                              {/* Divisor vertical */}
+                              <div className="w-px bg-licorice/5 self-stretch" />
+
+                              {/* Coluna Direita: Acumulativos */}
+                              <div className="space-y-5">
+                                <h4 className="text-[9px] font-bold uppercase tracking-widest text-licorice/20 mb-2">Filtros</h4>
+                                
+                                <label className="flex items-center gap-6 cursor-pointer group">
+                                  <span className={cn("flex-1 text-[10px] font-bold uppercase tracking-widest transition-colors", docFilterPendencias ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Pendências</span>
+                                  <div 
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setDocFilterPendencias(!docFilterPendencias);
+                                      setDocFilterTodos(false);
+                                    }}
+                                    className={cn(
+                                      "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                                      docFilterPendencias ? "bg-[#512E2D] border-[#512E2D]" : "border-licorice/10 bg-white group-hover:border-[#512E2D]/30"
+                                    )}
+                                  >
+                                    {docFilterPendencias && <Check size={10} className="text-white" />}
+                                  </div>
+                                </label>
+
+                                <label className="flex items-center gap-6 cursor-pointer group">
+                                  <span className={cn("flex-1 text-[10px] font-bold uppercase tracking-widest transition-colors", docFilterComPrazo ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Prazos</span>
+                                  <div 
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setDocFilterComPrazo(!docFilterComPrazo);
+                                      setDocFilterTodos(false);
+                                    }}
+                                    className={cn(
+                                      "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                                      docFilterComPrazo ? "bg-[#512E2D] border-[#512E2D]" : "border-licorice/10 bg-white group-hover:border-[#512E2D]/30"
+                                    )}
+                                  >
+                                    {docFilterComPrazo && <Check size={10} className="text-white" />}
+                                  </div>
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-antique/30 p-4 px-8 border-t border-licorice/5 flex items-center justify-between">
+                            <button 
+                              onClick={() => {
+                                setDocFilterArquivados(false);
+                                setDocFilterPendencias(false);
+                                setDocFilterComPrazo(false);
+                                setDocFilterDistribuidos(false);
+                                setDocFilterNaoDistribuidos(false);
+                                setDocFilterTodos(true);
+                              }}
+                              className="text-[10px] font-bold uppercase tracking-widest text-[#512E2D] hover:underline"
+                            >
+                              Limpar
+                            </button>
+                            <button 
+                              onClick={() => setShowDocFilter(false)}
+                              className="bg-[#512E2D] text-white px-8 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-[#512E2D]/20 hover:scale-105 active:scale-95 transition-all"
+                            >
+                              Aplicar
+                            </button>
+                          </div>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
             )}
@@ -1231,6 +1387,9 @@ ON CONFLICT (id) DO NOTHING;
               filterPendencias={docFilterPendencias}
               filterComPrazo={docFilterComPrazo}
               filterArquivados={docFilterArquivados}
+              filterDistribuidos={docFilterDistribuidos}
+              filterNaoDistribuidos={docFilterNaoDistribuidos}
+              filterTodos={docFilterTodos}
             />
           ) : view === 'registrations' ? (
             <Registrations 

@@ -15,9 +15,12 @@ interface DocumentsProps {
   filterPendencias: boolean;
   filterComPrazo: boolean;
   filterArquivados: boolean;
+  filterDistribuidos: boolean;
+  filterNaoDistribuidos: boolean;
+  filterTodos: boolean;
 }
 
-export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLead, searchQuery, filterPendencias, filterComPrazo, filterArquivados }: DocumentsProps) {
+export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLead, searchQuery, filterPendencias, filterComPrazo, filterArquivados, filterDistribuidos, filterNaoDistribuidos, filterTodos }: DocumentsProps) {
   const [selectedClient, setSelectedClient] = useState<Lead | null>(null);
   const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
   const [isEmailConfirmOpen, setIsEmailConfirmOpen] = useState(false);
@@ -100,7 +103,9 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
     if (!matchesSearch) return false;
 
     // Filter by archived status
-    if (filterArquivados) {
+    if (filterTodos) {
+      // Show all
+    } else if (filterArquivados) {
       if (!c.archived) return false;
     } else {
       if (c.archived) return false;
@@ -120,6 +125,14 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
     if (filterComPrazo) {
       const hasPrazo = c.documentData?.deadlineFatal || (c.documentData?.documents || []).some(d => d.deadline);
       if (!hasPrazo) return false;
+    }
+
+    if (filterDistribuidos) {
+      if (!c.documentData?.legalProcess?.processNumber) return false;
+    }
+
+    if (filterNaoDistribuidos) {
+      if (c.documentData?.legalProcess?.processNumber) return false;
     }
 
     return true;
