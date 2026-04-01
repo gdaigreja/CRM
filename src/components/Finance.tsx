@@ -152,6 +152,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
 
     const filtered = leads.filter(l => {
       if (!l.financialRecord?.tipoResultado) return false;
+      if (!l.documentData?.minutaHomologada) return false;
 
       const query = searchQuery.toLowerCase();
       const matchesSearch = !searchQuery ||

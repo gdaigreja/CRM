@@ -393,7 +393,8 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
             <button 
               onClick={(e) => {
                 e.stopPropagation();
-                const newValue = !docData.minutaHomologada;
+                if (docData.minutaHomologada) return;
+                const newValue = true;
                 onUpdate({ 
                   ...client, 
                   archived: newValue,
@@ -402,7 +403,7 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
               }}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border",
-                docData.minutaHomologada ? "bg-[#00A63E]/10 border-[#00A63E]/20 text-[#00A63E]" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10"
+                docData.minutaHomologada ? "bg-[#00A63E]/10 border-[#00A63E]/20 text-[#00A63E] cursor-default" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10"
               )}
             >
               <div className={cn("w-3 h-3 rounded-sm border flex items-center justify-center", docData.minutaHomologada ? "bg-[#00A63E] border-[#00A63E]" : "border-licorice/20 bg-white")}>
@@ -741,7 +742,8 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                     {(client.financialRecord?.tipoResultado === 'acordo' || client.financialRecord?.tipoResultado === 'sentenca_procedente') ? (
                       <button 
                         onClick={() => {
-                          const newValue = !docData.minutaHomologada;
+                          if (docData.minutaHomologada) return;
+                          const newValue = true;
                           onUpdate({ 
                             ...client, 
                             archived: newValue,
@@ -750,7 +752,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                         }}
                         className={cn(
                           "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border w-[180px]",
-                          docData.minutaHomologada ? "bg-[#00A63E]/10 border-[#00A63E]/20 text-[#00A63E] shadow-lg shadow-[#00A63E]/10" : "bg-white/5 border-white/10 text-white/40"
+                          docData.minutaHomologada ? "bg-[#00A63E]/10 border-[#00A63E]/20 text-[#00A63E] shadow-lg shadow-[#00A63E]/10 cursor-default" : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10"
                         )}
                       >
                         <FileText size={12} />
@@ -829,6 +831,21 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                     <LucideCheck size={16} strokeWidth={3} />
                   </button>
                 </div>
+              )}
+              {client.status !== 'Churn' && client.financialRecord?.tipoResultado && !docData.minutaHomologada && (
+                <button
+                  onClick={() => {
+                    const { tipoResultado, valorRestituicao, honorariosSucumbenciaisContratuais, parcelasResultado, valorHonorarios, dataPagamento, statusResultado, ...restFinance } = (client.financialRecord || {} as any);
+                    onUpdate({
+                      ...client,
+                      financialRecord: restFinance
+                    });
+                  }}
+                  className="px-4 py-2 flex items-center gap-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-red-500/20 transition-all hover:scale-105 active:scale-95 shadow-sm"
+                  title="Anular marcação de Acordo/Sentença"
+                >
+                  <X size={14} strokeWidth={3} /> Anular Registro
+                </button>
               )}
             </div>
           </div>
