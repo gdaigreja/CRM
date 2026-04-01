@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Mail, Bell, Plus, Trash2, X, ChevronDown, ChevronUp, Send, Calendar, Pencil, AlertCircle, AlertTriangle, FileText, Archive, Activity, Scale, Check as LucideCheck } from 'lucide-react';
+import { Search, Mail, Bell, Plus, Trash2, X, ChevronDown, ChevronUp, Send, Calendar, Pencil, AlertCircle, AlertTriangle, FileText, Archive, Activity, Scale, Eye, Check as LucideCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Lead, DocumentItem, DocumentStatus, Observation, ClientDocumentData } from '../types';
 import { DEFAULT_DOCUMENTS } from '../constants';
@@ -486,6 +486,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
   const [fineValue, setFineValue] = useState('');
   
   const [showResultModal, setShowResultModal] = useState(false);
+  const [isResultModalReadOnly, setIsResultModalReadOnly] = useState(false);
   const [showDeadlineModal, setShowDeadlineModal] = useState(false);
   const [showLegalModal, setShowLegalModal] = useState(false);
   
@@ -820,6 +821,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                   </button>
                   <button 
                     onClick={() => {
+                      setIsResultModalReadOnly(false);
                       setShowResultModal(true);
                       // Pre-fill honorarios based on current percentage
                       const perc = (client.contract?.percentage || 20) / 100;
@@ -833,19 +835,39 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                 </div>
               )}
               {client.status !== 'Churn' && client.financialRecord?.tipoResultado && !docData.minutaHomologada && (
-                <button
-                  onClick={() => {
-                    const { tipoResultado, valorRestituicao, honorariosSucumbenciaisContratuais, parcelasResultado, valorHonorarios, dataPagamento, statusResultado, ...restFinance } = (client.financialRecord || {} as any);
-                    onUpdate({
-                      ...client,
-                      financialRecord: restFinance
-                    });
-                  }}
-                  className="px-4 py-2 flex items-center gap-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-red-500/20 transition-all hover:scale-105 active:scale-95 shadow-sm"
-                  title="Anular marcação de Acordo/Sentença"
-                >
-                  <X size={14} strokeWidth={3} /> Anular Registro
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const rec = client.financialRecord;
+                      if (!rec) return;
+                      setResultType(rec.tipoResultado === 'acordo' ? 'acordo' : 'sentenca');
+                      setRestituicaoValue(formatCurrency(rec.valorRestituicao || 0));
+                      setSucumbenciaValue(formatCurrency(rec.honorariosSucumbenciaisContratuais || 0));
+                      setParcelasValue(String(rec.parcelasResultado || 1));
+                      setHonorariosValue(formatCurrency(rec.valorHonorarios || 0));
+                      if (rec.dataPagamento) setPaymentDate(rec.dataPagamento);
+                      setIsResultModalReadOnly(true);
+                      setShowResultModal(true);
+                    }}
+                    className="p-2 text-white/40 hover:text-white flex items-center justify-center rounded-lg transition-all hover:bg-white/10 active:scale-95"
+                    title="Ver Resultado Registrado"
+                  >
+                    <Eye size={16} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const { tipoResultado, valorRestituicao, honorariosSucumbenciaisContratuais, parcelasResultado, valorHonorarios, dataPagamento, statusResultado, ...restFinance } = (client.financialRecord || {} as any);
+                      onUpdate({
+                        ...client,
+                        financialRecord: restFinance
+                      });
+                    }}
+                    className="px-4 py-2 flex items-center gap-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-red-500/20 transition-all hover:scale-105 active:scale-95 shadow-sm"
+                    title="Anular marcação de Acordo/Sentença"
+                  >
+                    <X size={14} strokeWidth={3} /> Anular Registro
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -1375,13 +1397,17 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
               </button>
 
               <div className="text-center space-y-2">
-                <h3 className="text-2xl font-bold text-licorice">Registrar Resultado</h3>
-                <p className="text-sm text-licorice/40">Insira os detalhes técnicos do acordo ou sentença para baixa no financeiro.</p>
+                <h3 className="text-2xl font-bold text-licorice">
+                   {isResultModalReadOnly ? 'Visualizar Resultado' : 'Registrar Resultado'}
+                </h3>
+                <p className="text-sm text-licorice/40">
+                   {isResultModalReadOnly ? 'Detalhes técnicos do acordo ou sentença (Somente Leitura).' : 'Insira os detalhes técnicos do acordo ou sentença para baixa no financeiro.'}
+                </p>
               </div>
 
-              <div className="flex bg-antique/50 p-1 rounded-xl gap-1">
+              <div className={cn("flex bg-antique/50 p-1 rounded-xl gap-1", isResultModalReadOnly && "opacity-60 pointer-events-none")}>
                 <button 
-                  onClick={() => setResultType('acordo')}
+                  onClick={() => !isResultModalReadOnly && setResultType('acordo')}
                   className={cn(
                     "flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-lg transition-all",
                     resultType === 'acordo' ? "bg-white text-aventurine shadow-sm" : "text-licorice/40 hover:text-licorice/60"
@@ -1390,7 +1416,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                   Acordo
                 </button>
                 <button 
-                  onClick={() => setResultType('sentenca')}
+                  onClick={() => !isResultModalReadOnly && setResultType('sentenca')}
                   className={cn(
                     "flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-lg transition-all",
                     resultType === 'sentenca' ? "bg-white text-aventurine shadow-sm" : "text-licorice/40 hover:text-licorice/60"
@@ -1406,7 +1432,8 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                   <input 
                     type="text" 
                     placeholder="R$ 0,00"
-                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors"
+                    disabled={isResultModalReadOnly}
+                    className={cn("w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors", isResultModalReadOnly && "opacity-70 cursor-not-allowed")}
                     value={restituicaoValue}
                     onChange={(e) => {
                       const val = formatCurrency(parseCurrency(e.target.value));
@@ -1421,7 +1448,8 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                   <input 
                     type="text" 
                     placeholder="R$ 0,00"
-                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors"
+                    disabled={isResultModalReadOnly}
+                    className={cn("w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors", isResultModalReadOnly && "opacity-70 cursor-not-allowed")}
                     value={sucumbenciaValue}
                     onChange={(e) => {
                       const val = formatCurrency(parseCurrency(e.target.value));
@@ -1436,7 +1464,8 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                   <input 
                     type="number" 
                     min="1"
-                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors"
+                    disabled={isResultModalReadOnly}
+                    className={cn("w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors", isResultModalReadOnly && "opacity-70 cursor-not-allowed")}
                     value={parcelasValue}
                     onChange={(e) => setParcelasValue(e.target.value)}
                   />
@@ -1447,7 +1476,8 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                   <input 
                     type="text" 
                     placeholder="R$ 0,00"
-                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold text-aventurine focus:outline-none focus:border-aventurine/50 transition-colors"
+                    disabled={isResultModalReadOnly}
+                    className={cn("w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold text-aventurine focus:outline-none focus:border-aventurine/50 transition-colors", isResultModalReadOnly && "opacity-70 cursor-not-allowed")}
                     value={honorariosValue}
                     onChange={(e) => setHonorariosValue(formatCurrency(parseCurrency(e.target.value)))}
                   />
@@ -1457,19 +1487,22 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                   <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Data de Pagamento</label>
                   <input 
                     type="date" 
-                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors"
+                    disabled={isResultModalReadOnly}
+                    className={cn("w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors", isResultModalReadOnly && "opacity-70 cursor-not-allowed")}
                     value={paymentDate}
                     onChange={(e) => setPaymentDate(e.target.value)}
                   />
                 </div>
               </div>
 
-              <button 
-                onClick={handleConfirmResult}
-                className="w-full py-4 bg-aventurine text-white rounded-2xl font-bold uppercase tracking-widest shadow-xl shadow-aventurine/20 hover:scale-105 active:scale-95 transition-all"
-              >
-                Confirmar Registro
-              </button>
+              {!isResultModalReadOnly && (
+                <button 
+                  onClick={handleConfirmResult}
+                  className="w-full py-4 bg-aventurine text-white rounded-2xl font-bold uppercase tracking-widest shadow-xl shadow-aventurine/20 hover:scale-105 active:scale-95 transition-all"
+                >
+                  Confirmar Registro
+                </button>
+              )}
             </motion.div>
           </div>
         )}
