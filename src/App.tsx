@@ -688,20 +688,20 @@ export default function App() {
       >
         {/* Logo area */}
         <div className={cn(
-          "flex items-center mb-8",
-          isSidebarExpanded ? "gap-3" : "justify-center"
+          "flex items-center justify-center mb-8",
         )}>
-          <img
-            src="https://zklkmbokwzhbqdoqsnxs.supabase.co/storage/v1/object/public/Imagens/logo_pequena.png"
-            alt="Logo Distrato Justo"
-            className="w-9 h-9 object-contain flex-shrink-0 animate-glow-pulse"
-            referrerPolicy="no-referrer"
-          />
-          {isSidebarExpanded && (
-            <div className="flex flex-col leading-none">
-              <span className="font-display font-bold text-base text-white tracking-tight">Distrato</span>
-              <span className="font-display font-bold text-base text-white/60 tracking-tight">Justo</span>
-            </div>
+          {isSidebarExpanded ? (
+            <img
+              src="/assets/images/logo_maior.png"
+              alt="Logo Distrato Justo"
+              className="h-16 object-contain animate-glow-pulse"
+            />
+          ) : (
+            <img
+              src="/assets/images/logo_pequena.png"
+              alt="Logo Distrato Justo"
+              className="w-9 h-9 object-contain animate-glow-pulse"
+            />
           )}
         </div>
 
@@ -920,7 +920,7 @@ ON CONFLICT (id) DO NOTHING;
                 <input
                   type="text"
                   placeholder="Buscar leads..."
-                  className="pl-9 pr-4 py-2.5 bg-white/50 border border-licorice/5 rounded-xl text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
+                  className="pl-9 pr-4 py-2 bg-white/50 border border-licorice/5 rounded-xl text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -940,16 +940,19 @@ ON CONFLICT (id) DO NOTHING;
                   />
                 </div>
                 <div className="flex items-center gap-4">
-                  <select
-                    className="bg-white/50 px-4 py-2.5 rounded-xl border border-licorice/5 text-xs font-medium text-licorice/60 focus:outline-none shadow-sm"
-                    value={regFilterStatus}
-                    onChange={(e) => setRegFilterStatus(e.target.value as LeadStatus | 'all')}
-                  >
-                    <option value="all">Todos os Status</option>
-                    {columns.map(col => (
-                      <option key={col} value={col}>{col}</option>
-                    ))}
-                  </select>
+                  <div className="relative flex items-center">
+                    <select
+                      className="appearance-none bg-white/50 pl-4 pr-9 py-2 rounded-xl border border-licorice/5 text-xs font-medium text-licorice/60 focus:outline-none shadow-sm cursor-pointer"
+                      value={regFilterStatus}
+                      onChange={(e) => setRegFilterStatus(e.target.value as LeadStatus | 'all')}
+                    >
+                      <option value="all">Todos os Status</option>
+                      {columns.map(col => (
+                        <option key={col} value={col}>{col}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" />
+                  </div>
                 </div>
               </div>
             )}
@@ -971,7 +974,7 @@ ON CONFLICT (id) DO NOTHING;
                   <button
                     onClick={() => setShowDocFilter(!showDocFilter)}
                     className={cn(
-                      "flex items-center gap-2 px-4 py-3 bg-white/50 border rounded-xl text-xs font-medium transition-all shadow-sm",
+                      "flex items-center gap-2 px-4 py-2 bg-white/50 border rounded-xl text-xs font-medium transition-all shadow-sm",
                       (docFilterArquivados || docFilterPendencias || docFilterComPrazo || docFilterDistribuidos || docFilterNaoDistribuidos || docFilterTodos)
                         ? "border-[#512E2D] text-[#512E2D] shadow-md shadow-[#512E2D]/10 bg-white"
                         : "border-licorice/5 text-licorice/40 hover:bg-white/80"
@@ -1210,20 +1213,20 @@ ON CONFLICT (id) DO NOTHING;
                   <div className="flex bg-white/50 p-0.5 rounded-lg border border-licorice/5">
                     <button
                       onClick={() => setTaskView('list')}
-                      className={cn("p-2 rounded-xl transition-all", taskView === 'list' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
+                      className={cn("px-2 py-2 rounded-xl transition-all", taskView === 'list' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
                     >
                       <List size={14} />
                     </button>
                     <button
                       onClick={() => setTaskView('kanban')}
-                      className={cn("p-2 rounded-xl transition-all", taskView === 'kanban' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
+                      className={cn("px-2 py-2 rounded-xl transition-all", taskView === 'kanban' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
                     >
                       <Columns size={14} />
                     </button>
                   </div>
                   <button
                     onClick={() => setTriggerNewTask(Date.now())}
-                    className="bg-aventurine text-white px-5 py-3 rounded-xl text-xs font-medium shadow-sm hover:bg-aventurine/90 transition-all flex items-center gap-2"
+                    className="bg-aventurine text-white px-5 py-2 rounded-xl text-xs font-medium shadow-sm hover:bg-aventurine/90 transition-all flex items-center gap-2"
                   >
                     <Plus size={14} />
                     Nova Tarefa
@@ -1235,7 +1238,7 @@ ON CONFLICT (id) DO NOTHING;
           {view === 'kanban' && (
             <button
               onClick={addColumn}
-              className="bg-aventurine text-white px-5 py-3 rounded-xl text-xs font-medium shadow-sm hover:bg-aventurine/90 transition-all flex items-center gap-2"
+              className="bg-aventurine text-white px-5 py-2 rounded-xl text-xs font-medium shadow-sm hover:bg-aventurine/90 transition-all flex items-center gap-2"
             >
               <Plus size={14} />
               Nova Coluna
