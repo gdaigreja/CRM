@@ -182,7 +182,7 @@ export default function App() {
 
   // Registration Filters
   const [regSearchQuery, setRegSearchQuery] = useState('');
-  const [regFilterType, setRegFilterType] = useState<'all' | 'lead' | 'cliente'>('all');
+  const [regFilterType, setRegFilterType] = useState<'all' | 'lead' | 'cliente'>('cliente');
   const [regFilterStatus, setRegFilterStatus] = useState<LeadStatus | 'all'>('all');
 
   // Dashboard Filters
@@ -942,17 +942,8 @@ ON CONFLICT (id) DO NOTHING;
                 <div className="flex items-center gap-4">
                   <div className="flex bg-white/50 p-0.5 rounded-lg border border-licorice/5">
                     <button
-                      onClick={() => setRegFilterType('all')}
-                      className={cn("px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all", regFilterType === 'all' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
-                    >Todos</button>
-                    <button
-                      onClick={() => setRegFilterType('cliente')}
-                      className={cn("px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all", regFilterType === 'cliente' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
+                      className="px-6 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-aventurine text-white shadow-sm"
                     >Clientes</button>
-                    <button
-                      onClick={() => setRegFilterType('lead')}
-                      className={cn("px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all", regFilterType === 'lead' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
-                    >Leads</button>
                   </div>
                   <select
                     className="bg-white/50 px-3 py-1 rounded-lg border border-licorice/5 text-[10px] font-bold uppercase tracking-widest text-licorice/60 focus:outline-none shadow-sm"

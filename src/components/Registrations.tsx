@@ -86,19 +86,17 @@ export default function Registrations({
           <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="border-b border-licorice/5 bg-antique/30">
-                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Nome</th>
-                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Telefone</th>
-                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Classificação</th>
-                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Profissão</th>
-                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Tipo de Imóvel</th>
-                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Valor Pago</th>
-                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Status Atual</th>
-                <th className="w-[12.5%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Ações</th>
+                <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Nome</th>
+                <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Telefone</th>
+                <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Profissão</th>
+                <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Tipo de Imóvel</th>
+                <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Valor Pago</th>
+                <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Status Atual</th>
+                <th className="w-[10%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-licorice/5">
               {filteredLeads.map((lead) => {
-                const isItemCliente = lead.status === 'Assinado' || lead.status === 'Churn';
                 return (
                   <tr 
                     key={lead.id} 
@@ -117,13 +115,6 @@ export default function Registrations({
                       </span>
                     </td>
                     <td className="px-6 py-3">
-                      {isItemCliente ? (
-                        <span className="px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 text-[10px] font-bold uppercase">Cliente</span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-600 text-[10px] font-bold uppercase">Lead</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-3">
                       <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">{lead.profession || 'Não informada'}</span>
                     </td>
                     <td className="px-6 py-3">
@@ -138,7 +129,7 @@ export default function Registrations({
                       <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">{lead.status}</span>
                     </td>
                     <td className="px-6 py-3">
-                      <div className="flex items-center justify-start gap-2 transition-opacity">
+                      <div className="flex items-center justify-end gap-2 transition-opacity">
                         <a 
                           href={lead.phone ? `https://wa.me/55${lead.phone.replace(/\D/g, '')}` : undefined}
                           target={lead.phone ? "_blank" : undefined}
