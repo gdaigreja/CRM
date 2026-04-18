@@ -52,6 +52,17 @@ import DocumentGenerator from './components/DocumentGenerator';
 import Login from './components/Login';
 import Finance from './components/Finance';
 
+const STATUS_COLORS: Record<string, string> = {
+  'Novo': '#94a3b8',           // Gray
+  'Qualificação': '#F97316',   // Vibrant Orange
+  'Follow-up': '#EAB308',      // Yellow
+  'Reunião': '#2E7D32',        // Green
+  'Stand-by': '#3B82F6',       // Blue
+  'Recusado': '#EF4444',       // Red
+  'Desqualificado': '#A855F7', // Purple
+  'Recuperação': '#A0522D',    // Terracotta (Default)
+};
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!localStorage.getItem('token'));
   const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('user') || 'null'));
@@ -1327,7 +1338,10 @@ ON CONFLICT (id) DO NOTHING;
                           <div className="flex items-center justify-between px-4 py-3 group/col border-b border-licorice/6">
                             <div className="flex items-center gap-2.5 flex-1 min-w-0">
                               {/* Status dot */}
-                              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#A0522D', opacity: 0.5 }} />
+                              <span 
+                                className="w-2 h-2 rounded-full flex-shrink-0" 
+                                style={{ background: STATUS_COLORS[column] || '#A0522D', opacity: 1 }} 
+                              />
                               {editingColumn === column ? (
                                 <input
                                   autoFocus
