@@ -331,11 +331,11 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
       <div className="px-6 pb-6 flex flex-col gap-6">
         {/* Bloco A: Resultados Contra Loteadora */}
         {/* Bloco A: Resultados Contra Loteadora */}
-        <section className="h-[308px] flex-shrink-0 overflow-hidden flex flex-col bg-white rounded-2xl border border-licorice/5 shadow-sm">
-          <div className="bg-antique/50 text-licorice/60 px-6 py-3 min-h-[48px] flex items-center justify-between border-b border-licorice/5 flex-shrink-0">
+        <section className="h-[308px] flex-shrink-0 overflow-hidden flex flex-col card">
+          <div className="bg-surface-2/60 text-licorice/60 px-5 py-3 min-h-[48px] flex items-center justify-between border-b border-licorice/6 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <CheckCircle2 size={14} className="opacity-50" />
-              <h2 className="font-bold uppercase tracking-widest text-[10px]">Resultados Contra Loteadora</h2>
+              <CheckCircle2 size={13} className="opacity-40" />
+              <h2 className="section-label">Resultados Contra Loteadora</h2>
             </div>
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -356,8 +356,8 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
 
           <div className="overflow-auto flex-1 no-scrollbar">
             <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 z-10 bg-white">
-                <tr className="border-b border-licorice/5 bg-antique/30">
+              <thead className="sticky top-0 z-10">
+                <tr className="border-b border-licorice/5" style={{ background: 'rgba(245,242,237,0.8)' }}>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Cliente</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Resultado</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Status</th>
@@ -552,12 +552,12 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
 
         <div className="flex gap-6 pb-6">
           {/* Bloco B: Fila de Execução */}
-          <section className="flex-1 h-[353px] overflow-hidden flex flex-col bg-white rounded-2xl border border-licorice/5 shadow-sm">
-            <div className="bg-antique/50 text-licorice/60 px-6 py-3 flex items-center justify-between min-h-[48px] border-b border-licorice/5 flex-shrink-0">
+          <section className="flex-1 h-[353px] overflow-hidden flex flex-col card">
+            <div className="bg-surface-2/50 text-licorice/60 px-5 py-3 flex items-center justify-between min-h-[48px] border-b border-licorice/6 flex-shrink-0">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Clock size={14} className="opacity-50" />
-                  <h2 className="font-bold uppercase tracking-widest text-[10px]">Fila de Execução (Churn)</h2>
+                  <Clock size={13} className="opacity-40" />
+                  <h2 className="section-label">Fila de Execução (Churn)</h2>
                 </div>
                 {selectedChurn.size > 0 && (
                   <button
@@ -672,11 +672,11 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
           </section>
 
           {/* Bloco C: Gráfico Taxa de Perda */}
-          <section className="flex-1 h-[353px] overflow-hidden flex flex-col bg-white rounded-2xl border border-licorice/5 shadow-sm">
-            <div className="bg-antique/50 text-licorice/60 px-6 py-3 min-h-[48px] flex items-center border-b border-licorice/5 flex-shrink-0">
+          <section className="flex-1 h-[353px] overflow-hidden flex flex-col card">
+            <div className="bg-surface-2/50 text-licorice/60 px-5 py-3 min-h-[48px] flex items-center border-b border-licorice/6 flex-shrink-0">
               <div className="flex items-center gap-2">
-                <BarChart2 size={14} className="opacity-50" />
-                <h2 className="font-bold uppercase tracking-widest text-[10px]">Taxa de Perda Mês a Mês</h2>
+                <BarChart2 size={13} className="opacity-40" />
+                <h2 className="section-label">Taxa de Perda Mês a Mês</h2>
               </div>
             </div>
 
@@ -737,13 +737,14 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
 
 function MetricCard({ title, value, icon, color }: { title: string; value: string; icon: React.ReactNode; color: string }) {
   return (
-    <div className="bg-white rounded-2xl p-6 border border-licorice/5 shadow-sm flex items-center gap-5">
-      <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center text-white", color)}>
+    <div className="card-interactive p-5 flex items-center gap-4">
+      <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0", color)}
+        style={{ boxShadow: '0 4px 12px rgba(26,17,16,0.15)' }}>
         {icon}
       </div>
-      <div className="flex flex-col">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-licorice/30">{title}</span>
-        <span className="text-2xl font-bold text-licorice">{value}</span>
+      <div className="flex flex-col gap-0.5 min-w-0">
+        <span className="section-label truncate">{title}</span>
+        <span className="font-display text-xl font-bold text-licorice">{value}</span>
       </div>
     </div>
   );

@@ -1,42 +1,280 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @theme {
-  --color-antique: #F5F2ED;
-  --color-licorice: #1A1110;
+  /* ── Brand Palette (preserved) ─────────────────────── */
+  --color-antique:    #F5F2ED;
+  --color-licorice:   #1A1110;
   --color-aventurine: #4D2A29;
   --color-terracotta: #A0522D;
-  --color-exotic: #FF6321;
-  --color-success: #2E7D32;
-  
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-exotic:     #FF6321;
+  --color-success:    #2E7D32;
+
+  /* ── Sidebar brand ──────────────────────────────────── */
+  --color-bordeaux:       #512E2D;
+  --color-bordeaux-light: #6B3B3A;
+  --color-bordeaux-dark:  #38201F;
+
+  /* ── Surface layers (warm whites) ───────────────────── */
+  --color-surface-0:  #FFFFFF;
+  --color-surface-1:  #FAF8F5;
+  --color-surface-2:  #F5F2ED;   /* == antique */
+  --color-surface-3:  #EDE9E2;
+  --color-surface-4:  #E3DDD4;
+
+  /* ── Ink scale ──────────────────────────────────────── */
+  --color-ink-50:  #F7F4F0;
+  --color-ink-100: #EDE9E2;
+  --color-ink-200: #D6CFC4;
+  --color-ink-300: #B5A99A;
+  --color-ink-400: #8C7F72;
+  --color-ink-500: #685F54;
+  --color-ink-600: #4A4138;
+  --color-ink-700: #342D26;
+  --color-ink-800: #211B15;
+  --color-ink-900: #1A1110;   /* == licorice */
+
+  /* ── Semantic ───────────────────────────────────────── */
+  --color-success-soft: #EBF5EC;
+  --color-warning:      #B45309;
+  --color-warning-soft: #FEF3C7;
+  --color-danger-soft:  #FEE2E2;
+  --color-info:         #1E40AF;
+  --color-info-soft:    #EFF6FF;
+
+  /* ── Typography ─────────────────────────────────────── */
+  --font-display: "Bricolage Grotesque", ui-serif, serif;
+  --font-sans:    "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, monospace;
+
+  /* ── Shadows (warm-tinted) ─────────────────────────── */
+  --shadow-xs:     0 1px 2px 0 rgba(26, 17, 16, 0.06);
+  --shadow-sm:     0 1px 3px 0 rgba(26, 17, 16, 0.08), 0 1px 2px -1px rgba(26, 17, 16, 0.06);
+  --shadow-md:     0 4px 12px -2px rgba(26, 17, 16, 0.10), 0 2px 6px -2px rgba(26, 17, 16, 0.06);
+  --shadow-lg:     0 10px 30px -5px rgba(26, 17, 16, 0.14), 0 4px 12px -4px rgba(26, 17, 16, 0.08);
+  --shadow-xl:     0 20px 50px -10px rgba(26, 17, 16, 0.18), 0 8px 20px -8px rgba(26, 17, 16, 0.10);
+  --shadow-bord:   0 0 0 1px rgba(77, 42, 41, 0.20), 0 4px 12px -2px rgba(77, 42, 41, 0.12);
+  --shadow-inset:  inset 0 1px 0 rgba(255,255,255,0.80), inset 0 -1px 0 rgba(26,17,16,0.04);
 }
 
+/* ═══════════════════════════════════════════════════════
+   BASE
+═══════════════════════════════════════════════════════ */
 @layer base {
-  body {
-    @apply bg-antique text-licorice font-sans antialiased;
-    overflow: hidden;
+  *, *::before, *::after {
+    box-sizing: border-box;
   }
 
-  /* Hide scrollbars but allow scrolling */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
+
+  body {
+    @apply bg-antique text-licorice font-sans;
+    overflow: hidden;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* ── Premium custom scrollbar ─────────────────────── */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(77, 42, 41, 0.20);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(77, 42, 41, 0.40);
+  }
+
+  /* ── No-scrollbar utility ─────────────────────────── */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
 }
 
+/* ═══════════════════════════════════════════════════════
+   COMPONENTS — Design System Atoms
+═══════════════════════════════════════════════════════ */
 @layer components {
+
+  /* ─── Buttons ──────────────────────────────────────── */
   .btn-primary {
-    @apply bg-aventurine text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 text-sm font-medium;
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white
+           transition-all duration-200 select-none cursor-pointer;
+    background: linear-gradient(135deg, #512E2D 0%, #4D2A29 100%);
+    box-shadow: 0 1px 3px rgba(77,42,41,0.30), inset 0 1px 0 rgba(255,255,255,0.12);
   }
-  
-  .input-field {
-    @apply w-full bg-white/50 border border-licorice/10 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:border-aventurine transition-colors;
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #6B3B3A 0%, #5a3130 100%);
+    box-shadow: 0 4px 12px rgba(77,42,41,0.28), inset 0 1px 0 rgba(255,255,255,0.15);
+    transform: translateY(-1px);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(77,42,41,0.25);
   }
 
-  .kanban-column {
-    @apply flex flex-col bg-licorice/5 rounded-xl w-72 min-w-[18rem] h-full max-h-full;
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-licorice/60
+           hover:text-licorice hover:bg-licorice/6 transition-all duration-150 cursor-pointer select-none;
   }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
+           bg-white border border-licorice/10 text-licorice/70 hover:text-licorice
+           hover:border-licorice/20 hover:bg-white transition-all duration-150 cursor-pointer select-none;
+    box-shadow: var(--shadow-xs);
+  }
+
+  /* ─── Input field ─────────────────────────────────── */
+  .input-field {
+    @apply w-full border border-licorice/10 rounded-xl px-3 py-2 text-sm
+           text-licorice placeholder:text-licorice/30
+           focus:outline-none focus:border-aventurine/50
+           transition-all duration-150;
+    background: rgba(255,255,255,0.7);
+    box-shadow: var(--shadow-inset), var(--shadow-xs);
+  }
+  .input-field:focus {
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 0 0 3px rgba(77,42,41,0.10), var(--shadow-inset);
+  }
+
+  /* ─── Cards ───────────────────────────────────────── */
+  .card {
+    @apply bg-white rounded-2xl border border-licorice/6;
+    box-shadow: var(--shadow-sm);
+  }
+  .card-elevated {
+    @apply bg-white rounded-2xl border border-licorice/8;
+    box-shadow: var(--shadow-md);
+  }
+  .card-interactive {
+    @apply bg-white rounded-2xl border border-licorice/6 transition-all duration-200 cursor-pointer;
+    box-shadow: var(--shadow-sm);
+  }
+  .card-interactive:hover {
+    @apply border-licorice/12;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+
+  /* ─── Badges ──────────────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase;
+  }
+  .badge-default {
+    @apply badge bg-licorice/6 text-licorice/50;
+  }
+  .badge-primary {
+    @apply badge text-white;
+    background: linear-gradient(135deg, #512E2D, #4D2A29);
+  }
+  .badge-success {
+    @apply badge bg-success/10 text-success;
+  }
+  .badge-warning {
+    @apply badge bg-warning-soft text-warning;
+  }
+  .badge-danger {
+    @apply badge bg-danger-soft text-red-700;
+  }
+  .badge-exotic {
+    @apply badge bg-exotic/10 text-exotic;
+  }
+
+  /* ─── Kanban column ───────────────────────────────── */
+  .kanban-column {
+    @apply flex flex-col rounded-2xl w-72 min-w-[18rem] h-full max-h-full;
+    background: rgba(255,255,255,0.65);
+    border: 1px solid rgba(26,17,16,0.07);
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(8px);
+  }
+
+  /* ─── Section header label ────────────────────────── */
+  .section-label {
+    @apply text-[10px] font-bold uppercase tracking-[0.12em] text-licorice/40;
+  }
+
+  /* ─── Table styles ────────────────────────────────── */
+  .table-header {
+    @apply text-[10px] font-bold uppercase tracking-wider text-licorice/40 px-5 py-3;
+  }
+  .table-row {
+    @apply transition-colors duration-100;
+  }
+  .table-row:hover {
+    background: rgba(245, 242, 237, 0.6);
+  }
+  .table-cell {
+    @apply px-5 py-3 text-sm text-licorice;
+  }
+
+  /* ─── Divider ─────────────────────────────────────── */
+  .divider {
+    @apply border-t border-licorice/6;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   ANIMATIONS & KEYFRAMES
+═══════════════════════════════════════════════════════ */
+@layer utilities {
+
+  /* Shimmer skeleton loader */
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(26,17,16,0.04) 25%,
+      rgba(26,17,16,0.09) 50%,
+      rgba(26,17,16,0.04) 75%
+    );
+    background-size: 200% auto;
+    animation: shimmer 1.6s ease-in-out infinite;
+  }
+
+  /* Subtle badge pulse */
+  @keyframes badge-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.6; transform: scale(0.85); }
+  }
+  .animate-badge-pulse {
+    animation: badge-pulse 2s ease-in-out infinite;
+  }
+
+  /* Glow pulse (for logo on login) */
+  @keyframes glow-pulse {
+    0%, 100% { filter: drop-shadow(0 0 0px rgba(77,42,41,0)); }
+    50%       { filter: drop-shadow(0 0 10px rgba(77,42,41,0.35)); }
+  }
+  .animate-glow-pulse {
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+
+  /* Fade slide in */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-up {
+    animation: fade-up 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+
+  /* Text display font */
+  .font-display { font-family: var(--font-display); }
+  .font-mono    { font-family: var(--font-mono); }
 }

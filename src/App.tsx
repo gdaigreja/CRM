@@ -649,113 +649,111 @@ export default function App() {
     }
   };
 
+  // View label map
+  const viewLabels: Record<string, string> = {
+    kanban: 'Leads',
+    dashboard: 'Dashboard',
+    registrations: 'Clientes',
+    documents: 'Operação',
+    settings: 'Configurações',
+    tasks: 'Tarefas',
+    generator: 'Gerador de Documentos',
+    finance: 'Financeiro',
+  };
+
   return (
     <div className="flex h-screen w-full bg-antique overflow-hidden font-sans text-licorice">
       {/* Sidebar */}
       <aside
         className={cn(
-          "flex flex-col py-6 border-r border-licorice/10 bg-[#512E2D] text-white transition-all duration-300 relative z-20 shadow-2xl",
-          isSidebarExpanded ? "w-64 px-6" : "w-20 items-center"
+          "flex flex-col py-5 border-r text-white transition-all duration-300 relative z-20",
+          isSidebarExpanded ? "w-60 px-5" : "w-[72px] items-center px-3"
         )}
+        style={{
+          background: 'linear-gradient(180deg, #512E2D 0%, #3d2120 100%)',
+          borderColor: 'rgba(255,255,255,0.07)',
+          boxShadow: '4px 0 24px rgba(26,17,16,0.18)',
+        }}
       >
+        {/* Logo area */}
         <div className={cn(
-          "flex items-center mb-10",
-          isSidebarExpanded ? "justify-between" : "justify-center"
+          "flex items-center mb-8",
+          isSidebarExpanded ? "gap-3" : "justify-center"
         )}>
           <img
             src="https://zklkmbokwzhbqdoqsnxs.supabase.co/storage/v1/object/public/Imagens/logo_pequena.png"
             alt="Logo Distrato Justo"
-            className="w-10 h-10 object-contain"
+            className="w-9 h-9 object-contain flex-shrink-0 animate-glow-pulse"
             referrerPolicy="no-referrer"
           />
           {isSidebarExpanded && (
-            <span className="font-bold tracking-tight text-lg ml-3 flex-1">Distrato Justo</span>
+            <div className="flex flex-col leading-none">
+              <span className="font-display font-bold text-base text-white tracking-tight">Distrato</span>
+              <span className="font-display font-bold text-base text-white/60 tracking-tight">Justo</span>
+            </div>
           )}
         </div>
 
-        <nav className="flex flex-col gap-4 w-full flex-1">
+        {/* Divider */}
+        <div className="w-full h-px bg-white/8 mb-5" />
+
+        <nav className="flex flex-col gap-1 w-full flex-1">
           {isFeatureEnabled('leads') && (
-            <SidebarIcon
-              icon={<Columns size={20} />}
-              label="Leads"
-              active={view === 'kanban'}
-              expanded={isSidebarExpanded}
-              onClick={() => setView('kanban')}
-            />
+            <SidebarIcon icon={<Columns size={18} />} label="Leads" active={view === 'kanban'} expanded={isSidebarExpanded} onClick={() => setView('kanban')} />
           )}
           {isFeatureEnabled('clients') && (
-            <SidebarIcon
-              icon={<Users size={20} />}
-              label="Clientes"
-              active={view === 'registrations'}
-              expanded={isSidebarExpanded}
-              onClick={() => setView('registrations')}
-            />
+            <SidebarIcon icon={<Users size={18} />} label="Clientes" active={view === 'registrations'} expanded={isSidebarExpanded} onClick={() => setView('registrations')} />
           )}
           {isFeatureEnabled('documents') && (
-            <SidebarIcon
-              icon={<Activity size={20} />}
-              label="Operação"
-              active={view === 'documents'}
-              expanded={isSidebarExpanded}
-              onClick={() => setView('documents')}
-            />
+            <SidebarIcon icon={<Activity size={18} />} label="Operação" active={view === 'documents'} expanded={isSidebarExpanded} onClick={() => setView('documents')} />
           )}
           {isFeatureEnabled('finance') && (
-            <SidebarIcon
-              icon={<DollarSign size={20} />}
-              label="Financeiro"
-              active={view === 'finance'}
-              expanded={isSidebarExpanded}
-              onClick={() => setView('finance')}
-            />
+            <SidebarIcon icon={<DollarSign size={18} />} label="Financeiro" active={view === 'finance'} expanded={isSidebarExpanded} onClick={() => setView('finance')} />
           )}
           {isFeatureEnabled('tasks') && (
-            <SidebarIcon
-              icon={<CheckSquare size={20} />}
-              label="Tarefas"
-              active={view === 'tasks'}
-              expanded={isSidebarExpanded}
-              onClick={() => setView('tasks')}
-            />
+            <SidebarIcon icon={<CheckSquare size={18} />} label="Tarefas" active={view === 'tasks'} expanded={isSidebarExpanded} onClick={() => setView('tasks')} />
           )}
           {isFeatureEnabled('generator') && (
-            <SidebarIcon
-              icon={<FilePlus size={20} />}
-              label="Gerador"
-              active={view === 'generator'}
-              expanded={isSidebarExpanded}
-              onClick={() => setView('generator')}
-            />
+            <SidebarIcon icon={<FilePlus size={18} />} label="Gerador" active={view === 'generator'} expanded={isSidebarExpanded} onClick={() => setView('generator')} />
           )}
           {isFeatureEnabled('dashboard') && (
-            <SidebarIcon
-              icon={<LayoutDashboard size={20} />}
-              label="Dashboard"
-              active={view === 'dashboard'}
-              expanded={isSidebarExpanded}
-              onClick={() => setView('dashboard')}
-            />
+            <SidebarIcon icon={<LayoutDashboard size={18} />} label="Dashboard" active={view === 'dashboard'} expanded={isSidebarExpanded} onClick={() => setView('dashboard')} />
           )}
           {(isFeatureEnabled('access') || isFeatureEnabled('integrations')) && (
-            <SidebarIcon
-              icon={<Settings size={20} />}
-              label="Configurações"
-              active={view === 'settings'}
-              expanded={isSidebarExpanded}
-              onClick={() => setView('settings')}
-            />
+            <SidebarIcon icon={<Settings size={18} />} label="Configurações" active={view === 'settings'} expanded={isSidebarExpanded} onClick={() => setView('settings')} />
           )}
         </nav>
 
-        <div className="mt-auto flex flex-col gap-2 w-full">
-          <button
-            onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
-            className="flex items-center justify-center p-2.5 rounded-xl cursor-pointer transition-all duration-200 text-white/70 hover:bg-white/5 w-full"
-          >
-            {isSidebarExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-          </button>
-        </div>
+        {/* Divider */}
+        <div className="w-full h-px bg-white/8 mb-4" />
+
+        {/* User chip */}
+        {isSidebarExpanded ? (
+          <div className="flex items-center gap-3 mb-3 px-2">
+            <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white"
+              style={{ background: 'rgba(255,255,255,0.15)' }}>
+              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+            </div>
+            <div className="flex flex-col leading-tight min-w-0">
+              <span className="text-xs font-semibold text-white truncate">{user?.name || 'Usuário'}</span>
+              <span className="text-[10px] text-white/40 capitalize">{user?.role || 'editor'}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-3 flex justify-center">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
+              style={{ background: 'rgba(255,255,255,0.15)' }}>
+              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+          className="flex items-center justify-center p-2 rounded-xl cursor-pointer transition-all duration-200 text-white/40 hover:text-white hover:bg-white/8 w-full"
+        >
+          {isSidebarExpanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+        </button>
       </aside>
 
       {/* Main Content */}
@@ -892,8 +890,19 @@ ON CONFLICT (id) DO NOTHING;
         )}
 
         {/* Header */}
-        <header className="h-16 border-b border-licorice/5 flex items-center justify-between px-8 bg-white/10">
+        <header className="h-14 border-b flex items-center justify-between px-6 flex-shrink-0"
+          style={{
+            background: 'rgba(245,242,237,0.85)',
+            backdropFilter: 'blur(12px)',
+            borderColor: 'rgba(26,17,16,0.08)',
+            boxShadow: '0 1px 0 rgba(255,255,255,0.8), 0 2px 8px rgba(26,17,16,0.04)',
+          }}
+        >
           <div className="flex items-center gap-4 flex-1">
+            {/* Breadcrumb */}
+            <div className="flex items-center gap-2 mr-2">
+              <span className="font-display font-semibold text-sm text-licorice/80">{viewLabels[view] || view}</span>
+            </div>
             {view === 'kanban' && (
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-licorice/30" size={14} />
@@ -1292,20 +1301,20 @@ ON CONFLICT (id) DO NOTHING;
 
           <button
             onClick={handleLogout}
-            className="ml-4 p-2 text-licorice/40 hover:text-red-500 transition-colors flex items-center gap-2"
+            className="ml-2 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-licorice/40 hover:text-red-600 hover:bg-red-50 transition-all duration-150"
             title="Sair"
           >
-            <LogOut size={16} />
-            <span className="text-xs font-bold uppercase tracking-widest">Sair</span>
+            <LogOut size={14} />
+            <span>Sair</span>
           </button>
         </header>
 
         {/* Content Area */}
         <div className="flex-1 overflow-hidden flex flex-col">
           {view === 'kanban' ? (
-            <div className="flex-1 h-full overflow-x-auto p-6 no-scrollbar">
+            <div className="flex-1 h-full overflow-x-auto p-5 no-scrollbar">
               <DragDropContext onDragEnd={onDragEnd}>
-                <div className="flex gap-4 h-full">
+                <div className="flex gap-3.5 h-full">
                   {columns.filter(c => c !== 'Assinado' && c !== 'Churn').map((column) => (
                     <Droppable key={column} droppableId={column}>
                       {(provided) => (
@@ -1314,47 +1323,52 @@ ON CONFLICT (id) DO NOTHING;
                           ref={provided.innerRef}
                           className="kanban-column"
                         >
-                          <div className="p-4 flex items-center justify-between group/col">
-                            {editingColumn === column ? (
-                              <input
-                                autoFocus
-                                className="text-xs font-bold uppercase tracking-widest text-licorice bg-white border border-aventurine rounded px-1 outline-none w-full mr-2"
-                                defaultValue={column}
-                                onBlur={(e) => renameColumn(column, e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') renameColumn(column, e.currentTarget.value);
-                                  if (e.key === 'Escape') setEditingColumn(null);
-                                }}
-                              />
-                            ) : (
-                              <h2
-                                onClick={() => setEditingColumn(column)}
-                                className="text-xs font-bold uppercase tracking-widest text-licorice/40 cursor-pointer hover:text-licorice transition-colors truncate flex-1"
-                              >
-                                {column}
-                              </h2>
-                            )}
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] bg-licorice/10 px-2 py-0.5 rounded-full font-medium">
+                          {/* Column header with left accent strip */}
+                          <div className="flex items-center justify-between px-4 py-3 group/col border-b border-licorice/6">
+                            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                              {/* Status dot */}
+                              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#A0522D', opacity: 0.5 }} />
+                              {editingColumn === column ? (
+                                <input
+                                  autoFocus
+                                  className="text-[11px] font-bold uppercase tracking-wider text-licorice bg-antique border border-aventurine/40 rounded-lg px-2 py-0.5 outline-none w-full"
+                                  defaultValue={column}
+                                  onBlur={(e) => renameColumn(column, e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') renameColumn(column, e.currentTarget.value);
+                                    if (e.key === 'Escape') setEditingColumn(null);
+                                  }}
+                                />
+                              ) : (
+                                <h2
+                                  onClick={() => setEditingColumn(column)}
+                                  className="text-[11px] font-bold uppercase tracking-wider text-licorice/50 cursor-pointer hover:text-licorice transition-colors truncate"
+                                >
+                                  {column}
+                                </h2>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-bold text-licorice/40 bg-licorice/8 px-2 py-0.5 rounded-full">
                                 {filteredLeads.filter(l => l.status === column).length}
                               </span>
                               <button
                                 onClick={() => addNewLead(column)}
-                                className="p-1 text-licorice/20 hover:text-aventurine hover:bg-aventurine/10 rounded transition-all"
+                                className="p-1 text-licorice/25 hover:text-aventurine hover:bg-aventurine/10 rounded-lg transition-all"
                                 title="Adicionar Lead"
                               >
                                 <Plus size={12} />
                               </button>
                               <button
                                 onClick={() => deleteColumn(column)}
-                                className="p-1 text-licorice/20 hover:text-exotic hover:bg-exotic/10 rounded transition-all"
+                                className="p-1 text-licorice/25 hover:text-exotic hover:bg-exotic/8 rounded-lg transition-all opacity-0 group-hover/col:opacity-100"
                                 title="Excluir Coluna"
                               >
                                 <Trash2 size={12} />
                               </button>
                             </div>
                           </div>
-                          <div className="flex-1 overflow-y-auto px-2 pb-4 no-scrollbar flex flex-col gap-3">
+                          <div className="flex-1 overflow-y-auto px-2.5 pb-4 pt-2.5 no-scrollbar flex flex-col gap-2.5">
                             {filteredLeads
                               .filter(l => l.status === column)
                               .map((lead, index) => (
@@ -1492,33 +1506,37 @@ function DeleteConfirmModal({ onClose, onConfirm }: { onClose: () => void; onCon
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+      className="fixed inset-0 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+      style={{ background: 'rgba(26,17,16,0.35)' }}
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center gap-6"
+        initial={{ scale: 0.92, opacity: 0, y: 12 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.92, opacity: 0, y: 12 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+        className="bg-white w-full max-w-sm rounded-3xl p-8 flex flex-col items-center text-center gap-6"
+        style={{ boxShadow: '0 24px 64px rgba(26,17,16,0.22), 0 0 0 1px rgba(26,17,16,0.06)' }}
         onClick={e => e.stopPropagation()}
       >
-        <div className="w-16 h-16 bg-exotic/10 rounded-full flex items-center justify-center text-exotic">
-          <AlertCircle size={32} />
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(255,99,33,0.1)' }}>
+          <AlertCircle size={28} className="text-exotic" />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-licorice">Excluir Registro?</h3>
-          <p className="text-sm text-licorice/60 mt-2">Esta ação não pode ser desfeita. Todos os dados deste lead serão perdidos permanentemente.</p>
+          <h3 className="font-display text-xl font-bold text-licorice">Excluir Registro?</h3>
+          <p className="text-sm text-licorice/50 mt-2 leading-relaxed">Esta ação não pode ser desfeita. Todos os dados deste lead serão perdidos permanentemente.</p>
         </div>
         <div className="flex w-full gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-3 text-sm font-bold text-licorice/40 hover:text-licorice transition-colors"
+            className="flex-1 py-3 text-sm font-semibold text-licorice/40 hover:text-licorice bg-antique/40 hover:bg-antique rounded-xl transition-all"
           >
             Cancelar
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 py-3 bg-exotic text-white rounded-xl text-sm font-bold hover:bg-exotic/90 transition-colors"
+            className="flex-1 py-3 text-white text-sm font-bold rounded-xl transition-all hover:opacity-90 active:scale-95"
+            style={{ background: '#FF6321', boxShadow: '0 4px 12px rgba(255,99,33,0.3)' }}
           >
             Sim, Excluir
           </button>
@@ -1533,19 +1551,31 @@ function SidebarIcon({ icon, label, active = false, expanded = false, onClick }:
   return (
     <div
       onClick={onClick}
+      title={!expanded ? label : undefined}
       className={cn(
-        "flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all duration-200 group",
+        "relative flex items-center gap-2.5 px-2.5 py-2 rounded-xl cursor-pointer transition-all duration-200 select-none group",
         !expanded && "justify-center",
         active
-          ? "bg-[#93774E] text-white shadow-md shadow-black/20"
-          : "text-white/70 hover:bg-white/5 hover:text-white hover:shadow-xl hover:shadow-black/30"
+          ? "text-white"
+          : "text-white/50 hover:text-white hover:bg-white/8"
       )}
+      style={active ? {
+        background: 'rgba(255,255,255,0.14)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 3px rgba(0,0,0,0.2)',
+      } : {}}
     >
+      {/* Active left indicator */}
+      {active && (
+        <span
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full"
+          style={{ background: 'rgba(255,255,255,0.7)' }}
+        />
+      )}
       <div className="flex-shrink-0">{icon}</div>
       {expanded && (
         <span className={cn(
-          "text-sm font-medium transition-all duration-300 whitespace-nowrap overflow-hidden",
-          active ? "text-white" : "text-white/70 group-hover:text-white"
+          "text-[13px] font-medium whitespace-nowrap overflow-hidden",
+          active ? "text-white" : "text-white/50 group-hover:text-white"
         )}>
           {label}
         </span>
@@ -1557,41 +1587,54 @@ function SidebarIcon({ icon, label, active = false, expanded = false, onClick }:
 function LeadCard({ lead, index, onClick, onEdit }: { lead: Lead; index: number; onClick: () => void; onEdit: () => void; key?: string }) {
   return (
     <Draggable draggableId={lead.id} index={index}>
-      {(provided) => (
+      {(provided, snapshot) => (
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={onClick}
-          className="bg-white p-3 rounded-lg shadow-sm border border-licorice/5 hover:border-aventurine/30 transition-all cursor-pointer group relative"
+          className="group relative cursor-pointer rounded-xl transition-all duration-200"
+          style={{
+            background: snapshot.isDragging ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.92)',
+            border: '1px solid rgba(26,17,16,0.08)',
+            boxShadow: snapshot.isDragging
+              ? '0 12px 32px rgba(26,17,16,0.18), 0 4px 8px rgba(26,17,16,0.10), 0 0 0 1px rgba(77,42,41,0.15)'
+              : '0 1px 3px rgba(26,17,16,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
+            transform: snapshot.isDragging ? 'rotate(1.5deg) scale(1.02)' : 'none',
+          }}
         >
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-sm font-semibold leading-tight group-hover:text-aventurine transition-colors pr-6">{lead.name}</h3>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit();
-              }}
-              className="absolute top-3 right-3 p-1 text-licorice/20 hover:text-aventurine opacity-0 group-hover:opacity-100 transition-all"
-            >
-              <Pencil size={12} />
-            </button>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-1.5 text-[10px] text-licorice/50">
-              <Phone size={10} />
-              <span>{lead.phone ? formatPhone(lead.phone) : 'Sem telefone'}</span>
+          {/* Hover lift effect handled via CSS transition */}
+          <div className="p-3.5">
+            <div className="flex justify-between items-start mb-2.5">
+              <h3 className="text-sm font-semibold leading-snug text-licorice group-hover:text-aventurine transition-colors duration-150 pr-6">
+                {lead.name}
+              </h3>
+              <button
+                onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                className="absolute top-3 right-3 p-1.5 text-licorice/20 hover:text-aventurine hover:bg-aventurine/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+              >
+                <Pencil size={11} />
+              </button>
             </div>
-            <div className="flex items-center gap-1.5 text-[10px] text-licorice/50">
-              <MapPin size={10} />
-              <span>{lead.city ? `${lead.city}/${lead.state}` : 'Sem cidade'}</span>
+
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-1.5 text-[11px] text-licorice/40">
+                <Phone size={10} className="flex-shrink-0" />
+                <span className="truncate">{lead.phone ? formatPhone(lead.phone) : '—'}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-[11px] text-licorice/40">
+                <MapPin size={10} className="flex-shrink-0" />
+                <span className="truncate">{lead.city ? `${lead.city}${lead.state ? '/' + lead.state : ''}` : '—'}</span>
+              </div>
             </div>
-          </div>
-          <div className="mt-3 pt-3 border-t border-licorice/5 flex justify-between items-center">
-            <span className="text-[10px] font-bold text-aventurine">{formatCurrency(lead.valuePaid)}</span>
-            <span className="text-[9px] bg-licorice/10 text-licorice/60 px-1.5 py-0.5 rounded uppercase font-bold tracking-tighter">
-              {lead.propertyType}
-            </span>
+
+            <div className="mt-3 pt-2.5 border-t border-licorice/6 flex justify-between items-center">
+              <span className="text-xs font-bold font-mono text-aventurine">{formatCurrency(lead.valuePaid)}</span>
+              <span className="inline-flex items-center text-[9px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full"
+                style={{ background: 'rgba(26,17,16,0.06)', color: 'rgba(26,17,16,0.40)' }}>
+                {lead.propertyType}
+              </span>
+            </div>
           </div>
         </div>
       )}

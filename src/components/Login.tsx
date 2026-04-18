@@ -64,16 +64,25 @@ export default function Login({ onLogin }: LoginProps) {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-sm"
       >
-        <div className="bg-[#151619] border border-white/10 rounded-3xl p-6 shadow-2xl relative z-10">
-          <div className="text-center mb-6">
-            <img 
-              src="https://zklkmbokwzhbqdoqsnxs.supabase.co/storage/v1/object/public/Imagens/logo_pequena.png" 
-              alt="Logo Distrato Justo" 
-              className="w-12 h-12 object-contain mb-4 mx-auto"
+        <div
+          className="relative z-10 w-full"
+          style={{
+            background: 'rgba(21, 18, 16, 0.92)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '24px',
+            padding: '32px',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(166,98,40,0.08)',
+          }}
+        >
+          <div className="text-center mb-7">
+            <img
+              src="https://zklkmbokwzhbqdoqsnxs.supabase.co/storage/v1/object/public/Imagens/logo_pequena.png"
+              alt="Logo Distrato Justo"
+              className="w-11 h-11 object-contain mb-4 mx-auto animate-glow-pulse"
               referrerPolicy="no-referrer"
             />
-            <h1 className="text-2xl font-bold text-white mb-1 tracking-tight">Distrato Justo</h1>
-            <p className="text-white/50 text-[11px]">Acesse sua conta para gerenciar leads e documentos</p>
+            <h1 className="font-display text-2xl font-bold text-white mb-1 tracking-tight">Distrato Justo</h1>
+            <p className="text-white/40 text-xs">Acesse sua conta para gerenciar leads e documentos</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -92,34 +101,47 @@ export default function Login({ onLogin }: LoginProps) {
             </AnimatePresence>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-white/40 uppercase tracking-wider ml-1">E-mail</label>
+              <label className="block mb-1.5 text-[10px] font-bold text-white/40 uppercase tracking-widest ml-0.5">E-mail</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className="w-5 h-5 text-white/30 group-focus-within:text-[#93774E] transition-colors" />
+                  <Mail className="w-4 h-4 text-white/25 group-focus-within:text-white/60 transition-colors" />
                 </div>
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:border-[#93774E]/50 focus:ring-1 focus:ring-[#93774E]/50 transition-all text-sm"
+                  className="w-full border rounded-xl py-3 pl-11 pr-4 text-white placeholder:text-white/15 focus:outline-none transition-all text-sm"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    borderColor: 'rgba(255,255,255,0.10)',
+                    boxShadow: 'none',
+                  }}
+                  onFocus={e => e.currentTarget.style.borderColor = 'rgba(160,82,45,0.5)'}
+                  onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'}
                   placeholder="seu@email.com"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-white/40 uppercase tracking-wider ml-1">Senha</label>
+              <label className="block mb-1.5 text-[10px] font-bold text-white/40 uppercase tracking-widest ml-0.5">Senha</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="w-5 h-5 text-white/30 group-focus-within:text-[#93774E] transition-colors" />
+                  <Lock className="w-4 h-4 text-white/25 group-focus-within:text-white/60 transition-colors" />
                 </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 pl-12 pr-12 text-white placeholder:text-white/20 focus:outline-none focus:border-[#93774E]/50 focus:ring-1 focus:ring-[#93774E]/50 transition-all text-sm"
+                  className="w-full border rounded-xl py-3 pl-11 pr-12 text-white placeholder:text-white/15 focus:outline-none transition-all text-sm"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    borderColor: 'rgba(255,255,255,0.10)',
+                  }}
+                  onFocus={e => e.currentTarget.style.borderColor = 'rgba(160,82,45,0.5)'}
+                  onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'}
                   placeholder="••••••••"
                 />
                 <button
@@ -135,7 +157,11 @@ export default function Login({ onLogin }: LoginProps) {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#93774E] hover:bg-[#A68B63] text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-[#93774E]/20 transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group text-sm"
+              className="w-full text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2.5 disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+              style={{
+                background: 'linear-gradient(135deg, #A0522D 0%, #7a3d20 100%)',
+                boxShadow: '0 4px 20px rgba(160,82,45,0.35), inset 0 1px 0 rgba(255,255,255,0.12)',
+              }}
             >
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -148,9 +174,9 @@ export default function Login({ onLogin }: LoginProps) {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-white/5 text-center">
-            <p className="text-white/30 text-[11px]">
-              Esqueceu sua senha? <span className="text-[#93774E] cursor-pointer hover:underline text-[11px]">Recuperar acesso</span>
+          <div className="mt-5 pt-5 border-t text-center" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <p className="text-white/25 text-[11px]">
+              Esqueceu sua senha? <span className="text-white/50 cursor-pointer hover:text-white transition-colors">Recuperar acesso</span>
             </p>
           </div>
         </div>

@@ -123,49 +123,54 @@ export default function Dashboard({ leads }: DashboardProps) {
   const COLORS = ['#2D2A26', '#4A453E', '#6B6359', '#8C8275', '#AD9F8F'];
 
   return (
-    <div className="h-full overflow-y-auto p-8 no-scrollbar bg-antique/30">
-      <div className="max-w-7xl mx-auto flex flex-col gap-8">
+    <div className="h-full overflow-y-auto p-6 no-scrollbar" style={{ background: 'rgba(245,242,237,0.4)' }}>
+      <div className="max-w-7xl mx-auto flex flex-col gap-6">
         {/* Financial Block */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-          <MetricCard 
-            title="Total pago pelos clientes" 
-            value={formatCurrency(totalPaid)} 
-            icon={<DollarSign size={20} />}
+          <MetricCard
+            title="Total pago pelos clientes"
+            value={formatCurrency(totalPaid)}
+            icon={<DollarSign size={18} />}
             description="Soma total investida pelos leads"
+            accent="#4D2A29"
           />
-          <MetricCard 
-            title="Projeção de Recuperação" 
-            value={formatCurrency(recoveryProjection)} 
-            icon={<TrendingUp size={20} />}
+          <MetricCard
+            title="Projeção de Recuperação"
+            value={formatCurrency(recoveryProjection)}
+            icon={<TrendingUp size={18} />}
             description="75% da soma de leads assinados"
+            accent="#512E2D"
           />
-          <MetricCard 
-            title="Projeção de Honorários" 
-            value={formatCurrency(totalFees)} 
-            icon={<DollarSign size={20} />}
+          <MetricCard
+            title="Projeção de Honorários"
+            value={formatCurrency(totalFees)}
+            icon={<DollarSign size={18} />}
             description="Projeção de recebimento"
+            accent="#A0522D"
           />
-          <MetricCard 
-            title="Ticket Médio Projetado" 
-            value={formatCurrency(projectedAverageTicket)} 
-            icon={<Target size={20} />}
+          <MetricCard
+            title="Ticket Médio Projetado"
+            value={formatCurrency(projectedAverageTicket)}
+            icon={<Target size={18} />}
             description="Média por contrato assinado"
+            accent="#A0522D"
           />
-          <MetricCard 
-            title="Contratos Assinados" 
-            value={signedLeadsCount.toString()} 
-            icon={<Target size={20} />}
+          <MetricCard
+            title="Contratos Assinados"
+            value={signedLeadsCount.toString()}
+            icon={<Target size={18} />}
             description="Total de contratos fechados"
+            accent="#4D2A29"
           />
         </div>
 
         {/* Efficiency Block */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <BarChart3 size={16} className="text-licorice/40" />
-            <h3 className="text-xs font-bold uppercase tracking-widest text-licorice/40">Funil de Eficiência</h3>
+            <BarChart3 size={14} className="text-licorice/30" />
+            <h3 className="section-label">Funil de Eficiência</h3>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <EfficiencyCard title="Conv. Geral" value={convGeral} />
             <EfficiencyCard title="Alcance Contato" value={alcanceContato} />
             <EfficiencyCard title="Índice Qualif." value={indQualificacao} />
@@ -178,10 +183,10 @@ export default function Dashboard({ leads }: DashboardProps) {
         {/* New Visualizations Block */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Loss Reasons Chart */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-licorice/5 flex flex-col gap-6">
+          <div className="card p-5 flex flex-col gap-5">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-licorice/40">Motivos de Perda</h3>
-              <PieChart size={16} className="text-licorice/20" />
+              <h3 className="section-label">Motivos de Perda</h3>
+              <PieChart size={14} className="text-licorice/20" />
             </div>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -209,10 +214,10 @@ export default function Dashboard({ leads }: DashboardProps) {
           </div>
 
           {/* Monthly Evolution Chart */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-licorice/5 flex flex-col gap-6">
+          <div className="card p-5 flex flex-col gap-5">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-licorice/40">Evolução Mensal</h3>
-              <LineChartIcon size={16} className="text-licorice/20" />
+              <h3 className="section-label">Evolução Mensal</h3>
+              <LineChartIcon size={14} className="text-licorice/20" />
             </div>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -250,12 +255,12 @@ export default function Dashboard({ leads }: DashboardProps) {
         </div>
 
         {/* Charts Block */}
-        <div className="grid grid-cols-1 gap-6 pb-8">
+        <div className="grid grid-cols-1 gap-5 pb-6">
           {/* Funnel Chart */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-licorice/5 flex flex-col gap-6">
+          <div className="card p-5 flex flex-col gap-5">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-licorice/40">Funil de Conversão</h3>
-              <BarChart3 size={16} className="text-licorice/20" />
+              <h3 className="section-label">Funil de Conversão</h3>
+              <BarChart3 size={14} className="text-licorice/20" />
             </div>
             <div className="h-[350px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -292,44 +297,50 @@ export default function Dashboard({ leads }: DashboardProps) {
 }
 
 function EfficiencyCard({ title, value }: { title: string; value: number }) {
+  const color = value >= 50 ? '#2E7D32' : value >= 30 ? '#A0522D' : '#FF6321';
+  const barBg = value >= 50 ? 'rgba(46,125,50,0.12)' : value >= 30 ? 'rgba(160,82,45,0.12)' : 'rgba(255,99,33,0.10)';
   return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border border-licorice/5 flex flex-col gap-2">
-      <h3 className="text-[9px] uppercase font-bold text-licorice/30 tracking-widest truncate">{title}</h3>
-      <div className="flex items-baseline gap-1">
-        <span className="text-lg font-bold text-licorice">{value.toFixed(1)}</span>
-        <span className="text-[10px] font-bold text-licorice/40">%</span>
+    <div className="card p-4 flex flex-col gap-3">
+      <h3 className="text-[9px] uppercase font-bold tracking-wider" style={{ color: 'rgba(26,17,16,0.35)' }}>{title}</h3>
+      <div className="flex items-baseline gap-0.5">
+        <span className="font-display text-xl font-bold text-licorice">{value.toFixed(1)}</span>
+        <span className="text-[11px] font-bold" style={{ color: 'rgba(26,17,16,0.35)' }}>%</span>
       </div>
-      <div className="w-full bg-antique h-1 rounded-full overflow-hidden">
-        <motion.div 
+      <div className="w-full rounded-full overflow-hidden" style={{ height: '4px', background: barBg }}>
+        <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${Math.min(value, 100)}%` }}
-          className="h-full bg-aventurine"
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className="h-full rounded-full"
+          style={{ background: color }}
         />
       </div>
     </div>
   );
 }
 
-function MetricCard({ title, value, icon, description }: { title: string; value: string; icon: React.ReactNode; description: string }) {
+function MetricCard({ title, value, icon, description, accent = '#4D2A29' }: { title: string; value: string; icon: React.ReactNode; description: string; accent?: string }) {
   return (
-    <motion.div 
-      initial={{ y: 20, opacity: 0 }}
+    <motion.div
+      initial={{ y: 12, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="bg-white p-6 rounded-2xl shadow-sm border border-licorice/5 flex flex-col gap-4"
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="card-interactive p-5 flex flex-col gap-4"
     >
       <div className="flex items-center justify-between">
-        <div className="p-2 bg-antique rounded-lg text-licorice/60">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white flex-shrink-0"
+          style={{ background: accent, boxShadow: `0 4px 12px ${accent}30` }}>
           {icon}
         </div>
-        <span className="text-[10px] font-bold text-aventurine bg-aventurine/5 px-2 py-0.5 rounded-full">
-          +12%
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${accent}12`, color: accent }}>
+          Live
         </span>
       </div>
-      <div className="flex flex-col gap-1">
-        <h3 className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">{title}</h3>
-        <p className="text-2xl font-bold tracking-tight text-licorice">{value}</p>
+      <div className="flex flex-col gap-0.5">
+        <h3 className="section-label">{title}</h3>
+        <p className="font-display text-2xl font-bold tracking-tight text-licorice">{value}</p>
       </div>
-      <p className="text-[10px] text-licorice/40 font-medium">{description}</p>
+      <p className="text-[11px] text-licorice/35 font-medium leading-relaxed">{description}</p>
     </motion.div>
   );
 }
