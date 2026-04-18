@@ -173,23 +173,23 @@
     @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase;
   }
   .badge-default {
-    @apply badge bg-licorice/6 text-licorice/50;
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-licorice/6 text-licorice/50;
   }
   .badge-primary {
-    @apply badge text-white;
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase text-white;
     background: linear-gradient(135deg, #512E2D, #4D2A29);
   }
   .badge-success {
-    @apply badge bg-success/10 text-success;
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-success/10 text-success;
   }
   .badge-warning {
-    @apply badge bg-warning-soft text-warning;
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-warning-soft text-warning;
   }
   .badge-danger {
-    @apply badge bg-danger-soft text-red-700;
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-danger-soft text-red-700;
   }
   .badge-exotic {
-    @apply badge bg-exotic/10 text-exotic;
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-exotic/10 text-exotic;
   }
 
   /* ─── Kanban column ───────────────────────────────── */
@@ -277,4 +277,33 @@
   /* Text display font */
   .font-display { font-family: var(--font-display); }
   .font-mono    { font-family: var(--font-mono); }
+}
+/* ═══════════════════════════════════════════════════════
+   CURSOR — Unlayered (beats all @layer rules incl. Preflight)
+═══════════════════════════════════════════════════════ */
+button,
+[type="button"],
+[type="submit"],
+[type="reset"],
+[type="checkbox"],
+[type="radio"],
+select,
+label[for],
+summary,
+[role="button"],
+[role="tab"],
+[role="menuitem"],
+[role="option"],
+[role="checkbox"],
+[role="switch"],
+[tabindex]:not([tabindex="-1"]),
+a[href],
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Disabled → not-allowed always wins */
+[disabled],
+[aria-disabled="true"] {
+  cursor: not-allowed;
 }

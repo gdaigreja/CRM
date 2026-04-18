@@ -1593,14 +1593,14 @@ function LeadCard({ lead, index, onClick, onEdit }: { lead: Lead; index: number;
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={onClick}
-          className="group relative cursor-pointer rounded-xl transition-all duration-200"
+          className="group relative cursor-pointer rounded-xl transition-shadow duration-150"
           style={{
+            ...provided.draggableProps.style,
             background: snapshot.isDragging ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.92)',
             border: '1px solid rgba(26,17,16,0.08)',
             boxShadow: snapshot.isDragging
               ? '0 12px 32px rgba(26,17,16,0.18), 0 4px 8px rgba(26,17,16,0.10), 0 0 0 1px rgba(77,42,41,0.15)'
               : '0 1px 3px rgba(26,17,16,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
-            transform: snapshot.isDragging ? 'rotate(1.5deg) scale(1.02)' : 'none',
           }}
         >
           {/* Hover lift effect handled via CSS transition */}
