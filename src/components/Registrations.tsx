@@ -7,6 +7,7 @@ import {
   Trash2, 
   ExternalLink, 
   Filter,
+  ChevronLeft,
   ChevronRight,
   User,
   MapPin,
@@ -46,6 +47,10 @@ export default function Registrations({
   const [internalFilterStatus, setInternalFilterStatus] = useState<LeadStatus | 'all'>('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [viewingNotes, setViewingNotes] = useState<Lead | null>(null);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const searchQuery = externalFilters?.searchQuery ?? internalSearchQuery;
   const filterType = externalFilters?.filterType ?? internalFilterType;
@@ -73,6 +78,17 @@ export default function Registrations({
     }).sort((a, b) => a.name.localeCompare(b.name));
   }, [leads, searchQuery, filterType, filterStatus]);
 
+  // Reset to first page when filtering or searching
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterType, filterStatus]);
+
+  const totalPages = Math.ceil(filteredLeads.length / itemsPerPage);
+  const paginatedLeads = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredLeads.slice(start, start + itemsPerPage);
+  }, [filteredLeads, currentPage]);
+
   const handleDelete = (id: string) => {
     onDelete(id);
     setShowDeleteConfirm(null);
@@ -96,7 +112,7 @@ export default function Registrations({
               </tr>
             </thead>
             <tbody className="divide-y divide-licorice/5">
-              {filteredLeads.map((lead) => {
+              {paginatedLeads.map((lead) => {
                 return (
                   <tr 
                     key={lead.id} 
@@ -180,6 +196,70 @@ export default function Registrations({
               <p className="text-sm">Nenhum registro encontrado</p>
             </div>
           )}
+
+          {/* Pagination Footer */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-licorice/5 bg-antique/10 flex items-center justify-between">
+              <div className="text-xs font-medium text-licorice/40">
+                Mostrando <span className="text-licorice font-semibold">{paginatedLeads.length}</span> de <span className="text-licorice font-semibold">{filteredLeads.length}</span> registros
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setCurrentPage(prev => Math.max(1, prev - 1)); }}
+                  disabled={currentPage === 1}
+                  className={cn(
+                    "p-2 rounded-xl border transition-all duration-200",
+                    currentPage === 1 
+                      ? "border-transparent text-licorice/10 cursor-not-allowed" 
+                      : "border-licorice/5 text-licorice/40 hover:bg-white hover:text-aventurine hover:border-aventurine/20 shadow-sm"
+                  )}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+
+                <div className="flex items-center gap-1 mx-2">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
+                    // Show current page, and a few around it if total is large
+                    // For now, let's keep it simple as the user asked for "maximum 10 results per page"
+                    // but we can optimize the number of buttons shown if needed.
+                    if (totalPages <= 7 || page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                      return (
+                        <button
+                          key={page}
+                          onClick={(e) => { e.stopPropagation(); setCurrentPage(page); }}
+                          className={cn(
+                            "w-8 h-8 rounded-xl text-xs font-medium transition-all duration-200",
+                            currentPage === page 
+                              ? "bg-aventurine text-white shadow-md shadow-aventurine/20" 
+                              : "text-licorice/40 hover:bg-white hover:text-licorice border border-transparent hover:border-licorice/5"
+                          )}
+                        >
+                          {page}
+                        </button>
+                      );
+                    } else if (page === currentPage - 2 || page === currentPage + 2) {
+                      return <span key={page} className="text-licorice/20 px-1">...</span>;
+                    }
+                    return null;
+                  })}
+                </div>
+
+                <button
+                  onClick={(e) => { e.stopPropagation(); setCurrentPage(prev => Math.min(totalPages, prev + 1)); }}
+                  disabled={currentPage === totalPages}
+                  className={cn(
+                    "p-2 rounded-xl border transition-all duration-200",
+                    currentPage === totalPages 
+                      ? "border-transparent text-licorice/10 cursor-not-allowed" 
+                      : "border-licorice/5 text-licorice/40 hover:bg-white hover:text-aventurine hover:border-aventurine/20 shadow-sm"
+                  )}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -213,7 +293,7 @@ export default function Registrations({
                 </button>
               </div>
               <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-widest text-licorice/40">{viewingNotes.name}</p>
+                <p className="text-xs font-medium text-licorice/60">{viewingNotes.name}</p>
                 <div className="p-4 bg-antique/30 rounded-2xl border border-licorice/5 text-sm text-licorice/70 leading-relaxed min-h-[150px] max-h-[300px] overflow-y-auto whitespace-pre-wrap no-scrollbar">
                   {viewingNotes.notes || 'Nenhuma nota registrada para este cliente.'}
                 </div>

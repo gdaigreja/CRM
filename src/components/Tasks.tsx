@@ -289,10 +289,10 @@ export default function Tasks({ leads, externalFilters, onTriggerConsumed }: Tas
                           </h3>
                           <div className="flex items-center gap-3">
                             <span className={cn(
-                              "px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider",
+                              "px-3 py-1 rounded-xl text-[10px] font-medium tracking-wide",
                               getPriorityColor(task.priority)
                             )}>
-                              {task.priority}
+                              {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
                             </span>
                             <button 
                               onClick={(e) => {
@@ -415,10 +415,10 @@ export default function Tasks({ leads, externalFilters, onTriggerConsumed }: Tas
                                             {task.title}
                                           </h4>
                                           <span className={cn(
-                                            "px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider shrink-0",
-                                            getPriorityColor(task.priority)
-                                          )}>
-                                            {task.priority}
+                                             "px-2 py-0.5 rounded-xl text-[9px] font-medium tracking-wide shrink-0",
+                                             getPriorityColor(task.priority)
+                                           )}>
+                                             {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
                                           </span>
                                         </div>
                                         
@@ -498,7 +498,7 @@ export default function Tasks({ leads, externalFilters, onTriggerConsumed }: Tas
 
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40">Título da Tarefa</label>
+                    <label className="text-xs font-medium text-licorice/40">Título da Tarefa</label>
                     <input 
                       type="text" 
                       placeholder="O que precisa ser feito?"
@@ -509,7 +509,7 @@ export default function Tasks({ leads, externalFilters, onTriggerConsumed }: Tas
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40">Descrição (Opcional)</label>
+                    <label className="text-xs font-medium text-licorice/40">Descrição (Opcional)</label>
                     <textarea 
                       placeholder="Adicione mais detalhes..."
                       rows={3}
@@ -521,7 +521,7 @@ export default function Tasks({ leads, externalFilters, onTriggerConsumed }: Tas
 
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40">Prioridade</label>
+                      <label className="text-xs font-medium text-licorice/40">Prioridade</label>
                       <select 
                         className="w-full px-4 py-3 bg-antique/30 border border-licorice/5 rounded-2xl text-sm focus:outline-none focus:border-aventurine/50"
                         value={newTask.priority}
@@ -533,7 +533,7 @@ export default function Tasks({ leads, externalFilters, onTriggerConsumed }: Tas
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40">Data de Entrega</label>
+                      <label className="text-xs font-medium text-licorice/40">Data de Entrega</label>
                       <input 
                         type="date" 
                         className="w-full px-4 py-3 bg-antique/30 border border-licorice/5 rounded-2xl text-sm focus:outline-none focus:border-aventurine/50"
@@ -544,7 +544,7 @@ export default function Tasks({ leads, externalFilters, onTriggerConsumed }: Tas
                   </div>
 
                   <div className="space-y-2 relative">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40">Vincular Cliente (Opcional)</label>
+                    <label className="text-xs font-medium text-licorice/40">Vincular Cliente (Opcional)</label>
                     <div className="relative">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-licorice/20" size={16} />
                       <input 

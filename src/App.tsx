@@ -735,12 +735,19 @@ export default function App() {
           )}
         </nav>
 
+        <button
+          onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+          className="flex items-center justify-center p-2 rounded-xl cursor-pointer transition-all duration-200 text-white/40 hover:text-white hover:bg-white/8 w-full mb-3"
+        >
+          {isSidebarExpanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+        </button>
+
         {/* Divider */}
         <div className="w-full h-px bg-white/8 mb-4" />
 
         {/* User chip */}
         {isSidebarExpanded ? (
-          <div className="flex items-center gap-3 mb-3 px-2">
+          <div className="flex items-center gap-3 px-2">
             <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white"
               style={{ background: 'rgba(255,255,255,0.15)' }}>
               {user?.name?.charAt(0)?.toUpperCase() || 'U'}
@@ -751,20 +758,13 @@ export default function App() {
             </div>
           </div>
         ) : (
-          <div className="mb-3 flex justify-center">
+          <div className="flex justify-center">
             <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
               style={{ background: 'rgba(255,255,255,0.15)' }}>
               {user?.name?.charAt(0)?.toUpperCase() || 'U'}
             </div>
           </div>
         )}
-
-        <button
-          onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
-          className="flex items-center justify-center p-2 rounded-xl cursor-pointer transition-all duration-200 text-white/40 hover:text-white hover:bg-white/8 w-full"
-        >
-          {isSidebarExpanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-        </button>
       </aside>
 
       {/* Main Content */}
@@ -901,7 +901,7 @@ ON CONFLICT (id) DO NOTHING;
         )}
 
         {/* Header */}
-        <header className="h-14 border-b flex items-center justify-between px-6 flex-shrink-0"
+        <header className="h-14 border-b flex items-center justify-between px-6 flex-shrink-0 relative z-50"
           style={{
             background: 'rgba(245,242,237,0.85)',
             backdropFilter: 'blur(12px)',
@@ -920,7 +920,7 @@ ON CONFLICT (id) DO NOTHING;
                 <input
                   type="text"
                   placeholder="Buscar leads..."
-                  className="pl-9 pr-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs focus:outline-none focus:border-aventurine/50 w-64"
+                  className="pl-9 pr-4 py-2.5 bg-white/50 border border-licorice/5 rounded-xl text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -934,19 +934,14 @@ ON CONFLICT (id) DO NOTHING;
                   <input
                     type="text"
                     placeholder="Buscar por nome, CPF ou e-mail..."
-                    className="pl-9 pr-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
+                    className="pl-9 pr-4 py-2 bg-white/50 border border-licorice/5 rounded-xl text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
                     value={regSearchQuery}
                     onChange={(e) => setRegSearchQuery(e.target.value)}
                   />
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="flex bg-white/50 p-0.5 rounded-lg border border-licorice/5">
-                    <button
-                      className="px-6 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-aventurine text-white shadow-sm"
-                    >Clientes</button>
-                  </div>
                   <select
-                    className="bg-white/50 px-3 py-1 rounded-lg border border-licorice/5 text-[10px] font-bold uppercase tracking-widest text-licorice/60 focus:outline-none shadow-sm"
+                    className="bg-white/50 px-4 py-2.5 rounded-xl border border-licorice/5 text-xs font-medium text-licorice/60 focus:outline-none shadow-sm"
                     value={regFilterStatus}
                     onChange={(e) => setRegFilterStatus(e.target.value as LeadStatus | 'all')}
                   >
@@ -967,7 +962,7 @@ ON CONFLICT (id) DO NOTHING;
                   <input
                     type="text"
                     placeholder="Filtrar cliente..."
-                    className="pl-9 pr-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
+                    className="pl-9 pr-4 py-2 bg-white/50 border border-licorice/5 rounded-xl text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
                     value={docSearchQuery}
                     onChange={(e) => setDocSearchQuery(e.target.value)}
                   />
@@ -976,7 +971,7 @@ ON CONFLICT (id) DO NOTHING;
                   <button
                     onClick={() => setShowDocFilter(!showDocFilter)}
                     className={cn(
-                      "flex items-center gap-2 px-4 py-1.5 bg-white/50 border rounded-full text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm",
+                      "flex items-center gap-2 px-4 py-3 bg-white/50 border rounded-xl text-xs font-medium transition-all shadow-sm",
                       (docFilterArquivados || docFilterPendencias || docFilterComPrazo || docFilterDistribuidos || docFilterNaoDistribuidos || docFilterTodos)
                         ? "border-[#512E2D] text-[#512E2D] shadow-md shadow-[#512E2D]/10 bg-white"
                         : "border-licorice/5 text-licorice/40 hover:bg-white/80"
@@ -995,12 +990,12 @@ ON CONFLICT (id) DO NOTHING;
                   <AnimatePresence>
                     {showDocFilter && (
                       <>
-                        <div className="fixed inset-0 z-40" onClick={() => setShowDocFilter(false)} />
+                        <div className="fixed inset-0 z-[60]" onClick={() => setShowDocFilter(false)} />
                         <motion.div
                           initial={{ opacity: 0, y: 10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                          className="absolute top-full right-0 mt-3 w-[420px] bg-white rounded-[32px] shadow-2xl border border-licorice/5 z-50 overflow-hidden"
+                          className="absolute top-full right-0 mt-3 w-[420px] bg-white rounded-[32px] shadow-2xl border border-licorice/5 z-[100] overflow-hidden"
                         >
                           <div className="p-8">
                             {/* Bloco 1: Todos */}
@@ -1099,10 +1094,10 @@ ON CONFLICT (id) DO NOTHING;
 
                               {/* Coluna Direita: Acumulativos */}
                               <div className="space-y-5">
-                                <h4 className="text-[9px] font-bold uppercase tracking-widest text-licorice/20 mb-2">Filtros</h4>
+                                <h4 className="text-xs font-medium text-licorice/20 mb-2">Filtros</h4>
 
                                 <label className="flex items-center gap-6 cursor-pointer group">
-                                  <span className={cn("flex-1 text-[10px] font-bold uppercase tracking-widest transition-colors", docFilterPendencias ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Pendências</span>
+                                  <span className={cn("flex-1 text-xs font-medium transition-colors", docFilterPendencias ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Pendências</span>
                                   <div
                                     onClick={(e) => {
                                       e.preventDefault();
@@ -1119,7 +1114,7 @@ ON CONFLICT (id) DO NOTHING;
                                 </label>
 
                                 <label className="flex items-center gap-6 cursor-pointer group">
-                                  <span className={cn("flex-1 text-[10px] font-bold uppercase tracking-widest transition-colors", docFilterComPrazo ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Prazos</span>
+                                  <span className={cn("flex-1 text-xs font-medium transition-colors", docFilterComPrazo ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Prazos</span>
                                   <div
                                     onClick={(e) => {
                                       e.preventDefault();
@@ -1148,13 +1143,13 @@ ON CONFLICT (id) DO NOTHING;
                                 setDocFilterNaoDistribuidos(false);
                                 setDocFilterTodos(true);
                               }}
-                              className="text-[10px] font-bold uppercase tracking-widest text-[#512E2D] hover:underline"
+                              className="text-xs font-medium text-[#512E2D] hover:underline"
                             >
                               Limpar
                             </button>
                             <button
                               onClick={() => setShowDocFilter(false)}
-                              className="bg-[#512E2D] text-white px-8 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-[#512E2D]/20 hover:scale-105 active:scale-95 transition-all"
+                              className="bg-[#512E2D] text-white px-8 py-2.5 rounded-xl text-xs font-medium shadow-lg shadow-[#512E2D]/20 hover:scale-105 active:scale-95 transition-all"
                             >
                               Aplicar
                             </button>
@@ -1174,7 +1169,7 @@ ON CONFLICT (id) DO NOTHING;
                   <input
                     type="text"
                     placeholder="Buscar por nome, CPF ou e-mail..."
-                    className="pl-9 pr-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
+                    className="pl-9 pr-4 py-2 bg-white/50 border border-licorice/5 rounded-xl text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
                     value={financeSearchQuery}
                     onChange={(e) => setFinanceSearchQuery(e.target.value)}
                   />
@@ -1189,7 +1184,7 @@ ON CONFLICT (id) DO NOTHING;
                   <input
                     type="text"
                     placeholder="Buscar tarefas..."
-                    className="pl-9 pr-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
+                    className="pl-9 pr-4 py-2 bg-white/50 border border-licorice/5 rounded-xl text-xs focus:outline-none focus:border-aventurine/50 w-64 shadow-sm"
                     value={taskSearchQuery}
                     onChange={(e) => setTaskSearchQuery(e.target.value)}
                   />
@@ -1201,7 +1196,7 @@ ON CONFLICT (id) DO NOTHING;
                         key={status}
                         onClick={() => setTaskFilterStatus(status)}
                         className={cn(
-                          "px-3 py-1 rounded-md text-[10px] font-bold transition-all",
+                          "px-3 py-1.5 rounded-xl text-xs font-medium transition-all",
                           taskFilterStatus === status ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice"
                         )}
                       >
@@ -1215,20 +1210,20 @@ ON CONFLICT (id) DO NOTHING;
                   <div className="flex bg-white/50 p-0.5 rounded-lg border border-licorice/5">
                     <button
                       onClick={() => setTaskView('list')}
-                      className={cn("p-1.5 rounded-md transition-all", taskView === 'list' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
+                      className={cn("p-2 rounded-xl transition-all", taskView === 'list' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
                     >
                       <List size={14} />
                     </button>
                     <button
                       onClick={() => setTaskView('kanban')}
-                      className={cn("p-1.5 rounded-md transition-all", taskView === 'kanban' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
+                      className={cn("p-2 rounded-xl transition-all", taskView === 'kanban' ? "bg-aventurine text-white shadow-sm" : "text-licorice/40 hover:text-licorice")}
                     >
                       <Columns size={14} />
                     </button>
                   </div>
                   <button
                     onClick={() => setTriggerNewTask(Date.now())}
-                    className="bg-aventurine text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm hover:bg-aventurine/90 transition-all flex items-center gap-2"
+                    className="bg-aventurine text-white px-5 py-3 rounded-xl text-xs font-medium shadow-sm hover:bg-aventurine/90 transition-all flex items-center gap-2"
                   >
                     <Plus size={14} />
                     Nova Tarefa
@@ -1240,7 +1235,7 @@ ON CONFLICT (id) DO NOTHING;
           {view === 'kanban' && (
             <button
               onClick={addColumn}
-              className="bg-aventurine text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm hover:bg-aventurine/90 transition-all flex items-center gap-2"
+              className="bg-aventurine text-white px-5 py-3 rounded-xl text-xs font-medium shadow-sm hover:bg-aventurine/90 transition-all flex items-center gap-2"
             >
               <Plus size={14} />
               Nova Coluna
@@ -1251,7 +1246,7 @@ ON CONFLICT (id) DO NOTHING;
             <div className="relative">
               <button
                 onClick={() => setShowDatePicker(!showDatePicker)}
-                className="flex items-center gap-2 px-4 py-1.5 bg-white/50 border border-licorice/5 rounded-full text-xs font-semibold text-licorice/60 hover:bg-white/80 transition-all min-w-[150px] whitespace-nowrap"
+                className="flex items-center gap-2 px-4 py-2 bg-white/50 border border-licorice/5 rounded-xl text-xs font-medium text-licorice/60 hover:bg-white/80 transition-all min-w-[150px] whitespace-nowrap"
               >
                 <Calendar size={14} />
                 <span>{dateRange.label}</span>
@@ -1264,7 +1259,7 @@ ON CONFLICT (id) DO NOTHING;
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-licorice/5 z-50 overflow-hidden"
+                    className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-licorice/5 z-[100] overflow-hidden"
                   >
                     <div className="flex flex-col">
                       {['este mês', 'mês anterior', 'este ano', 'ano anterior', 'desde o início'].map((opt) => (

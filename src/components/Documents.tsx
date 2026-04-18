@@ -280,8 +280,8 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
       )}
       {client.status === 'Churn' && (
         <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none z-10">
-          <div className="absolute top-2 right-[-30px] bg-red-600 text-white text-[9px] font-bold py-0.5 w-[100px] text-center rotate-45 shadow-sm uppercase tracking-widest">
-            churn
+          <div className="absolute top-2 right-[-30px] bg-red-600 text-white text-[9px] font-semibold py-0.5 w-[100px] text-center rotate-45 shadow-sm tracking-wide">
+            Churn
           </div>
         </div>
       )}
@@ -328,7 +328,7 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
           <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-widest">
             <span className="text-licorice/40">Obrigatórios</span>
             <span 
-              className={cn("font-bold")} 
+              className={cn("font-semibold")} 
               style={{ color: obrProgress.percent === 100 ? '#00A63E' : 'var(--color-exotic)' }}
             >
               {obrProgress.current}/{obrProgress.total}
@@ -378,7 +378,7 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
               });
             }}
             className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border",
+              "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-medium transition-all border",
               docData.rescisaoFormalizada ? "bg-red-600/10 border-red-600/20 text-red-600" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10"
             )}
           >
@@ -420,7 +420,7 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
                   onEmailClick();
                 }}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border",
+                  "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-medium transition-all border",
                   docData.emailSent ? "bg-aventurine/10 border-aventurine/20 text-aventurine" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10"
                 )}
               >
@@ -439,7 +439,7 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
                   }
                 }}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border",
+                  "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-medium transition-all border",
                   docData.notificationSent ? "bg-aventurine/10 border-aventurine/20 text-aventurine" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10"
                 )}
               >
@@ -730,7 +730,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                       });
                     }}
                     className={cn(
-                      "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border w-[180px]",
+                      "flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-medium transition-all border w-[180px]",
                       docData.rescisaoFormalizada ? "bg-red-600 border-red-500 text-white shadow-lg shadow-red-900/40" : "bg-white/5 border-white/10 text-white/40"
                     )}
                   >
@@ -752,7 +752,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                           });
                         }}
                         className={cn(
-                          "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border w-[180px]",
+                          "flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-medium transition-all border w-[180px]",
                           docData.minutaHomologada ? "bg-[#00A63E]/10 border-[#00A63E]/20 text-[#00A63E] shadow-lg shadow-[#00A63E]/10 cursor-default" : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10"
                         )}
                       >
@@ -781,8 +781,8 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                             }
                           }}
                           className={cn(
-                            "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border w-[120px]",
-                            docData.notificationSent ? "bg-orange-500 border-orange-500 text-white" : "bg-white/5 border-white/10 text-white/40"
+                          "flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-medium transition-all border w-[120px]",
+                          docData.notificationSent ? "bg-orange-500 border-orange-500 text-white" : "bg-white/5 border-white/10 text-white/40"
                           )}
                         >
                           <Bell size={12} />

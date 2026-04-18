@@ -114,7 +114,7 @@ export default function EditLeadSidebar({
                 <section>
                   <div className="flex items-center gap-2 mb-4">
                     <User size={14} className="text-aventurine" />
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-licorice/40">Dados Pessoais</h4>
+                    <h4 className="text-xs font-medium text-licorice/40">Dados Pessoais</h4>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
@@ -153,7 +153,7 @@ export default function EditLeadSidebar({
                 <section>
                   <div className="flex items-center gap-2 mb-4">
                     <MapPin size={14} className="text-aventurine" />
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-licorice/40">Endereço</h4>
+                    <h4 className="text-xs font-medium text-licorice/40">Endereço</h4>
                   </div>
                   <div className="grid grid-cols-6 gap-4">
                     <div className="col-span-2">
@@ -178,7 +178,7 @@ export default function EditLeadSidebar({
                 <section>
                   <div className="flex items-center gap-2 mb-4">
                     <User size={14} className="text-aventurine" />
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-licorice/40">Dados do Cônjuge</h4>
+                    <h4 className="text-xs font-medium text-licorice/40">Dados do Cônjuge</h4>
                   </div>
                   
                   {editingLead.spouseInfo && editingLead.spouseInfo.name?.trim() ? (
@@ -214,7 +214,7 @@ export default function EditLeadSidebar({
                     <button 
                       type="button"
                       onClick={() => setIsSpouseModalOpen(true)}
-                      className="w-full py-4 border-2 border-dashed border-licorice/10 rounded-xl text-[10px] font-bold uppercase tracking-widest text-licorice/40 hover:bg-licorice/5 hover:border-licorice/20 transition-all flex items-center justify-center gap-2"
+                    className="w-full py-4 border-2 border-dashed border-licorice/10 rounded-xl text-xs font-medium text-licorice/40 hover:bg-licorice/5 hover:border-licorice/20 transition-all flex items-center justify-center gap-2"
                     >
                       <Plus size={14} />
                       Adicionar Cônjuge
@@ -389,7 +389,7 @@ function SpouseModal({ open, onClose, data, onSave }: {
 function Field({ label, value, onChange, onBlur }: { label: string; value: string; onChange: (v: string) => void; onBlur: () => void }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">{label}</label>
+      <label className="text-[10px] font-medium text-licorice/30">{label}</label>
       <input 
         className="input-field"
         value={value}
