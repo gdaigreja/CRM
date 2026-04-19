@@ -568,7 +568,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                             <input
                               type="text"
                               autoFocus
-                              className="bg-white border border-aventurine/20 px-3 py-1.5 rounded-lg text-xs font-bold text-[#00A63E] w-28 focus:outline-none focus:ring-2 focus:ring-aventurine/10"
+                              className="bg-white border border-aventurine/20 px-3 py-1.5 rounded-lg text-xs font-bold w-28 focus:outline-none focus:ring-2 focus:ring-aventurine/10 text-licorice"
                               value={formatCurrency(currentRecord.honorariosPagos || 0)}
                               onChange={(e) => setEditValues({ ...editValues!, honorariosPagos: parseCurrency(e.target.value) })}
                               onKeyDown={(e) => e.key === 'Enter' && handleSave()}
@@ -576,7 +576,10 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                             />
                           </div>
                         ) : (
-                          <span className="text-xs font-bold text-[#00A63E]">
+                          <span className={cn(
+                            "text-xs font-bold",
+                            (record.honorariosPagos || 0) < (record.valorHonorarios || 0) ? "text-[#F59E0B]" : "text-[#00A63E]"
+                          )}>
                             {formatCurrency(record.honorariosPagos || 0) || '-'}
                           </span>
                         )}
