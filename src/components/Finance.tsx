@@ -379,7 +379,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
           <div className="overflow-auto flex-1 no-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead className="sticky top-0 z-10">
-                <tr className="border-b border-licorice/5" style={{ background: 'rgba(245,242,237,0.8)' }}>
+                <tr className="border-b border-licorice/10" style={{ background: '#F5F2ED' }}>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Cliente</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Resultado</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Restituição</th>
@@ -585,8 +585,12 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                         <div className="flex justify-center">
                           <input
                             type="checkbox"
-                            className="w-4 h-4 rounded border-licorice/20 text-aventurine focus:ring-aventurine/20 cursor-pointer"
-                            checked={record.inicioPenhora || false}
+                            className={cn(
+                              "w-4 h-4 rounded border-licorice/20 text-aventurine focus:ring-aventurine/20",
+                              lead.contract?.format === 'Ao final' ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                            )}
+                            checked={lead.contract?.format === 'Ao final' ? true : (record.inicioPenhora || false)}
+                            disabled={lead.contract?.format === 'Ao final'}
                             onChange={(e) => {
                               onUpdate({
                                 ...lead,
