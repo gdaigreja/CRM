@@ -49,7 +49,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
   const [selectedChurn, setSelectedChurn] = useState<Set<string>>(new Set());
   const [churnStatusFilter, setChurnStatusFilter] = useState<'todos' | 'Executar' | 'Executado' | 'Isento'>('todos');
 
-  const [editing, setEditing] = useState<{ id: string; field: 'restituicao' | 'sucumbencia' | 'honorarios' | 'parcelas' } | null>(null);
+  const [editing, setEditing] = useState<{ id: string; field: 'restituicao' | 'sucumbencia' | 'honorarios' | 'honorariosPagos' | 'parcelas' | 'inicioPenhora' } | null>(null);
   const [editValues, setEditValues] = useState<FinancialRecord | null>(null);
 
   const parseCurrency = (val: string) => {
@@ -76,7 +76,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
     return d.toISOString().split('T')[0];
   };
 
-  const handleStartEdit = (lead: Lead, field: 'restituicao' | 'sucumbencia' | 'honorarios' | 'parcelas') => {
+  const handleStartEdit = (lead: Lead, field: 'restituicao' | 'sucumbencia' | 'honorarios' | 'honorariosPagos' | 'parcelas' | 'inicioPenhora') => {
     setEditing({ id: lead.id, field });
     setEditValues({ ...lead.financialRecord! });
   };
@@ -382,12 +382,13 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                 <tr className="border-b border-licorice/5" style={{ background: 'rgba(245,242,237,0.8)' }}>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Cliente</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Resultado</th>
-                  <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Status</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Restituição</th>
-                  <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Parcela</th>
+                  <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Parc.</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Valor Parcela</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Sucumbência</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Hon. Devido</th>
+                  <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Hon. Pago</th>
+                  <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40 text-center">Inic. Pen.</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Pagamento</th>
                 </tr>
               </thead>
@@ -422,19 +423,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-3">
-                        <select
-                          value={record.statusResultado || 'em_pagamento'}
-                          onChange={(e) => handleStatusChange(lead, e.target.value as any)}
-                          className={cn(
-                            "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase cursor-pointer focus:outline-none bg-transparent transition-all border-none outline-none",
-                            record.statusResultado === 'finalizado' ? "text-[#00A63E]" : "text-orange-400"
-                          )}
-                        >
-                          <option value="em_pagamento">Em Pagamento</option>
-                          <option value="finalizado">Finalizado</option>
-                        </select>
-                      </td>
+
                       <td className="px-6 py-3 cursor-pointer" onClick={() => handleStartEdit(lead, 'restituicao')}>
                         {editing?.id === lead.id && editing?.field === 'restituicao' ? (
                           <div className="editing-cell">
@@ -467,33 +456,51 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                const next = Math.max(1, (editValues?.parcelasPagas || 1) - 1);
-                                setEditValues({ ...editValues!, parcelasPagas: next });
+                                if (editValues?.statusResultado === 'finalizado') {
+                                  setEditValues({ 
+                                    ...editValues!, 
+                                    statusResultado: 'em_pagamento',
+                                    parcelasPagas: editValues?.parcelasResultado || 1
+                                  });
+                                } else {
+                                  const next = Math.max(1, (editValues?.parcelasPagas || 1) - 1);
+                                  setEditValues({ ...editValues!, parcelasPagas: next });
+                                }
                               }}
                               className="w-6 h-6 rounded bg-antique/50 flex items-center justify-center text-licorice/40 hover:text-licorice"
                             >
                               -
                             </button>
-                            <div className="flex items-center text-xs font-bold text-licorice/60 min-w-[32px] justify-center">
-                              {editValues?.parcelasPagas}
-                              <span className="mx-1">/</span>
-                              <input
-                                type="number"
-                                autoFocus
-                                className="w-8 bg-transparent border-none p-0 text-xs font-bold focus:outline-none text-center"
-                                value={editValues?.parcelasResultado}
-                                onChange={(e) => setEditValues({ ...editValues!, parcelasResultado: parseInt(e.target.value) || 1 })}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-                              />
+                            <div className="flex items-center text-xs font-bold min-w-[32px] justify-center">
+                              {editValues?.statusResultado === 'finalizado' ? (
+                                <span className="text-aventurine">FINALIZADO</span>
+                              ) : (
+                                <div className="flex items-center text-licorice/60">
+                                  {editValues?.parcelasPagas}
+                                  <span className="mx-1">/</span>
+                                  <input
+                                    type="number"
+                                    autoFocus
+                                    className="w-8 bg-transparent border-none p-0 text-xs font-bold focus:outline-none text-center"
+                                    value={editValues?.parcelasResultado}
+                                    onChange={(e) => setEditValues({ ...editValues!, parcelasResultado: parseInt(e.target.value) || 1 })}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                                  />
+                                </div>
+                              )}
                             </div>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const total = editValues?.parcelasResultado || 1;
                                 const current = editValues?.parcelasPagas || 1;
+                                if (editValues?.statusResultado === 'finalizado') return;
+                                
                                 if (current < total) {
                                   const nextDate = addOneMonth(editValues?.dataPagamento);
                                   setEditValues({ ...editValues!, parcelasPagas: current + 1, dataPagamento: nextDate });
+                                } else if (current === total) {
+                                  setEditValues({ ...editValues!, statusResultado: 'finalizado' });
                                 }
                               }}
                               className="w-6 h-6 rounded bg-antique/50 flex items-center justify-center text-licorice/40 hover:text-licorice"
@@ -502,8 +509,13 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                             </button>
                           </div>
                         ) : (
-                          <span className="text-xs font-semibold text-licorice/60">
-                            {record.parcelasPagas || 1}/{record.parcelasResultado || 1}
+                          <span className={cn(
+                            "text-xs font-bold",
+                            record.statusResultado === 'finalizado' ? "text-aventurine" : "text-licorice/60"
+                          )}>
+                            {record.statusResultado === 'finalizado' 
+                              ? 'FINALIZADO' 
+                              : `${record.parcelasPagas || 1}/${record.parcelasResultado || 1}`}
                           </span>
                         )}
                       </td>
@@ -549,6 +561,43 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                             {formatCurrency(record.valorHonorarios || 0) || '-'}
                           </span>
                         )}
+                      </td>
+                      <td className="px-6 py-3 cursor-pointer" onClick={() => handleStartEdit(lead, 'honorariosPagos')}>
+                        {editing?.id === lead.id && editing?.field === 'honorariosPagos' ? (
+                          <div className="editing-cell">
+                            <input
+                              type="text"
+                              autoFocus
+                              className="bg-white border border-aventurine/20 px-3 py-1.5 rounded-lg text-xs font-bold text-[#00A63E] w-28 focus:outline-none focus:ring-2 focus:ring-aventurine/10"
+                              value={formatCurrency(currentRecord.honorariosPagos || 0)}
+                              onChange={(e) => setEditValues({ ...editValues!, honorariosPagos: parseCurrency(e.target.value) })}
+                              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                              onBlur={handleSave}
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-xs font-bold text-[#00A63E]">
+                            {formatCurrency(record.honorariosPagos || 0) || '-'}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-3 text-center">
+                        <div className="flex justify-center">
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 rounded border-licorice/20 text-aventurine focus:ring-aventurine/20 cursor-pointer"
+                            checked={record.inicioPenhora || false}
+                            onChange={(e) => {
+                              onUpdate({
+                                ...lead,
+                                financialRecord: {
+                                  ...record,
+                                  inicioPenhora: e.target.checked
+                                }
+                              });
+                            }}
+                          />
+                        </div>
                       </td>
                       <td className="px-6 py-3">
                         <div className="flex flex-col gap-0.5">

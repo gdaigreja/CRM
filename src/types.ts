@@ -108,6 +108,8 @@ export interface FinancialRecord {
   valorCondenacao?: number;
   valorRestituicao?: number;
   honorariosSucumbenciaisContratuais?: number;
+  honorariosPagos?: number;
+  inicioPenhora?: boolean;
   parcelasResultado?: number;
   parcelasPagas?: number;
   motivoImprocedencia?: string;
