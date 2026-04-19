@@ -49,13 +49,13 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
   const [selectedChurn, setSelectedChurn] = useState<Set<string>>(new Set());
   const [churnStatusFilter, setChurnStatusFilter] = useState<'todos' | 'Executar' | 'Executado' | 'Isento'>('todos');
 
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<{ id: string; field: 'restituicao' | 'sucumbencia' | 'honorarios' | 'parcelas' } | null>(null);
   const [editValues, setEditValues] = useState<FinancialRecord | null>(null);
 
   const parseCurrency = (val: string) => {
-    // Remove all non-digit characters except comma/period for decimals, then replace comma with period
-    const cleaned = val.replace(/[^\d,.]/g, '').replace(',', '.');
-    return parseFloat(cleaned) || 0;
+    const digits = val.replace(/\D/g, '');
+    if (!digits) return 0;
+    return parseInt(digits) / 100;
   };
 
   const isWithinRange = (dateStr?: string) => {
@@ -76,8 +76,8 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
     return d.toISOString().split('T')[0];
   };
 
-  const handleStartEdit = (lead: Lead) => {
-    setEditingId(lead.id);
+  const handleStartEdit = (lead: Lead, field: 'restituicao' | 'sucumbencia' | 'honorarios' | 'parcelas') => {
+    setEditing({ id: lead.id, field });
     setEditValues({ ...lead.financialRecord! });
   };
 
@@ -92,17 +92,33 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
   };
 
   const handleSave = () => {
-    if (!editingId || !editValues) return;
-    const lead = leads.find(l => l.id === editingId);
+    if (!editing || !editValues) return;
+    const lead = leads.find(l => l.id === editing.id);
     if (lead) {
       onUpdate({
         ...lead,
         financialRecord: editValues
       });
     }
-    setEditingId(null);
+    setEditing(null);
     setEditValues(null);
   };
+
+  // Auto-save on click away
+  React.useEffect(() => {
+    if (!editing) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const isSelect = target.tagName === 'SELECT' || target.tagName === 'OPTION';
+      if (!target.closest('.editing-cell') && !isSelect) {
+        handleSave();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [editing, editValues]);
 
   // Filter leads for Churn Queue
   const churnLeads = useMemo(() => {
@@ -170,6 +186,12 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
     });
 
     return filtered.sort((a, b) => {
+      // First sort by status: 'em_pagamento' first, then 'finalizado'
+      const statusA = a.financialRecord?.statusResultado === 'finalizado' ? 1 : 0;
+      const statusB = b.financialRecord?.statusResultado === 'finalizado' ? 1 : 0;
+      if (statusA !== statusB) return statusA - statusB;
+
+      // Then sort by proximity to today
       const dateA = a.financialRecord?.dataPagamento ? new Date(a.financialRecord.dataPagamento + 'T00:00:00') : new Date(8640000000000000);
       const dateB = b.financialRecord?.dataPagamento ? new Date(b.financialRecord.dataPagamento + 'T00:00:00') : new Date(8640000000000000);
 
@@ -306,25 +328,25 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
           title="Restituído"
           value={formatCurrency(metrics.restituido)}
           icon={<DollarSign size={20} />}
-          color="bg-aventurine"
+          color="bg-[#C5A059]"
         />
         <MetricCard
           title="Sucumbência"
           value={formatCurrency(metrics.sucumbencia)}
           icon={<TrendingUp size={20} />}
-          color="bg-licorice"
+          color="bg-[#C5A059]"
         />
         <MetricCard
           title="Honorários"
           value={formatCurrency(metrics.honorarios)}
           icon={<PieChart size={20} />}
-          color="bg-exotic"
+          color="bg-[#C5A059]"
         />
         <MetricCard
           title="Receita de Churn (Previsto)"
           value={formatCurrency(metrics.receitaChurnPrevisto)}
           icon={<AlertCircle size={20} />}
-          color="bg-red-500"
+          color="bg-[#C5A059]"
         />
       </div>
 
@@ -334,7 +356,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
         <section className="h-[308px] flex-shrink-0 overflow-hidden flex flex-col card">
           <div className="bg-surface-2/60 text-licorice/60 px-5 py-3 min-h-[48px] flex items-center justify-between border-b border-licorice/6 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <CheckCircle2 size={13} className="opacity-40" />
+              <CheckCircle2 size={13} className="text-[#C5A059]" strokeWidth={3} />
               <h2 className="section-label">Resultados Contra Loteadora</h2>
             </div>
             <div className="flex items-center gap-2">
@@ -362,12 +384,11 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Resultado</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Status</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Restituição</th>
-                  <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Sucumbência</th>
-                  <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Honorário</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Parcela</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Valor Parcela</th>
+                  <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Sucumbência</th>
+                  <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Hon. Devido</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Pagamento</th>
-                  <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-licorice/5">
@@ -375,12 +396,15 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                   const record = lead.financialRecord!;
                   const isProcedente = record.tipoResultado === 'sentenca_procedente' || record.tipoResultado === 'acordo';
                   const isImprocedente = record.tipoResultado === 'improcedente';
-                  const isEditing = editingId === lead.id;
-                  const currentRecord = isEditing ? editValues! : record;
+                  const isAnyFieldEditing = editing?.id === lead.id;
+                  const currentRecord = isAnyFieldEditing ? editValues! : record;
                   const isFinalizado = record.statusResultado === 'finalizado';
 
                   return (
-                    <tr key={lead.id} className="hover:bg-antique/10 transition-colors group">
+                    <tr 
+                      key={lead.id} 
+                      className="hover:bg-antique/10 transition-colors group"
+                    >
                       <td className="px-6 py-3">
                         <span className="text-sm font-semibold text-licorice">{lead.name}</span>
                       </td>
@@ -394,7 +418,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                         {record.tipoResultado === 'improcedente' && (
                           <div className="flex items-center gap-2">
                             <span className="px-2 py-0.5 rounded-full bg-exotic/10 text-exotic text-[10px] font-bold uppercase">Improcedente</span>
-                            <AlertCircle size={14} className="text-exotic animate-pulse" title="Análise necessária" />
+                            <AlertCircle size={14} className="text-[#C5A059]" title="Análise necessária" />
                           </div>
                         )}
                       </td>
@@ -411,14 +435,19 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                           <option value="finalizado">Finalizado</option>
                         </select>
                       </td>
-                      <td className="px-6 py-3">
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            className="bg-antique/30 border border-licorice/5 p-2 rounded-lg text-xs font-mono w-24 focus:outline-none focus:border-aventurine/50"
-                            value={formatCurrency(currentRecord.valorRestituicao || 0)}
-                            onChange={(e) => setEditValues({ ...editValues!, valorRestituicao: parseCurrency(e.target.value) })}
-                          />
+                      <td className="px-6 py-3 cursor-pointer" onClick={() => handleStartEdit(lead, 'restituicao')}>
+                        {editing?.id === lead.id && editing?.field === 'restituicao' ? (
+                          <div className="editing-cell">
+                            <input
+                              type="text"
+                              autoFocus
+                              className="bg-white border border-aventurine/20 px-3 py-1.5 rounded-lg text-xs font-mono w-28 focus:outline-none focus:ring-2 focus:ring-aventurine/10 text-licorice font-bold"
+                              value={formatCurrency(currentRecord.valorRestituicao || 0)}
+                              onChange={(e) => setEditValues({ ...editValues!, valorRestituicao: parseCurrency(e.target.value) })}
+                              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                              onBlur={handleSave}
+                            />
+                          </div>
                         ) : (
                           <span className="text-sm font-mono text-licorice/60">
                             {isImprocedente ? (
@@ -432,39 +461,12 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-3">
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            className="bg-antique/30 border border-licorice/5 p-2 rounded-lg text-xs font-mono w-24 focus:outline-none focus:border-aventurine/50"
-                            value={formatCurrency(currentRecord.honorariosSucumbenciaisContratuais || 0)}
-                            onChange={(e) => setEditValues({ ...editValues!, honorariosSucumbenciaisContratuais: parseCurrency(e.target.value) })}
-                          />
-                        ) : (
-                          <span className="text-sm font-mono text-licorice/60">
-                            {formatCurrency(record.honorariosSucumbenciaisContratuais || 0)}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-3">
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            className="bg-antique/30 border border-licorice/5 p-2 rounded-lg text-xs font-bold text-aventurine w-24 focus:outline-none focus:border-aventurine/50"
-                            value={formatCurrency(currentRecord.valorHonorarios || 0)}
-                            onChange={(e) => setEditValues({ ...editValues!, valorHonorarios: parseCurrency(e.target.value) })}
-                          />
-                        ) : (
-                          <span className="text-xs font-bold text-aventurine">
-                            {formatCurrency(record.valorHonorarios || 0) || '-'}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-3">
-                        {isEditing ? (
-                          <div className="flex items-center gap-2">
+                      <td className="px-6 py-3 cursor-pointer" onClick={() => handleStartEdit(lead, 'parcelas')}>
+                        {editing?.id === lead.id && editing?.field === 'parcelas' ? (
+                          <div className="editing-cell flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                             <button
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 const next = Math.max(1, (editValues?.parcelasPagas || 1) - 1);
                                 setEditValues({ ...editValues!, parcelasPagas: next });
                               }}
@@ -477,13 +479,16 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                               <span className="mx-1">/</span>
                               <input
                                 type="number"
+                                autoFocus
                                 className="w-8 bg-transparent border-none p-0 text-xs font-bold focus:outline-none text-center"
                                 value={editValues?.parcelasResultado}
                                 onChange={(e) => setEditValues({ ...editValues!, parcelasResultado: parseInt(e.target.value) || 1 })}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                               />
                             </div>
                             <button
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 const total = editValues?.parcelasResultado || 1;
                                 const current = editValues?.parcelasPagas || 1;
                                 if (current < total) {
@@ -507,38 +512,53 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                           {formatCurrency((currentRecord.valorRestituicao || 0) / (currentRecord.parcelasResultado || 1))}
                         </span>
                       </td>
+                      <td className="px-6 py-3 cursor-pointer" onClick={() => handleStartEdit(lead, 'sucumbencia')}>
+                        {editing?.id === lead.id && editing?.field === 'sucumbencia' ? (
+                          <div className="editing-cell">
+                            <input
+                              type="text"
+                              autoFocus
+                              className="bg-white border border-aventurine/20 px-3 py-1.5 rounded-lg text-xs font-mono w-28 focus:outline-none focus:ring-2 focus:ring-aventurine/10 text-licorice font-bold"
+                              value={formatCurrency(currentRecord.honorariosSucumbenciaisContratuais || 0)}
+                              onChange={(e) => setEditValues({ ...editValues!, honorariosSucumbenciaisContratuais: parseCurrency(e.target.value) })}
+                              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                              onBlur={handleSave}
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-sm font-mono text-licorice/60">
+                            {formatCurrency(record.honorariosSucumbenciaisContratuais || 0)}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-3 cursor-pointer" onClick={() => handleStartEdit(lead, 'honorarios')}>
+                        {editing?.id === lead.id && editing?.field === 'honorarios' ? (
+                          <div className="editing-cell">
+                            <input
+                              type="text"
+                              autoFocus
+                              className="bg-white border border-aventurine/20 px-3 py-1.5 rounded-lg text-xs font-bold text-aventurine w-28 focus:outline-none focus:ring-2 focus:ring-aventurine/10"
+                              value={formatCurrency(currentRecord.valorHonorarios || 0)}
+                              onChange={(e) => setEditValues({ ...editValues!, valorHonorarios: parseCurrency(e.target.value) })}
+                              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                              onBlur={handleSave}
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-xs font-bold text-aventurine">
+                            {formatCurrency(record.valorHonorarios || 0) || '-'}
+                          </span>
+                        )}
+                      </td>
                       <td className="px-6 py-3">
                         <div className="flex flex-col gap-0.5">
                           {currentRecord.dataPagamento && (
                             <span className="text-sm font-mono text-licorice/40">{new Date(currentRecord.dataPagamento + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
                           )}
-                          {record.anexoSentenca && !isEditing && (
+                          {record.anexoSentenca && (
                             <button className="text-[10px] font-bold text-aventurine uppercase flex items-center gap-1 hover:underline">
                               Sentença
                             </button>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          {isEditing ? (
-                            <button
-                              onClick={handleSave}
-                              className="p-1.5 text-aventurine hover:bg-aventurine/10 rounded-lg transition-colors"
-                              title="Salvar"
-                            >
-                              <Check size={16} />
-                            </button>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => handleStartEdit(lead)}
-                                className="p-1.5 rounded-lg transition-colors text-licorice/40 hover:text-aventurine hover:bg-aventurine/10"
-                                title="Editar"
-                              >
-                                <Pencil size={14} />
-                              </button>
-                            </>
                           )}
                         </div>
                       </td>
@@ -556,7 +576,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
             <div className="bg-surface-2/50 text-licorice/60 px-5 py-3 flex items-center justify-between min-h-[48px] border-b border-licorice/6 flex-shrink-0">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Clock size={13} className="opacity-40" />
+                  <Clock size={13} className="text-[#C5A059]" strokeWidth={3} />
                   <h2 className="section-label">Fila de Execução (Churn)</h2>
                 </div>
                 {selectedChurn.size > 0 && (
@@ -675,7 +695,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
           <section className="flex-1 h-[353px] overflow-hidden flex flex-col card">
             <div className="bg-surface-2/50 text-licorice/60 px-5 py-3 min-h-[48px] flex items-center border-b border-licorice/6 flex-shrink-0">
               <div className="flex items-center gap-2">
-                <BarChart2 size={13} className="opacity-40" />
+                <BarChart2 size={13} className="text-[#C5A059]" strokeWidth={3} />
                 <h2 className="section-label">Taxa de Perda Mês a Mês</h2>
               </div>
             </div>

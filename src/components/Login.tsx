@@ -104,7 +104,7 @@ export default function Login({ onLogin }: LoginProps) {
               <label className="block mb-1.5 text-[10px] font-bold text-white/40 uppercase tracking-widest ml-0.5">E-mail</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className="w-4 h-4 text-white/25 group-focus-within:text-white/60 transition-colors" />
+                  <Mail className="w-4 h-4 text-[#D4AF37]/40 group-focus-within:text-[#D4AF37] transition-colors" />
                 </div>
                 <input
                   type="email"
@@ -117,7 +117,7 @@ export default function Login({ onLogin }: LoginProps) {
                     borderColor: 'rgba(255,255,255,0.10)',
                     boxShadow: 'none',
                   }}
-                  onFocus={e => e.currentTarget.style.borderColor = 'rgba(160,82,45,0.5)'}
+                  onFocus={e => e.currentTarget.style.borderColor = 'rgba(212,175,55,0.5)'}
                   onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'}
                   placeholder="seu@email.com"
                 />
@@ -128,7 +128,7 @@ export default function Login({ onLogin }: LoginProps) {
               <label className="block mb-1.5 text-[10px] font-bold text-white/40 uppercase tracking-widest ml-0.5">Senha</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="w-4 h-4 text-white/25 group-focus-within:text-white/60 transition-colors" />
+                  <Lock className="w-4 h-4 text-[#D4AF37]/40 group-focus-within:text-[#D4AF37] transition-colors" />
                 </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -140,14 +140,14 @@ export default function Login({ onLogin }: LoginProps) {
                     background: 'rgba(255,255,255,0.06)',
                     borderColor: 'rgba(255,255,255,0.10)',
                   }}
-                  onFocus={e => e.currentTarget.style.borderColor = 'rgba(160,82,45,0.5)'}
+                  onFocus={e => e.currentTarget.style.borderColor = 'rgba(212,175,55,0.5)'}
                   onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'}
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-white/30 hover:text-white transition-colors"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#D4AF37]/40 hover:text-[#D4AF37] transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
