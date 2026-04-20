@@ -46,10 +46,10 @@ export default function Login({ onLogin }: LoginProps) {
       <div 
         className="absolute inset-0 z-0"
         style={{
-          backgroundImage: 'url("https://zklkmbokwzhbqdoqsnxs.supabase.co/storage/v1/object/public/Imagens/Fachada.jpg")',
+          backgroundImage: 'url("/assets/images/Fachada.webp")',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundRepeat: 'no-referrer'
+          backgroundRepeat: 'no-repeat'
         }}
       >
         <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
@@ -76,12 +76,11 @@ export default function Login({ onLogin }: LoginProps) {
         >
           <div className="text-center mb-7">
             <img
-              src="https://zklkmbokwzhbqdoqsnxs.supabase.co/storage/v1/object/public/Imagens/logo_pequena.png"
+              src="/assets/images/logo_maior.png"
               alt="Logo Distrato Justo"
-              className="w-11 h-11 object-contain mb-4 mx-auto animate-glow-pulse"
+              className="h-16 object-contain mb-4 mx-auto animate-glow-pulse"
               referrerPolicy="no-referrer"
             />
-            <h1 className="font-display text-2xl font-bold text-white mb-1 tracking-tight">Distrato Justo</h1>
             <p className="text-white/40 text-xs">Acesse sua conta para gerenciar leads e documentos</p>
           </div>
 
