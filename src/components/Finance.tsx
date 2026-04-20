@@ -379,7 +379,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
           <div className="overflow-auto flex-1 no-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead className="sticky top-0 z-10">
-                <tr className="border-b border-licorice/10" style={{ background: '#F5F2ED' }}>
+                <tr className="border-b border-licorice/10" style={{ background: '#FDFDFB' }}>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Cliente</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Resultado</th>
                   <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Restituição</th>
@@ -473,7 +473,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                             </button>
                             <div className="flex items-center text-xs font-bold min-w-[32px] justify-center">
                               {editValues?.statusResultado === 'finalizado' ? (
-                                <span className="text-aventurine">FINALIZADO</span>
+                                <span className="text-aventurine">Finalizado</span>
                               ) : (
                                 <div className="flex items-center text-licorice/60">
                                   {editValues?.parcelasPagas}
@@ -514,7 +514,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                             record.statusResultado === 'finalizado' ? "text-aventurine" : "text-licorice/60"
                           )}>
                             {record.statusResultado === 'finalizado' 
-                              ? 'FINALIZADO' 
+                              ? 'Finalizado' 
                               : `${record.parcelasPagas || 1}/${record.parcelasResultado || 1}`}
                           </span>
                         )}
@@ -667,7 +667,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
             <div className="overflow-auto flex-1 no-scrollbar">
               <table className="w-full text-left border-collapse">
                 <thead className="sticky top-0 z-10 bg-white">
-                  <tr className="border-b border-licorice/5 bg-antique/30">
+                  <tr className="border-b border-licorice/5" style={{ background: '#FDFDFB' }}>
                     <th className="pl-6 py-4 w-10">
                       <div
                         onClick={toggleSelectAll}

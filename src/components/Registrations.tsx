@@ -101,7 +101,7 @@ export default function Registrations({
         <div className="bg-white rounded-2xl border border-licorice/5 shadow-sm overflow-hidden">
           <table className="w-full text-left border-collapse table-fixed">
             <thead>
-              <tr className="border-b border-licorice/5 bg-antique/30">
+              <tr className="border-b border-licorice/5" style={{ background: '#FDFDFB' }}>
                 <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Nome</th>
                 <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Telefone</th>
                 <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Profissão</th>

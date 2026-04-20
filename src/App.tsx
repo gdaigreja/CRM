@@ -939,21 +939,6 @@ ON CONFLICT (id) DO NOTHING;
                     onChange={(e) => setRegSearchQuery(e.target.value)}
                   />
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="relative flex items-center">
-                    <select
-                      className="appearance-none bg-white/50 pl-4 pr-9 py-2 rounded-xl border border-licorice/5 text-xs font-medium text-licorice/60 focus:outline-none shadow-sm cursor-pointer"
-                      value={regFilterStatus}
-                      onChange={(e) => setRegFilterStatus(e.target.value as LeadStatus | 'all')}
-                    >
-                      <option value="all">Todos os Status</option>
-                      {columns.map(col => (
-                        <option key={col} value={col}>{col}</option>
-                      ))}
-                    </select>
-                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" />
-                  </div>
-                </div>
               </div>
             )}
 
@@ -976,7 +961,7 @@ ON CONFLICT (id) DO NOTHING;
                     className={cn(
                       "flex items-center gap-2 px-4 py-2 bg-white/50 border rounded-xl text-xs font-medium transition-all shadow-sm",
                       (docFilterArquivados || docFilterPendencias || docFilterComPrazo || docFilterDistribuidos || docFilterNaoDistribuidos || docFilterTodos)
-                        ? "border-[#512E2D] text-[#512E2D] shadow-md shadow-[#512E2D]/10 bg-white"
+                        ? "border-licorice/5 text-[#512E2D] shadow-md shadow-[#512E2D]/10 bg-white"
                         : "border-licorice/5 text-licorice/40 hover:bg-white/80"
                     )}
                   >

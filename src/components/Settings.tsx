@@ -625,7 +625,7 @@ export default function Settings({ onLogout, user, isFeatureEnabled, onUpdateUse
               <div className="overflow-hidden border border-licorice/5 rounded-2xl">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-antique/30 border-b border-licorice/5">
+                    <tr className="border-b border-licorice/5" style={{ background: '#FDFDFB' }}>
                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Usuário</th>
                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Nível de Acesso</th>
                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40 text-right">Ações</th>
