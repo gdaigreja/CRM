@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Task, Lead } from '../types';
-import { cn } from '../utils';
+import { Task, Lead } from '../../../shared/types';
+import { cn } from '../../../shared/utils';
 import { 
   CheckCircle2, 
   Circle, 

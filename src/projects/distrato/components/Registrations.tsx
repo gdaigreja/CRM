@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Lead, LeadStatus } from '../types';
-import { cn, formatPhone, formatCPF, formatRG, formatCEP, formatCurrency } from '../utils';
+import { Lead, LeadStatus } from '../../../shared/types';
+import { cn, formatPhone, formatCPF, formatRG, formatCEP, formatCurrency } from '../../../shared/utils';
 import { 
   Search, 
   Pencil, 

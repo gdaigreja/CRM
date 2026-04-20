@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Lead } from '../types';
-import { cn, formatCurrency, formatRG, formatCPF, formatPhone } from '../utils';
+import { Lead } from '../../../shared/types';
+import { cn, formatCurrency, formatRG, formatCPF, formatPhone } from '../../../shared/utils';
 import { 
   FileText, 
   Upload, 

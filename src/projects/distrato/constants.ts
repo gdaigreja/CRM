@@ -1,4 +1,4 @@
-import { Lead, DocumentItem } from './types';
+import { Lead, DocumentItem } from '../../shared/types';
 
 export const DEFAULT_DOCUMENTS: DocumentItem[] = [
   { id: 'd1', name: 'RG ou CNH', status: 'Pendente de Solicitar', type: 'obrigatório' },

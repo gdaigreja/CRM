@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Mail, Bell, Plus, Trash2, X, ChevronDown, ChevronUp, Send, Calendar, Pencil, AlertCircle, AlertTriangle, FileText, Archive, Activity, Scale, Eye, Check as LucideCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Lead, DocumentItem, DocumentStatus, Observation, ClientDocumentData } from '../types';
+import { Lead, DocumentItem, DocumentStatus, Observation, ClientDocumentData } from '../../../shared/types';
 import { DEFAULT_DOCUMENTS } from '../constants';
-import { cn } from '../utils';
+import { cn } from '../../../shared/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 interface DocumentsProps {

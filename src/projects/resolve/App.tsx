@@ -39,9 +39,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { v4 as uuidv4 } from 'uuid';
-import { Lead, LeadStatus, ContractData, SpouseInfo } from './types';
+import { Lead, LeadStatus, ContractData, SpouseInfo } from '../../shared/types';
 import { INITIAL_LEADS, KANBAN_COLUMNS, DEFAULT_DOCUMENTS } from './constants';
-import { cn, formatCurrency, formatPhone, parseCurrency, formatRG, formatCPF, formatCEP, formatPercent } from './utils';
+import { cn, formatCurrency, formatPhone, parseCurrency, formatRG, formatCPF, formatCEP, formatPercent } from '../../shared/utils';
 import Dashboard from './components/Dashboard';
 import Registrations from './components/Registrations';
 import EditLeadSidebar from './components/EditLeadSidebar';
@@ -49,7 +49,7 @@ import Documents from './components/Documents';
 import SettingsView from './components/Settings';
 import Tasks from './components/Tasks';
 import DocumentGenerator from './components/DocumentGenerator';
-import Login from './components/Login';
+import Login from '../../shared/components/Login';
 import Finance from './components/Finance';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -75,6 +75,13 @@ export default function App() {
   const [view, setView] = useState<'kanban' | 'dashboard' | 'registrations' | 'documents' | 'settings' | 'tasks' | 'generator' | 'finance'>('kanban');
   const [editingColumn, setEditingColumn] = useState<string | null>(null);
   const [rolePermissions, setRolePermissions] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    document.title = 'ResolvePrev';
+    if (user && user.project !== 'resolve') {
+      window.location.href = '/distrato';
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -692,14 +699,14 @@ export default function App() {
         )}>
           {isSidebarExpanded ? (
             <img
-              src="/assets/images/logo_maior.png"
-              alt="Logo Distrato Justo"
+              src="https://zklkmbokwzhbqdoqsnxs.supabase.co/storage/v1/object/public/Imagens/logo_pequena.png"
+              alt="Logo ResolvePrev"
               className="h-16 object-contain animate-glow-pulse"
             />
           ) : (
             <img
-              src="/assets/images/logo_pequena.png"
-              alt="Logo Distrato Justo"
+              src="https://zklkmbokwzhbqdoqsnxs.supabase.co/storage/v1/object/public/Imagens/logo_pequena.png"
+              alt="Logo ResolvePrev"
               className="w-9 h-9 object-contain animate-glow-pulse"
             />
           )}

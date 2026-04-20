@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Lead, LeadStatus } from '../types';
-import { cn, formatPhone, formatCPF, formatRG, formatCEP } from '../utils';
+import { Lead, LeadStatus } from '../../../shared/types';
+import { cn, formatPhone, formatCPF, formatRG, formatCEP } from '../../../shared/utils';
 import { 
   Trash2, 
   ExternalLink, 
@@ -15,7 +15,7 @@ import {
   FilePlus,
   Phone
 } from 'lucide-react';
-import { SpouseInfo } from '../types';
+import { SpouseInfo } from '../../../shared/types';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface EditLeadSidebarProps {

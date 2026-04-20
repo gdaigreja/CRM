@@ -1,6 +1,6 @@
 import React from 'react';
-import { Lead } from '../types';
-import { formatCurrency } from '../utils';
+import { Lead } from '../../../shared/types';
+import { formatCurrency } from '../../../shared/utils';
 import { motion } from 'motion/react';
 import { TrendingUp, DollarSign, Users, Target, BarChart3, PieChart, LineChart as LineChartIcon } from 'lucide-react';
 import { 

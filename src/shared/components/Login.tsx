@@ -10,6 +10,7 @@ interface LoginProps {
 export default function Login({ onLogin }: LoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [operation, setOperation] = useState('distrato');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +24,7 @@ export default function Login({ onLogin }: LoginProps) {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, operation }),
       });
 
       const data = await response.json();
@@ -77,7 +78,7 @@ export default function Login({ onLogin }: LoginProps) {
           <div className="text-center mb-7">
             <img
               src="/assets/images/logo_maior.png"
-              alt="Logo Distrato Justo"
+              alt="Filipe Carvalho Advocacia"
               className="h-16 object-contain mb-4 mx-auto animate-glow-pulse"
               referrerPolicy="no-referrer"
             />
@@ -108,6 +109,8 @@ export default function Login({ onLogin }: LoginProps) {
                     background: 'rgba(255,255,255,0.06)',
                     borderColor: 'rgba(255,255,255,0.10)',
                   }}
+                  value={operation}
+                  onChange={(e) => setOperation(e.target.value)}
                   onFocus={e => e.currentTarget.style.borderColor = 'rgba(212,175,55,0.5)'}
                   onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'}
                 >
@@ -131,6 +134,8 @@ export default function Login({ onLogin }: LoginProps) {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoCapitalize="none"
+                  autoCorrect="off"
                   className="w-full border rounded-xl py-3 pl-11 pr-4 text-white placeholder:text-white/15 focus:outline-none transition-all text-sm"
                   style={{
                     background: 'rgba(255,255,255,0.06)',
@@ -202,7 +207,7 @@ export default function Login({ onLogin }: LoginProps) {
         </div>
         
         <p className="text-center mt-8 text-white/20 text-xs">
-          &copy; 2026 Distrato Justo. Todos os direitos reservados.
+          &copy; 2026 Filipe Carvalho Advocacia. Todos os direitos reservados.
         </p>
       </motion.div>
     </div>

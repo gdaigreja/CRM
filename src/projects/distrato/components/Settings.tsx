@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, Shield, Globe, Terminal, Copy, Check, User, Users, Share2, Plus, Key, Mail, Lock, ShieldCheck, X, Trash2, AlertCircle, ChevronDown, Eye, EyeOff, LogOut } from 'lucide-react';
-import { cn } from '../utils';
+import { cn } from '../../../shared/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface SystemUser {
@@ -67,7 +67,7 @@ const INITIAL_PERMISSIONS: PermissionLevel[] = [
       { id: 'leads', label: 'Leads', enabled: true },
       { id: 'clients', label: 'Clientes', enabled: true },
       { id: 'documents', label: 'Documentos', enabled: false },
-      { id: 'tasks', label: 'Tarefas', enabled: false },
+      { id: 'tasks', label: 'Afazeres', enabled: false },
       { id: 'generator', label: 'Gerador', enabled: false },
       { id: 'dashboard', label: 'Dashboard', enabled: true },
       { id: 'access', label: 'Acessos', enabled: false },

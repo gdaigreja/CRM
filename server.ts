@@ -35,6 +35,26 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 const supabase = createClient(supabaseUrl || "https://placeholder.supabase.co", supabaseAnonKey || "placeholder");
 
+
+
+// Helper to get dynamic table name based on project
+const getTable = (project: string | undefined, baseName: string) => {
+  // Normalize project to lowercase and handle defaults
+  const p = (project || 'distrato').toLowerCase();
+  
+  // SHARED TABLES: Users and Roles are now shared across all projects
+  if (baseName === 'users' || baseName === 'roles_permissions') {
+    return baseName;
+  }
+
+  if (p === 'resolve') {
+    return `resolve_${baseName}`;
+  }
+  
+  // Default to original distrato table
+  return baseName;
+};
+
 // Health check endpoint
 app.get(["/api/health", "/health"], (req, res) => {
   res.json({ status: "ok", version: "1.0.0", env: process.env.NODE_ENV });
@@ -83,38 +103,49 @@ const mapDbLeadToFrontend = (dbLead: any) => ({
   } : undefined
 });
 
-const mapFrontendLeadToDb = (lead: any) => ({
-  id: lead.id,
-  name: lead.name,
-  profession: lead.profession,
-  phone: lead.phone,
-  email: lead.email,
-  rg: lead.rg,
-  cpf: lead.cpf,
-  address: lead.address,
-  neighborhood: lead.neighborhood,
-  city: lead.city,
-  state: lead.state,
-  zip_code: lead.zipCode,
-  value_paid: lead.valuePaid,
-  property_type: lead.propertyType,
-  brokerage: lead.brokerage,
-  delays: lead.delays,
-  signed_distrato: lead.signedDistrato,
-  proposal: lead.proposal,
-  status: lead.status,
-  contract: lead.contract,
-  document_data: lead.documentData || null,
-  financial_record: lead.financialRecord || null,
-  notes: lead.notes,
-  spouse_name: lead.spouseInfo?.name || null,
-  spouse_cpf: lead.spouseInfo?.cpf || null,
-  spouse_rg: lead.spouseInfo?.rg || null,
-  spouse_phone: lead.spouseInfo?.phone || null,
-  spouse_email: lead.spouseInfo?.email || null,
-  archived: lead.archived || false,
-  drive: lead.drive || null
-});
+const mapFrontendLeadToDb = (lead: any) => {
+  const dbLead: any = {
+    name: lead.name,
+    profession: lead.profession,
+    phone: lead.phone,
+    email: lead.email,
+    rg: lead.rg,
+    cpf: lead.cpf,
+    address: lead.address,
+    neighborhood: lead.neighborhood,
+    city: lead.city,
+    state: lead.state,
+    zip_code: lead.zipCode,
+    value_paid: lead.valuePaid,
+    property_type: lead.propertyType,
+    brokerage: lead.brokerage,
+    delays: lead.delays,
+    signed_distrato: lead.signedDistrato,
+    proposal: lead.proposal,
+    status: lead.status,
+    contract: lead.contract,
+    document_data: lead.documentData || null,
+    financial_record: lead.financialRecord || null,
+    notes: lead.notes,
+    spouse_name: lead.spouseInfo?.name || null,
+    spouse_cpf: lead.spouseInfo?.cpf || null,
+    spouse_rg: lead.spouseInfo?.rg || null,
+    spouse_phone: lead.spouseInfo?.phone || null,
+    spouse_email: lead.spouseInfo?.email || null,
+    archived: lead.archived || false,
+    drive: lead.drive || null
+  };
+
+  // Only include ID if explicitly provided (usually for updates or if frontend generates it)
+  if (lead.id) {
+    dbLead.id = lead.id;
+  } else {
+    // Generate one if it's a new lead without ID (to be safe)
+    dbLead.id = uuidv4();
+  }
+
+  return dbLead;
+};
 
 // Helpers for Task Mapping
 const mapDbTaskToFrontend = (dbTask: any) => ({
@@ -146,13 +177,16 @@ const JWT_SECRET = process.env.JWT_SECRET || "distrato-justo-secret-key-2026";
 // Mock DB for now (users.json)
 const USERS_FILE = path.join(process.cwd(), 'users.json');
 
-async function getUsers() {
+async function getUsers(project?: string) {
   try {
+    // FORCE SHARED TABLE: Always use 'users' regardless of passed project
+    const tableName = 'users';
     const { data, error } = await supabase
-      .from('users')
+      .from(tableName)
       .select('*');
     
     if (error) throw error;
+    console.log(`Successfully fetched ${data?.length || 0} users from table: ${tableName}`);
     if (data && data.length > 0) return data;
     
     // Fallback to local file if Supabase has no users
@@ -179,36 +213,75 @@ const authenticateToken = (req: any, res: any, next: any) => {
     return res.status(401).json({ error: "Token não fornecido" });
   }
 
-  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+  jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
     if (err) {
       return res.status(403).json({ 
         error: "Sessão inválida ou expirada",
         code: "INVALID_TOKEN" 
       });
     }
-    req.user = user;
+    
+    // Ensure project context is present
+    if (!decoded.project) {
+      decoded.project = 'distrato';
+    }
+    
+    req.user = decoded;
     next();
   });
 };
 
 // Auth Endpoints
 app.post(["/api/auth/login", "/auth/login"], async (req, res) => {
-  const { email, password } = req.body;
-  const users = await getUsers();
-  const user = users.find((u: any) => u.email === email);
+  const { email, password, operation } = req.body;
+  const project = operation || 'distrato';
+  
+  // Always query the shared users table (no project argument needed now)
+  const users = await getUsers(); 
+  
+  // Normalize lookup: lowercase and trim email for both input and DB
+  const targetEmail = (email || "").toLowerCase().trim();
+  const user = users.find((u: any) => {
+    const dbEmail = (u.email || "").toLowerCase().trim();
+    return dbEmail === targetEmail;
+  });
+  
+  console.log("Login DEBUG:", { 
+    email, 
+    operation, 
+    userFound: !!user, 
+    totalUsersFetched: users.length,
+    matchedUserEmail: user?.email 
+  });
 
   if (!user) {
     return res.status(401).json({ error: "E-mail ou senha incorretos" });
   }
 
   // Simple password check for demo, in real app use bcrypt
-  const isPasswordValid = password === user.password;
+  const typedPassword = (password || "").trim();
+  const dbPassword = (user.password || "").trim();
+  const isPasswordValid = typedPassword === dbPassword;
+
+  console.log("Login STEP - Password Check:", { 
+    email,
+    operation,
+    typedLength: typedPassword.length,
+    dbLength: dbPassword.length,
+    match: isPasswordValid
+  });
 
   if (!isPasswordValid) {
     return res.status(401).json({ error: "E-mail ou senha incorretos" });
   }
 
-  const token = jwt.sign({ id: user.id, email: user.email, role: user.role, name: user.name }, JWT_SECRET, { expiresIn: '24h' });
+  const token = jwt.sign({ 
+    id: user.id, 
+    email: user.email, 
+    role: user.role, 
+    name: user.name,
+    project: project 
+  }, JWT_SECRET, { expiresIn: '24h' });
   
   res.json({
     token,
@@ -216,14 +289,15 @@ app.post(["/api/auth/login", "/auth/login"], async (req, res) => {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      project: project
     }
   });
 });
 
 app.get(["/api/auth/me", "/auth/me"], authenticateToken, async (req: any, res) => {
   try {
-    const users = await getUsers();
+    const users = await getUsers(req.user.project);
     const user = users.find((u: any) => u.id === req.user.id);
     
     if (!user) {
@@ -234,7 +308,8 @@ app.get(["/api/auth/me", "/auth/me"], authenticateToken, async (req: any, res) =
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      project: req.user.project
     });
   } catch (e) {
     res.status(500).json({ error: "Falha ao buscar perfil" });
@@ -255,7 +330,7 @@ app.patch(["/api/auth/me", "/auth/me"], authenticateToken, async (req: any, res)
     }
 
     const { data, error } = await supabase
-      .from('users')
+      .from(getTable(req.user.project, 'users'))
       .update(updateData)
       .eq('id', userId)
       .select();
@@ -312,8 +387,9 @@ app.post(["/api/leads/webhook", "/leads/webhook"], async (req, res) => {
   };
 
   try {
+    const project = (payload.operation || 'distrato').toLowerCase();
     const { data, error } = await supabase
-      .from('leads')
+      .from(getTable(project, 'leads'))
       .insert([newLeadData])
       .select();
 
@@ -331,10 +407,10 @@ app.post(["/api/leads/webhook", "/leads/webhook"], async (req, res) => {
 });
 
 // API to get leads for the frontend
-app.get(["/api/leads", "/leads"], authenticateToken, async (req, res) => {
+app.get(["/api/leads", "/leads"], authenticateToken, async (req: any, res) => {
   try {
     const { data, error } = await supabase
-      .from('leads')
+      .from(getTable(req.user.project, 'leads'))
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -346,9 +422,9 @@ app.get(["/api/leads", "/leads"], authenticateToken, async (req, res) => {
   }
 });
 
-app.put(["/api/leads/:id", "/leads/:id"], authenticateToken, async (req, res) => {
+app.put(["/api/leads/:id", "/leads/:id"], authenticateToken, async (req: any, res) => {
   const { id } = req.params;
-  console.log(`Updating lead ${id}...`);
+  console.log(`Updating lead ${id} for project ${req.user.project}...`);
   const updatedLead = mapFrontendLeadToDb(req.body);
   
   // Remove ID from updatedLead to avoid potential issues with updating PK
@@ -356,7 +432,7 @@ app.put(["/api/leads/:id", "/leads/:id"], authenticateToken, async (req, res) =>
 
   try {
     const { data, error } = await supabase
-      .from('leads')
+      .from(getTable(req.user.project, 'leads'))
       .update(updateData)
       .eq('id', id)
       .select();
@@ -379,11 +455,11 @@ app.put(["/api/leads/:id", "/leads/:id"], authenticateToken, async (req, res) =>
   }
 });
 
-app.delete(["/api/leads/:id", "/leads/:id"], authenticateToken, async (req, res) => {
+app.delete(["/api/leads/:id", "/leads/:id"], authenticateToken, async (req: any, res) => {
   const { id } = req.params;
   try {
     const { error } = await supabase
-      .from('leads')
+      .from(getTable(req.user.project, 'leads'))
       .delete()
       .eq('id', id);
 
@@ -395,11 +471,12 @@ app.delete(["/api/leads/:id", "/leads/:id"], authenticateToken, async (req, res)
   }
 });
 
-app.post(["/api/leads", "/leads"], authenticateToken, async (req, res) => {
+app.post(["/api/leads", "/leads"], authenticateToken, async (req: any, res) => {
   const dbLead = mapFrontendLeadToDb(req.body);
   try {
+    const tableName = getTable(req.user.project, 'leads');
     const { data, error } = await supabase
-      .from('leads')
+      .from(tableName)
       .insert([dbLead])
       .select();
 
@@ -415,7 +492,7 @@ app.post(["/api/leads", "/leads"], authenticateToken, async (req, res) => {
 app.get(["/api/tasks", "/tasks"], authenticateToken, async (req: any, res) => {
   try {
     const { data, error } = await supabase
-      .from('tasks')
+      .from(getTable(req.user.project, 'tasks'))
       .select('*')
       .eq('user_id', req.user.id)
       .order('created_at', { ascending: false });
@@ -433,7 +510,7 @@ app.post(["/api/tasks", "/tasks"], authenticateToken, async (req: any, res) => {
   
   try {
     const { data, error } = await supabase
-      .from('tasks')
+      .from(getTable(req.user.project, 'tasks'))
       .insert([taskData])
       .select();
 
@@ -451,7 +528,7 @@ app.put(["/api/tasks/:id", "/tasks/:id"], authenticateToken, async (req: any, re
 
   try {
     const { data, error } = await supabase
-      .from('tasks')
+      .from(getTable(req.user.project, 'tasks'))
       .update(updatedTask)
       .eq('id', id)
       .eq('user_id', req.user.id) // Security: ensure user owns the task
@@ -472,7 +549,7 @@ app.delete(["/api/tasks/:id", "/tasks/:id"], authenticateToken, async (req: any,
   const { id } = req.params;
   try {
     const { error } = await supabase
-      .from('tasks')
+      .from(getTable(req.user.project, 'tasks'))
       .delete()
       .eq('id', id)
       .eq('user_id', req.user.id); // Security: ensure user owns the task
@@ -486,10 +563,10 @@ app.delete(["/api/tasks/:id", "/tasks/:id"], authenticateToken, async (req: any,
 });
 
 // Kanban Columns Endpoints
-app.get(["/api/columns", "/columns"], authenticateToken, async (req, res) => {
+app.get(["/api/columns", "/columns"], authenticateToken, async (req: any, res) => {
   try {
     const { data, error } = await supabase
-      .from('kanban_columns')
+      .from(getTable(req.user.project, 'kanban_columns'))
       .select('name')
       .order('position', { ascending: true });
 
@@ -501,12 +578,12 @@ app.get(["/api/columns", "/columns"], authenticateToken, async (req, res) => {
   }
 });
 
-app.post(["/api/columns", "/columns"], authenticateToken, async (req, res) => {
+app.post(["/api/columns", "/columns"], authenticateToken, async (req: any, res) => {
   const { name } = req.body;
   try {
     // Get current max position
     const { data: currentColumns } = await supabase
-      .from('kanban_columns')
+      .from(getTable(req.user.project, 'kanban_columns'))
       .select('position')
       .order('position', { ascending: false })
       .limit(1);
@@ -514,7 +591,7 @@ app.post(["/api/columns", "/columns"], authenticateToken, async (req, res) => {
     const nextPosition = currentColumns && currentColumns.length > 0 ? currentColumns[0].position + 1 : 0;
 
     const { error } = await supabase
-      .from('kanban_columns')
+      .from(getTable(req.user.project, 'kanban_columns'))
       .insert([{ name, position: nextPosition }]);
 
     if (error) throw error;
@@ -525,11 +602,11 @@ app.post(["/api/columns", "/columns"], authenticateToken, async (req, res) => {
   }
 });
 
-app.delete(["/api/columns/:name", "/columns/:name"], authenticateToken, async (req, res) => {
+app.delete(["/api/columns/:name", "/columns/:name"], authenticateToken, async (req: any, res) => {
   const { name } = req.params;
   try {
     const { error } = await supabase
-      .from('kanban_columns')
+      .from(getTable(req.user.project, 'kanban_columns'))
       .delete()
       .eq('name', name);
 
@@ -541,14 +618,14 @@ app.delete(["/api/columns/:name", "/columns/:name"], authenticateToken, async (r
   }
 });
 
-app.patch(["/api/columns/:oldName", "/columns/:oldName"], authenticateToken, async (req, res) => {
+app.patch(["/api/columns/:oldName", "/columns/:oldName"], authenticateToken, async (req: any, res) => {
   const { oldName } = req.params;
   const { newName } = req.body;
 
   try {
     // 1. Update column name in kanban_columns
     const { error: colError } = await supabase
-      .from('kanban_columns')
+      .from(getTable(req.user.project, 'kanban_columns'))
       .update({ name: newName })
       .eq('name', oldName);
 
@@ -556,7 +633,7 @@ app.patch(["/api/columns/:oldName", "/columns/:oldName"], authenticateToken, asy
 
     // 2. Update all leads that were in this status
     const { error: leadError } = await supabase
-      .from('leads')
+      .from(getTable(req.user.project, 'leads'))
       .update({ status: newName })
       .eq('status', oldName);
 
@@ -570,10 +647,10 @@ app.patch(["/api/columns/:oldName", "/columns/:oldName"], authenticateToken, asy
 });
 
 // User Management Endpoints
-app.get(["/api/roles/permissions", "/roles/permissions"], authenticateToken, async (req, res) => {
+app.get(["/api/roles/permissions", "/roles/permissions"], authenticateToken, async (req: any, res) => {
   try {
     const { data, error } = await supabase
-      .from('roles_permissions')
+      .from(getTable(req.user.project, 'roles_permissions'))
       .select('*');
     
     if (error) throw error;
@@ -584,11 +661,11 @@ app.get(["/api/roles/permissions", "/roles/permissions"], authenticateToken, asy
   }
 });
 
-app.post(["/api/roles/permissions", "/roles/permissions"], authenticateToken, async (req, res) => {
+app.post(["/api/roles/permissions", "/roles/permissions"], authenticateToken, async (req: any, res) => {
   const { role_id, permissions } = req.body;
   try {
     const { data, error } = await supabase
-      .from('roles_permissions')
+      .from(getTable(req.user.project, 'roles_permissions'))
       .upsert({ role_id, permissions })
       .select();
     
@@ -600,11 +677,11 @@ app.post(["/api/roles/permissions", "/roles/permissions"], authenticateToken, as
   }
 });
 
-app.delete(["/api/roles/permissions/:role_id", "/roles/permissions/:role_id"], authenticateToken, async (req, res) => {
+app.delete(["/api/roles/permissions/:role_id", "/roles/permissions/:role_id"], authenticateToken, async (req: any, res) => {
   const { role_id } = req.params;
   try {
     const { error } = await supabase
-      .from('roles_permissions')
+      .from(getTable(req.user.project, 'roles_permissions'))
       .delete()
       .eq('role_id', role_id);
     
@@ -616,16 +693,16 @@ app.delete(["/api/roles/permissions/:role_id", "/roles/permissions/:role_id"], a
   }
 });
 
-app.get(["/api/users", "/users"], authenticateToken, async (req, res) => {
-  const users = await getUsers();
+app.get(["/api/users", "/users"], authenticateToken, async (req: any, res) => {
+  const users = await getUsers(req.user.project);
   res.json(users);
 });
 
-app.post(["/api/users", "/users"], authenticateToken, async (req, res) => {
+app.post(["/api/users", "/users"], authenticateToken, async (req: any, res) => {
   const userData = req.body;
   try {
     const { data, error } = await supabase
-      .from('users')
+      .from(getTable(req.user.project, 'users'))
       .insert([userData])
       .select();
     
@@ -637,11 +714,11 @@ app.post(["/api/users", "/users"], authenticateToken, async (req, res) => {
   }
 });
 
-app.delete(["/api/users/:id", "/users/:id"], authenticateToken, async (req, res) => {
+app.delete(["/api/users/:id", "/users/:id"], authenticateToken, async (req: any, res) => {
   const { id } = req.params;
   try {
     const { error } = await supabase
-      .from('users')
+      .from(getTable(req.user.project, 'users'))
       .delete()
       .match({ id });
     
@@ -658,7 +735,7 @@ app.patch(["/api/users/:id", "/users/:id"], authenticateToken, async (req, res) 
   const updates = req.body;
   try {
     const { data, error } = await supabase
-      .from('users')
+      .from(getTable((req as any).user.project, 'users'))
       .update(updates)
       .match({ id })
       .select();
@@ -674,15 +751,49 @@ app.patch(["/api/users/:id", "/users/:id"], authenticateToken, async (req, res) 
 async function startServer() {
   // na Vercel, não precisamos do middleware do Vite nem de servir arquivos estáticos manualmente, 
   // pois a Vercel cuida disso de forma nativa através do vercel.json e da pasta dist.
-  if (process.env.NODE_ENV !== "production" && process.env.VERCEL !== '1') {
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL === '1') {
+    const distPath = path.resolve(__dirname, 'dist');
+    app.use(express.static(distPath));
+    
+    app.get('/distrato', (req, res) => {
+      res.sendFile(path.join(distPath, 'distrato.html'));
+    });
+    
+    app.get('/resolve', (req, res) => {
+      res.sendFile(path.join(distPath, 'resolve.html'));
+    });
+    
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  } else {
     try {
       const { createServer: createViteServer } = await import('vite');
       const vite = await createViteServer({
         server: { middlewareMode: true },
-        appType: "spa",
+        appType: "custom",
       });
       app.use(vite.middlewares);
       
+      app.get('/distrato', async (req, res) => {
+        const html = await fs.readFileSync(path.resolve(__dirname, 'distrato.html'), 'utf-8');
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(await vite.transformIndexHtml('/distrato.html', html));
+      });
+      
+      app.get('/resolve', async (req, res) => {
+        const html = await fs.readFileSync(path.resolve(__dirname, 'resolve.html'), 'utf-8');
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(await vite.transformIndexHtml('/resolve.html', html));
+      });
+
+      app.get('/', async (req, res) => {
+        try {
+          const html = await fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
+          res.status(200).set({ 'Content-Type': 'text/html' }).end(await vite.transformIndexHtml('/', html));
+        } catch (e) {
+          res.status(500).end(String(e));
+        }
+      });
+
       const PORT = process.env.PORT || 3000;
       app.listen(PORT, () => {
         console.log(`Development server running on http://localhost:${PORT}`);

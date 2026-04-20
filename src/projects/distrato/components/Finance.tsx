@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Lead, FinancialRecord } from '../types';
-import { cn, formatCurrency } from '../utils';
+import { Lead, FinancialRecord } from '../../../shared/types';
+import { cn, formatCurrency } from '../../../shared/utils';
 import {
   AlertCircle,
   TrendingUp,
