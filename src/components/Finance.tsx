@@ -49,7 +49,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
   const [selectedChurn, setSelectedChurn] = useState<Set<string>>(new Set());
   const [churnStatusFilter, setChurnStatusFilter] = useState<'todos' | 'Executar' | 'Executado' | 'Isento'>('todos');
 
-  const [editing, setEditing] = useState<{ id: string; field: 'restituicao' | 'sucumbencia' | 'honorarios' | 'honorariosPagos' | 'parcelas' | 'inicioPenhora' } | null>(null);
+  const [editing, setEditing] = useState<{ id: string; field: 'multa' | 'restituicao' | 'sucumbencia' | 'honorarios' | 'honorariosPagos' | 'parcelas' | 'inicioPenhora' } | null>(null);
   const [editValues, setEditValues] = useState<FinancialRecord | null>(null);
 
   const parseCurrency = (val: string) => {
@@ -76,7 +76,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
     return d.toISOString().split('T')[0];
   };
 
-  const handleStartEdit = (lead: Lead, field: 'restituicao' | 'sucumbencia' | 'honorarios' | 'honorariosPagos' | 'parcelas' | 'inicioPenhora') => {
+  const handleStartEdit = (lead: Lead, field: 'multa' | 'restituicao' | 'sucumbencia' | 'honorarios' | 'honorariosPagos' | 'parcelas' | 'inicioPenhora') => {
     setEditing({ id: lead.id, field });
     setEditValues({ ...lead.financialRecord! });
   };
@@ -328,13 +328,13 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
           title="Restituído"
           value={formatCurrency(metrics.restituido)}
           icon={<DollarSign size={20} />}
-          color="bg-[#C5A059]"
+          color="bg-success"
         />
         <MetricCard
           title="Sucumbência"
           value={formatCurrency(metrics.sucumbencia)}
           icon={<TrendingUp size={20} />}
-          color="bg-[#C5A059]"
+          color="bg-info"
         />
         <MetricCard
           title="Honorários"
@@ -346,7 +346,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
           title="Receita de Churn (Previsto)"
           value={formatCurrency(metrics.receitaChurnPrevisto)}
           icon={<AlertCircle size={20} />}
-          color="bg-[#C5A059]"
+          color="bg-exotic"
         />
       </div>
 
@@ -680,7 +680,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                       </div>
                     </th>
                     <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Lead</th>
-                    <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Multa</th>
+                    <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Multa Pen.</th>
                     <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Status</th>
                     <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Churn</th>
                   </tr>
@@ -712,10 +712,24 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                         <td className="px-6 py-3">
                           <span className="text-sm font-semibold text-licorice">{lead.name}</span>
                         </td>
-                        <td className="px-6 py-3">
-                          <span className="text-sm font-mono text-licorice/60">
-                            {formatCurrency(multa)}
-                          </span>
+                        <td className="px-6 py-3 cursor-pointer" onClick={() => handleStartEdit(lead, 'multa')}>
+                          {editing?.id === lead.id && editing?.field === 'multa' ? (
+                            <div className="editing-cell" onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="text"
+                                autoFocus
+                                className="bg-white border border-aventurine/20 px-3 py-1.5 rounded-lg text-xs font-mono w-28 focus:outline-none focus:ring-2 focus:ring-aventurine/10 text-licorice font-bold"
+                                value={formatCurrency(editValues?.multaRescisoriaDevida || 0)}
+                                onChange={(e) => setEditValues({ ...editValues!, multaRescisoriaDevida: parseCurrency(e.target.value) })}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                                onBlur={handleSave}
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-sm font-mono text-licorice/60">
+                              {formatCurrency(multa)}
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-3">
                           <span className={cn(

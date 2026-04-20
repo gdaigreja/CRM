@@ -1791,19 +1791,22 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
 
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Tipo de Imóvel</label>
-                  <select
-                    className="input-field"
-                    value={localLead.propertyType}
-                    onChange={e => {
-                      handleChange('propertyType', e.target.value);
-                      onUpdate({ ...localLead, propertyType: e.target.value, contract });
-                    }}
-                  >
-                    <option>Sem construção</option>
-                    <option>Com construção</option>
-                    <option>Planta</option>
-                    <option>Imóvel Pronto</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      className="input-field appearance-none pr-10"
+                      value={localLead.propertyType}
+                      onChange={e => {
+                        handleChange('propertyType', e.target.value);
+                        onUpdate({ ...localLead, propertyType: e.target.value, contract });
+                      }}
+                    >
+                      <option>Sem construção</option>
+                      <option>Com construção</option>
+                      <option>Planta</option>
+                      <option>Imóvel Pronto</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" size={16} />
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-1">
@@ -1829,17 +1832,20 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
 
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Distrato Assinado</label>
-                  <select
-                    className="input-field"
-                    value={localLead.signedDistrato}
-                    onChange={e => {
-                      handleChange('signedDistrato', e.target.value);
-                      onUpdate({ ...localLead, signedDistrato: e.target.value, contract });
-                    }}
-                  >
-                    <option>Sim</option>
-                    <option>Não</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      className="input-field appearance-none pr-10"
+                      value={localLead.signedDistrato}
+                      onChange={e => {
+                        handleChange('signedDistrato', e.target.value);
+                        onUpdate({ ...localLead, signedDistrato: e.target.value, contract });
+                      }}
+                    >
+                      <option>Sim</option>
+                      <option>Não</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" size={16} />
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-1">
@@ -1868,34 +1874,37 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
                     onBlur={handleBlur}
                   />
                 </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Formato</label>
-                  <select
-                    className="input-field"
-                    value={contract.format}
-                    onChange={e => {
-                      const format = e.target.value;
-                      let newContract = { ...contract, format };
-                      if (format === 'Isento' || format === 'Ao Final') {
-                        newContract = {
-                          ...newContract,
-                          value: 0,
-                          paymentMethod: '',
-                          installments: 0,
-                          dueDate: 0,
-                          firstInstallmentDate: '',
-                          generateBilling: false
-                        };
-                      }
-                      setContract(newContract);
-                      onUpdate({ ...localLead, contract: newContract });
-                    }}
-                  >
-                    <option>Parcelado</option>
-                    <option>Ao Final</option>
-                    <option>Isento</option>
-                  </select>
-                </div>
+                  <div className="relative flex flex-col gap-1">
+                    <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Formato</label>
+                    <div className="relative">
+                      <select
+                        className="input-field appearance-none pr-10"
+                        value={contract.format}
+                        onChange={e => {
+                          const format = e.target.value;
+                          let newContract = { ...contract, format };
+                          if (format === 'Isento' || format === 'Ao Final') {
+                            newContract = {
+                              ...newContract,
+                              value: 0,
+                              paymentMethod: '',
+                              installments: 0,
+                              dueDate: 0,
+                              firstInstallmentDate: '',
+                              generateBilling: false
+                            };
+                          }
+                          setContract(newContract);
+                          onUpdate({ ...localLead, contract: newContract });
+                        }}
+                      >
+                        <option>Parcelado</option>
+                        <option>Ao Final</option>
+                        <option>Isento</option>
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" size={16} />
+                    </div>
+                  </div>
 
                 {/* Other contract fields - disabled if format is Isento or Ao Final */}
                 <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
@@ -1910,21 +1919,24 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
                 </div>
                 <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
                   <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Meio de Pagamento</label>
-                  <select
-                    disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
-                    className="input-field"
-                    value={contract.paymentMethod}
-                    onChange={e => {
-                      const newContract = { ...contract, paymentMethod: e.target.value };
-                      setContract(newContract);
-                      onUpdate({ ...localLead, contract: newContract });
-                    }}
-                  >
-                    <option value="">Selecione...</option>
-                    <option>Boleto Bancário</option>
-                    <option>Cartão de Crédito</option>
-                    <option>PIX</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
+                      className="input-field appearance-none pr-10"
+                      value={contract.paymentMethod}
+                      onChange={e => {
+                        const newContract = { ...contract, paymentMethod: e.target.value };
+                        setContract(newContract);
+                        onUpdate({ ...localLead, contract: newContract });
+                      }}
+                    >
+                      <option value="">Selecione...</option>
+                      <option>Boleto Bancário</option>
+                      <option>Cartão de Crédito</option>
+                      <option>PIX</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" size={16} />
+                  </div>
                 </div>
                 <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
                   <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Parcelas</label>
