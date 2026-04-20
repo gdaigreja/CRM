@@ -184,12 +184,13 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
           <NewClientDocumentModal 
             leads={leads}
             onClose={() => setIsNewClientModalOpen(false)}
-            onConfirm={(leadId, code) => {
+            onConfirm={(leadId, code, projeto) => {
               const lead = leads.find(l => l.id === leadId);
               if (lead) {
                 const updatedLead: Lead = {
                   ...lead,
                   documentData: {
+                    projeto,
                     code,
                     documents: [...DEFAULT_DOCUMENTS],
                     observations: [],
@@ -1664,8 +1665,9 @@ const DocumentRow: React.FC<{ doc: DocumentItem; onUpdate: (u: Partial<DocumentI
   );
 }
 
-const NewClientDocumentModal: React.FC<{ leads: Lead[]; onClose: () => void; onConfirm: (leadId: string, code: string) => void }> = ({ leads, onClose, onConfirm }) => {
+const NewClientDocumentModal: React.FC<{ leads: Lead[]; onClose: () => void; onConfirm: (leadId: string, code: string, projeto: string) => void }> = ({ leads, onClose, onConfirm }) => {
   const [selectedLeadId, setSelectedLeadId] = useState('');
+  const [projeto, setProjeto] = useState('Distrato Justo');
   const [code, setCode] = useState('');
 
   // Only show leads that don't have documentData yet
@@ -1703,7 +1705,28 @@ const NewClientDocumentModal: React.FC<{ leads: Lead[]; onClose: () => void; onC
             <div className="space-y-3">
               <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40">Projeto / Origem</label>
               <div className="flex gap-3">
-                <button className="flex-1 py-3 bg-licorice/5 border border-licorice/10 rounded-xl text-[10px] font-bold uppercase tracking-widest text-licorice/30">ResolvePrev</button>
+                <button 
+                  onClick={() => setProjeto('Distrato Justo')}
+                  className={cn(
+                    "flex-1 py-3 border rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all",
+                    projeto === 'Distrato Justo' 
+                      ? "bg-licorice text-white border-licorice shadow-lg shadow-licorice/20" 
+                      : "bg-licorice/5 border-licorice/10 text-licorice/30 hover:bg-licorice/10"
+                  )}
+                >
+                  Distrato Justo
+                </button>
+                <button 
+                  onClick={() => setProjeto('ResolvePrev')}
+                  className={cn(
+                    "flex-1 py-3 border rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all",
+                    projeto === 'ResolvePrev' 
+                      ? "bg-licorice text-white border-licorice shadow-lg shadow-licorice/20" 
+                      : "bg-licorice/5 border-licorice/10 text-licorice/30 hover:bg-licorice/10"
+                  )}
+                >
+                  ResolvePrev
+                </button>
               </div>
             </div>
 
@@ -1741,7 +1764,7 @@ const NewClientDocumentModal: React.FC<{ leads: Lead[]; onClose: () => void; onC
               Cancelar
             </button>
             <button 
-              onClick={() => onConfirm(selectedLeadId, code)}
+              onClick={() => onConfirm(selectedLeadId, code, projeto)}
               disabled={!selectedLeadId || !code}
               className="flex-1 py-4 bg-aventurine text-white rounded-2xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-aventurine/20 hover:bg-aventurine/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >

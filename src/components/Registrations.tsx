@@ -108,7 +108,7 @@ export default function Registrations({
                 <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Tipo de Imóvel</th>
                 <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Valor Pago</th>
                 <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Status Atual</th>
-                <th className="w-[10%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40 text-right">Ações</th>
+                <th className="w-[10%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40 text-left">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-licorice/5">
@@ -142,10 +142,16 @@ export default function Registrations({
                       </span>
                     </td>
                     <td className="px-6 py-3">
-                      <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">{lead.status}</span>
+                      <span className={cn(
+                        "text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full inline-block text-center min-w-[80px]",
+                        lead.status === 'Assinado' ? "bg-green-500/10 text-green-600" : 
+                        lead.status === 'Churn' ? "bg-red-500/10 text-red-600" : "bg-licorice/5 text-licorice/40"
+                      )}>
+                        {lead.status}
+                      </span>
                     </td>
                     <td className="px-6 py-3">
-                      <div className="flex items-center justify-end gap-2 transition-opacity">
+                      <div className="flex items-center justify-start gap-2 transition-opacity">
                         <a 
                           href={lead.phone ? `https://wa.me/55${lead.phone.replace(/\D/g, '')}` : undefined}
                           target={lead.phone ? "_blank" : undefined}
@@ -157,8 +163,8 @@ export default function Registrations({
                           className={cn(
                             "p-1.5 rounded-lg transition-all",
                             lead.phone 
-                              ? "bg-green-500/10 text-green-600 hover:bg-green-500 hover:text-white" 
-                              : "bg-green-500/5 text-green-600/20 cursor-not-allowed"
+                              ? "text-green-600 hover:text-green-500 hover:scale-110" 
+                              : "text-green-600/20 cursor-not-allowed"
                           )}
                           title={lead.phone ? "Abrir WhatsApp" : "Telefone não informado"}
                         >

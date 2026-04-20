@@ -71,6 +71,7 @@ export interface Observation {
 }
 
 export interface ClientDocumentData {
+  projeto?: string;
   code: string;
   documents: DocumentItem[];
   observations: Observation[];

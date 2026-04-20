@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, Mail, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, AlertCircle, Loader2, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../utils';
 
@@ -98,6 +98,27 @@ export default function Login({ onLogin }: LoginProps) {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            <div className="space-y-2">
+              <label className="block mb-1.5 text-[10px] font-bold text-white/40 uppercase tracking-widest ml-0.5">Operação</label>
+              <div className="relative group">
+                <select
+                  className="w-full border rounded-xl py-3 px-4 text-white placeholder:text-white/15 focus:outline-none transition-all text-sm appearance-none cursor-pointer"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    borderColor: 'rgba(255,255,255,0.10)',
+                  }}
+                  onFocus={e => e.currentTarget.style.borderColor = 'rgba(212,175,55,0.5)'}
+                  onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'}
+                >
+                  <option value="distrato" className="bg-licorice">Distrato Justo</option>
+                  <option value="resolve" className="bg-licorice">ResolvePrev</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                  <ChevronDown className="w-4 h-4 text-[#D4AF37]/40 group-focus-within:text-[#D4AF37] transition-colors" />
+                </div>
+              </div>
+            </div>
 
             <div className="space-y-2">
               <label className="block mb-1.5 text-[10px] font-bold text-white/40 uppercase tracking-widest ml-0.5">E-mail</label>
