@@ -1004,7 +1004,7 @@ ON CONFLICT (id) DO NOTHING;
                             {/* Bloco 1: Todos */}
                             <div className="pb-6 border-b border-licorice/5 mb-6">
                               <label className="flex items-center gap-6 cursor-pointer group">
-                                <span className={cn("flex-1 text-[11px] font-bold uppercase tracking-[0.2em] transition-colors", docFilterTodos ? "text-[#512E2D]" : "text-licorice/20 group-hover:text-licorice/40")}>Todos</span>
+                                <span className={cn("flex-1 text-[11px] font-bold tracking-[0.05em] transition-colors", docFilterTodos ? "text-[#512E2D]" : "text-licorice/20 group-hover:text-licorice/40")}>Todos</span>
                                 <div
                                   onClick={(e) => {
                                     e.preventDefault();
@@ -1032,10 +1032,9 @@ ON CONFLICT (id) DO NOTHING;
                             <div className="flex gap-10">
                               {/* Coluna Esquerda: Exclusivos */}
                               <div className="flex-1 space-y-5">
-                                <h4 className="text-[9px] font-bold uppercase tracking-widest text-licorice/20 mb-2">Exibição</h4>
 
                                 <label className="flex items-center gap-6 cursor-pointer group">
-                                  <span className={cn("flex-1 text-[10px] font-bold uppercase tracking-widest transition-colors", docFilterDistribuidos ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice text-[10px]")}>Distribuídos</span>
+                                  <span className={cn("flex-1 text-[11px] font-bold transition-colors", docFilterDistribuidos ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Distribuídos</span>
                                   <div
                                     onClick={(e) => {
                                       e.preventDefault();
@@ -1054,7 +1053,7 @@ ON CONFLICT (id) DO NOTHING;
                                 </label>
 
                                 <label className="flex items-center gap-6 cursor-pointer group">
-                                  <span className={cn("flex-1 text-[10px] font-bold uppercase tracking-widest transition-colors", docFilterNaoDistribuidos ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice shadow-none")}>Não Distribuídos</span>
+                                  <span className={cn("flex-1 text-[11px] font-bold transition-colors", docFilterNaoDistribuidos ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice shadow-none")}>Não Distribuídos</span>
                                   <div
                                     onClick={(e) => {
                                       e.preventDefault();
@@ -1073,7 +1072,7 @@ ON CONFLICT (id) DO NOTHING;
                                 </label>
 
                                 <label className="flex items-center gap-6 cursor-pointer group">
-                                  <span className={cn("flex-1 text-[10px] font-bold uppercase tracking-widest transition-colors", docFilterArquivados ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Arquivados</span>
+                                  <span className={cn("flex-1 text-[11px] font-bold transition-colors", docFilterArquivados ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Arquivados</span>
                                   <div
                                     onClick={(e) => {
                                       e.preventDefault();
@@ -1097,7 +1096,6 @@ ON CONFLICT (id) DO NOTHING;
 
                               {/* Coluna Direita: Acumulativos */}
                               <div className="space-y-5">
-                                <h4 className="text-xs font-medium text-licorice/20 mb-2">Filtros</h4>
 
                                 <label className="flex items-center gap-6 cursor-pointer group">
                                   <span className={cn("flex-1 text-xs font-medium transition-colors", docFilterPendencias ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Pendências</span>

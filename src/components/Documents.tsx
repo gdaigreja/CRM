@@ -288,8 +288,8 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
       )}
       {client.financialRecord?.tipoResultado && client.status !== 'Churn' && (
         <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none z-10">
-          <div className="absolute top-2 right-[-30px] bg-[#00A63E] text-white text-[8px] font-bold py-0.5 w-[100px] text-center rotate-45 shadow-sm uppercase tracking-[0.2em]">
-            {client.financialRecord.tipoResultado === 'acordo' ? 'acordo' : 'sentença'}
+          <div className="absolute top-2 right-[-30px] bg-[#00A63E] text-white text-[8px] font-bold py-0.5 w-[100px] text-center rotate-45 shadow-sm tracking-[0.15em]">
+            {client.financialRecord.tipoResultado === 'acordo' ? 'Acordo' : 'Sentença'}
           </div>
         </div>
       )}
@@ -317,7 +317,7 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
           title="Abrir Google Drive"
         >
           <img 
-            src="https://zklkmbokwzhbqdoqsnxs.supabase.co/storage/v1/object/public/Imagens/drive-cinza.png" 
+            src="/assets/images/icone_drive_cinza.png" 
             alt="Drive" 
             className="w-4 h-4 object-contain opacity-20 group-hover/drive:opacity-100 transition-opacity"
           />
@@ -699,12 +699,31 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
           <div className="p-5 bg-[#512E2D] text-white flex justify-between items-stretch">
             <div className="flex flex-col justify-between gap-4">
               <div className="flex flex-col">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <button 
                     onClick={() => onEditLead(client)}
                     className="text-lg font-bold tracking-tight hover:text-white/80 transition-colors text-left"
                   >
                     {client.name}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (client.drive) {
+                        const url = client.drive.startsWith('http') ? client.drive : `https://${client.drive}`;
+                        window.open(url, '_blank');
+                      } else {
+                        alert('O link do Google Drive não foi cadastrado.');
+                      }
+                    }}
+                    className="p-1 rounded-lg hover:bg-white/5 transition-all hover:scale-110 active:scale-95 group/drive"
+                    title="Abrir Google Drive"
+                  >
+                    <img 
+                      src="/assets/images/icone_drive_branco.png" 
+                      alt="Drive" 
+                      className="w-4 h-4 object-contain opacity-30 group-hover/drive:opacity-100 transition-opacity"
+                    />
                   </button>
                 </div>
                 <button 
@@ -766,7 +785,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                         <button 
                           onClick={() => onEmailClick()}
                           className={cn(
-                            "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border w-[120px]",
+                            "flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold transition-all border w-[120px]",
                             docData.emailSent ? "bg-orange-500 border-orange-500 text-white" : "bg-white/5 border-white/10 text-white/40"
                           )}
                         >
@@ -782,8 +801,8 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                             }
                           }}
                           className={cn(
-                          "flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-medium transition-all border w-[120px]",
-                          docData.notificationSent ? "bg-orange-500 border-orange-500 text-white" : "bg-white/5 border-white/10 text-white/40"
+                            "flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold transition-all border w-[120px]",
+                            docData.notificationSent ? "bg-orange-500 border-orange-500 text-white" : "bg-white/5 border-white/10 text-white/40"
                           )}
                         >
                           <Bell size={12} />
