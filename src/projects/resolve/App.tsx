@@ -55,9 +55,9 @@ import Finance from './components/Finance';
 const STATUS_COLORS: Record<string, string> = {
   'Novo': '#94a3b8',           // Gray
   'Qualificação': '#F97316',   // Vibrant Orange
-  'Follow-up': '#EAB308',      // Yellow
-  'Reunião': '#2E7D32',        // Green
-  'Stand-by': '#3B82F6',       // Blue
+  'Follow-up': '#FACC15',      // Vivid Yellow
+  'Reunião': '#22C55E',        // Vivid Green
+  'Stand-by': '#2563EB',       // Vivid Blue
   'Recusado': '#EF4444',       // Red
   'Desqualificado': '#A855F7', // Purple
   'Recuperação': '#A0522D',    // Terracotta (Default)
@@ -1316,7 +1316,12 @@ ON CONFLICT (id) DO NOTHING;
                               {/* Status dot */}
                               <span 
                                 className="w-2 h-2 rounded-full flex-shrink-0" 
-                                style={{ background: STATUS_COLORS[column] || '#A0522D', opacity: 1 }} 
+                                style={{ 
+                                  background: STATUS_COLORS[column] || 
+                                              STATUS_COLORS[Object.keys(STATUS_COLORS).find(k => k.toLowerCase() === column.toLowerCase()) || ''] || 
+                                              '#A0522D', 
+                                  opacity: 1 
+                                }} 
                               />
                               {editingColumn === column ? (
                                 <input

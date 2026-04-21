@@ -95,6 +95,8 @@ const mapDbLeadToFrontend = (dbLead: any, project: string = 'distrato') => {
     lead.incomeRange = dbLead.income_range;
     lead.hasRequested = dbLead.has_requested;
     lead.serviceType = dbLead.service_type;
+    lead.birthDate = dbLead.birth_date;
+    lead.gender = dbLead.gender;
   } else {
     lead.valuePaid = Number(dbLead.value_paid || 0);
     lead.propertyType = dbLead.property_type;
@@ -158,6 +160,8 @@ const mapFrontendLeadToDb = (lead: any, project: string = 'distrato') => {
     dbLead.income_range = lead.incomeRange || null;
     dbLead.has_requested = lead.hasRequested || null;
     dbLead.service_type = lead.serviceType || null;
+    dbLead.birth_date = lead.birthDate || null;
+    dbLead.gender = lead.gender || null;
   } else {
     dbLead.value_paid = lead.valuePaid;
     dbLead.property_type = lead.propertyType;

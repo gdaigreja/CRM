@@ -116,13 +116,18 @@ export default function EditLeadSidebar({
                     <User size={14} className="text-aventurine" />
                     <h4 className="text-xs font-medium text-licorice/40">Dados Pessoais</h4>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="col-span-2">
+                  <div className="grid grid-cols-6 gap-4">
+                    <div className="col-span-6">
                       <Field label="Nome Completo" value={editingLead.name} onChange={v => setEditingLead({...editingLead, name: v})} onBlur={handleBlur} />
                     </div>
-                    <Field label="Profissão" value={editingLead.profession} onChange={v => setEditingLead({...editingLead, profession: v})} onBlur={handleBlur} />
-                    <Field label="E-mail" value={editingLead.email || ''} onChange={v => setEditingLead({...editingLead, email: v})} onBlur={handleBlur} />
-                    <div className="flex flex-col gap-1">
+                    <div className="col-span-3">
+                      <Field label="Profissão" value={editingLead.profession} onChange={v => setEditingLead({...editingLead, profession: v})} onBlur={handleBlur} />
+                    </div>
+                    <div className="col-span-3">
+                      <Field label="E-mail" value={editingLead.email || ''} onChange={v => setEditingLead({...editingLead, email: v})} onBlur={handleBlur} />
+                    </div>
+                    
+                    <div className="col-span-3 flex flex-col gap-1">
                       <label className="text-[10px] font-medium text-licorice/30 tracking-widest">Whatsapp</label>
                       <div className="flex gap-2">
                         <input 
@@ -143,9 +148,8 @@ export default function EditLeadSidebar({
                         )}
                       </div>
                     </div>
-                    <Field label="RG" value={formatRG(editingLead.rg || '')} onChange={v => setEditingLead({...editingLead, rg: v.replace(/\D/g, '')})} onBlur={handleBlur} />
-                    <Field label="CPF" value={formatCPF(editingLead.cpf || '')} onChange={v => setEditingLead({...editingLead, cpf: v.replace(/\D/g, '')})} onBlur={handleBlur} />
-                    <div className="flex flex-col gap-1">
+
+                    <div className="col-span-3 flex flex-col gap-1">
                       <label className="text-[10px] font-medium text-licorice/30">Estado Civil</label>
                       <select 
                         className="input-field appearance-none cursor-pointer"
@@ -158,6 +162,36 @@ export default function EditLeadSidebar({
                         <option value="Casado(a)">Casado(a)</option>
                         <option value="Divorciado(a)">Divorciado(a)</option>
                         <option value="Viúvo(a)">Viúvo(a)</option>
+                      </select>
+                    </div>
+
+                    <div className="col-span-3">
+                      <Field label="CPF" value={formatCPF(editingLead.cpf || '')} onChange={v => setEditingLead({...editingLead, cpf: v.replace(/\D/g, '')})} onBlur={handleBlur} />
+                    </div>
+                    <div className="col-span-3">
+                      <Field label="RG" value={formatRG(editingLead.rg || '')} onChange={v => setEditingLead({...editingLead, rg: v.replace(/\D/g, '')})} onBlur={handleBlur} />
+                    </div>
+                    <div className="col-span-3 flex flex-col gap-1">
+                      <label className="text-[10px] font-medium text-licorice/30">Data Nasc.</label>
+                      <input 
+                        type="date"
+                        className="input-field"
+                        value={editingLead.birthDate || ''}
+                        onChange={e => setEditingLead({...editingLead, birthDate: e.target.value})}
+                        onBlur={handleBlur}
+                      />
+                    </div>
+                    <div className="col-span-3 flex flex-col gap-1">
+                      <label className="text-[10px] font-medium text-licorice/30">Gênero</label>
+                      <select 
+                        className="input-field appearance-none cursor-pointer"
+                        value={editingLead.gender || ''}
+                        onChange={e => setEditingLead({...editingLead, gender: e.target.value as any})}
+                        onBlur={handleBlur}
+                      >
+                        <option value="">Selecione...</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Feminino">Feminino</option>
                       </select>
                     </div>
                   </div>

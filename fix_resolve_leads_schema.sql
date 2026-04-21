@@ -10,6 +10,12 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='resolve_leads' AND column_name='service_type') THEN
         ALTER TABLE public.resolve_leads ADD COLUMN service_type TEXT;
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='resolve_leads' AND column_name='birth_date') THEN
+        ALTER TABLE public.resolve_leads ADD COLUMN birth_date DATE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='resolve_leads' AND column_name='gender') THEN
+        ALTER TABLE public.resolve_leads ADD COLUMN gender TEXT;
+    END IF;
 END $$;
 
 -- 2. Rename existing columns to the new retirement domain fields

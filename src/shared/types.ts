@@ -43,6 +43,8 @@ export interface Lead {
   incomeRange?: string;
   hasRequested?: string;
   serviceType?: 'Aposentadoria' | 'Planejamento';
+  birthDate?: string;
+  gender?: 'Masculino' | 'Feminino';
 }
 
 export interface LegalProcessInfo {
