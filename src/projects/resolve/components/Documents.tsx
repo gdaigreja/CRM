@@ -25,6 +25,7 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
   const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
   const [isEmailConfirmOpen, setIsEmailConfirmOpen] = useState(false);
   const [pendingEmailClient, setPendingEmailClient] = useState<Lead | null>(null);
+  const [pendingEmailAction, setPendingEmailAction] = useState<'emailSent' | 'notificationSent' | null>(null);
 
   const handleEmailClick = (client: Lead) => {
     // Only show confirmation if email hasn't been sent yet
@@ -154,6 +155,11 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
               onClick={() => setSelectedClient(client)}
               onUpdate={onUpdateLead}
               onEmailClick={() => handleEmailClick(client)}
+              onConfirmService={(action) => {
+                setPendingEmailClient(client);
+                setPendingEmailAction(action);
+                setIsEmailConfirmOpen(true);
+              }}
             />
           ))}
         </div>
@@ -177,6 +183,12 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
             onEmailClick={() => {
               const current = leads.find(l => l.id === selectedClient.id);
               if (current) handleEmailClick(current);
+            }}
+            onConfirmService={(action) => {
+              const current = leads.find(l => l.id === selectedClient.id) || selectedClient;
+              setPendingEmailClient(current);
+              setPendingEmailAction(action);
+              setIsEmailConfirmOpen(true);
             }}
           />
         )}
@@ -206,7 +218,10 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
           />
         )}
         {isEmailConfirmOpen && pendingEmailClient && (
-          <div className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[300] flex items-center justify-center p-4" onClick={() => setIsEmailConfirmOpen(false)}>
+          <div className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[300] flex items-center justify-center p-4" onClick={() => {
+            setIsEmailConfirmOpen(false);
+            setPendingEmailAction(null);
+          }}>
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -215,24 +230,52 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
               onClick={e => e.stopPropagation()}
             >
               <div className="w-16 h-16 bg-aventurine/10 rounded-full flex items-center justify-center text-aventurine">
-                <Mail size={32} />
+                <Check size={32} />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-licorice">Confirmar Envio?</h3>
-                <p className="text-sm text-licorice/60 mt-2">Deseja enviar o e-mail para a contraparte informando os dados do processo e do cliente?</p>
+                <h3 className="text-xl font-bold text-licorice">Confirmar Serviço?</h3>
+                <p className="text-sm text-licorice/60 mt-2">
+                  Deseja confirmar que o serviço de <strong>{pendingEmailAction === 'emailSent' ? 'Cálculo' : 'Planejamento'}</strong> já foi prestado? 
+                  <br/><br/>
+                  <span className="text-red-500 font-semibold">Esta ação não poderá ser desfeita.</span>
+                </p>
               </div>
               <div className="flex w-full gap-3">
                 <button 
-                  onClick={() => setIsEmailConfirmOpen(false)}
+                  onClick={() => {
+                    setIsEmailConfirmOpen(false);
+                    setPendingEmailAction(null);
+                  }}
                   className="flex-1 py-4 text-sm font-bold text-licorice/40 hover:text-licorice transition-colors"
                 >
                   Cancelar
                 </button>
                 <button 
-                  onClick={() => sendEmailWebhook(pendingEmailClient)}
+                  onClick={() => {
+                    if (pendingEmailClient && pendingEmailAction) {
+                      onUpdateLead({
+                        ...pendingEmailClient,
+                        documentData: {
+                          ...pendingEmailClient.documentData!,
+                          [pendingEmailAction]: true
+                        }
+                      });
+                      if (selectedClient?.id === pendingEmailClient.id) {
+                        setSelectedClient({
+                          ...pendingEmailClient,
+                          documentData: {
+                            ...pendingEmailClient.documentData!,
+                            [pendingEmailAction]: true
+                          }
+                        });
+                      }
+                    }
+                    setIsEmailConfirmOpen(false);
+                    setPendingEmailAction(null);
+                  }}
                   className="flex-1 py-4 bg-aventurine text-white rounded-2xl text-sm font-bold shadow-lg shadow-aventurine/20 hover:scale-105 active:scale-95 transition-all"
                 >
-                  Sim, Enviar
+                  Confirmar
                 </button>
               </div>
             </motion.div>
@@ -243,7 +286,13 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
   );
 }
 
-const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead: Lead) => void; onEmailClick: () => void }> = ({ client, onClick, onUpdate, onEmailClick }) => {
+const ClientCard: React.FC<{ 
+  client: Lead; 
+  onClick: () => void; 
+  onUpdate: (lead: Lead) => void; 
+  onEmailClick: () => void;
+  onConfirmService: (action: 'emailSent' | 'notificationSent') => void;
+}> = ({ client, onClick, onUpdate, onEmailClick, onConfirmService }) => {
   const docData = client.documentData || { 
     code: '', 
     documents: [...DEFAULT_DOCUMENTS], 
@@ -425,15 +474,15 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!client.contract?.isCalculation) return;
-                  onUpdate({ ...client, documentData: { ...docData, emailSent: !docData.emailSent } });
+                  if (!client.contract?.isCalculation || docData.emailSent) return;
+                  onConfirmService('emailSent');
                 }}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-medium transition-all border",
-                  docData.emailSent ? "bg-aventurine/10 border-aventurine/20 text-aventurine" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10",
-                  !client.contract?.isCalculation && "opacity-40 cursor-not-allowed pointer-events-none"
+                  docData.emailSent ? "bg-aventurine/10 border-aventurine/20 text-aventurine cursor-default" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10",
+                  !client.contract?.isCalculation && "opacity-40 cursor-not-allowed"
                 )}
-                title={!client.contract?.isCalculation ? "Serviço não contratado" : ""}
+                title={docData.emailSent ? "Serviço Prestado" : !client.contract?.isCalculation ? "Serviço não contratado" : ""}
               >
                 <div className={cn("w-3 h-3 rounded-sm border flex items-center justify-center", docData.emailSent ? "bg-aventurine border-aventurine" : "border-licorice/20 bg-white")}>
                   {docData.emailSent && <Check size={8} className="text-white" />}
@@ -444,15 +493,15 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!client.contract?.isPlanning) return;
-                  onUpdate({ ...client, documentData: { ...docData, notificationSent: !docData.notificationSent } });
+                  if (!client.contract?.isPlanning || docData.notificationSent) return;
+                  onConfirmService('notificationSent');
                 }}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-medium transition-all border",
-                  docData.notificationSent ? "bg-aventurine/10 border-aventurine/20 text-aventurine" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10",
-                  !client.contract?.isPlanning && "opacity-40 cursor-not-allowed pointer-events-none"
+                  docData.notificationSent ? "bg-aventurine/10 border-aventurine/20 text-aventurine cursor-default" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10",
+                  !client.contract?.isPlanning && "opacity-40 cursor-not-allowed"
                 )}
-                title={!client.contract?.isPlanning ? "Serviço não contratado" : ""}
+                title={docData.notificationSent ? "Serviço Prestado" : !client.contract?.isPlanning ? "Serviço não contratado" : ""}
               >
                 <div className={cn("w-3 h-3 rounded-sm border flex items-center justify-center", docData.notificationSent ? "bg-aventurine border-aventurine" : "border-licorice/20 bg-white")}>
                   {docData.notificationSent && <Check size={8} className="text-white" />}
@@ -486,7 +535,15 @@ function Check({ size, className }: { size: number; className?: string }) {
 }
 
 // Placeholder components to be moved to separate files or implemented below
-const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpdate: (lead: Lead) => void; onDelete: () => void; onEditLead: (lead: Lead) => void; onEmailClick: () => void }> = ({ client, onClose, onUpdate, onDelete, onEditLead, onEmailClick }) => {
+const DocumentDetailOverlay: React.FC<{ 
+  client: Lead; 
+  onClose: () => void; 
+  onUpdate: (lead: Lead) => void; 
+  onDelete: () => void; 
+  onEditLead: (lead: Lead) => void; 
+  onEmailClick: () => void;
+  onConfirmService: (action: 'emailSent' | 'notificationSent') => void;
+}> = ({ client, onClose, onUpdate, onDelete, onEditLead, onEmailClick, onConfirmService }) => {
   const [isObrigatorioOpen, setIsObrigatorioOpen] = useState(true);
   const [isEventualOpen, setIsEventualOpen] = useState(true);
   const [newObservation, setNewObservation] = useState('');
@@ -800,13 +857,13 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                       <>
                         <button 
                           onClick={() => {
-                            if (!client.contract?.isCalculation) return;
-                            onUpdate({ ...client, documentData: { ...docData, emailSent: !docData.emailSent } });
+                            if (!client.contract?.isCalculation || docData.emailSent) return;
+                            onConfirmService('emailSent');
                           }}
                           className={cn(
                             "flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold transition-all border w-[120px]",
-                            docData.emailSent ? "bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-900/20" : "bg-white/5 border-white/10 text-white/40",
-                            !client.contract?.isCalculation && "opacity-40 cursor-not-allowed pointer-events-none"
+                            docData.emailSent ? "bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-900/20 cursor-default" : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10",
+                            !client.contract?.isCalculation && "opacity-40 cursor-not-allowed"
                           )}
                         >
                           <span>Cálculo</span>
@@ -815,13 +872,13 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
 
                         <button 
                           onClick={() => {
-                            if (!client.contract?.isPlanning) return;
-                            onUpdate({ ...client, documentData: { ...docData, notificationSent: !docData.notificationSent } });
+                            if (!client.contract?.isPlanning || docData.notificationSent) return;
+                            onConfirmService('notificationSent');
                           }}
                           className={cn(
                             "flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold transition-all border w-[120px]",
-                            docData.notificationSent ? "bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-900/20" : "bg-white/5 border-white/10 text-white/40",
-                            !client.contract?.isPlanning && "opacity-40 cursor-not-allowed pointer-events-none"
+                            docData.notificationSent ? "bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-900/20 cursor-default" : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10",
+                            !client.contract?.isPlanning && "opacity-40 cursor-not-allowed"
                           )}
                         >
                           <span>Planejamento</span>

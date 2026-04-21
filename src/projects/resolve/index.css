@@ -278,6 +278,7 @@
   .font-display { font-family: var(--font-display); }
   .font-mono    { font-family: var(--font-mono); }
 }
+
 /* ═══════════════════════════════════════════════════════
    CURSOR — Unlayered (beats all @layer rules incl. Preflight)
 ═══════════════════════════════════════════════════════ */
