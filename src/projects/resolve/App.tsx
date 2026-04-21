@@ -410,50 +410,45 @@ export default function App() {
     const updatedLead = { ...lead, contract };
     setLeads(prev => prev.map(l => l.id === lead.id ? updatedLead : l));
 
-    const webhookUrl = "https://n8n.srv1077266.hstgr.cloud/webhook/distratojusto";
+    const webhookUrl = "https://n8n.srv1077266.hstgr.cloud/webhook/resolveprev";
 
     const payload = {
+      id: updatedLead.id,
       nome: updatedLead.name,
       profissao: updatedLead.profession,
-      dados_cliente: {
-        telefone: updatedLead.phone,
+      email: updatedLead.email,
+      whatsapp: updatedLead.phone,
+      cpf: updatedLead.cpf,
+      rg: updatedLead.rg,
+      estado_civil: updatedLead.maritalStatus,
+      dados_previdenciarios: {
+        idade: updatedLead.age,
+        contribuicao: updatedLead.contribution,
+        contribui: updatedLead.isContributing,
+        trabalho: updatedLead.workType,
+        renda: updatedLead.incomeRange,
+        ja_solicitou: updatedLead.hasRequested,
+        tipo_servico: updatedLead.serviceType
+      },
+      endereco: {
         cidade: updatedLead.city,
         estado: updatedLead.state,
-        valor_pago: updatedLead.valuePaid,
-        tipo_imovel: updatedLead.propertyType,
-        corretagem: updatedLead.brokerage,
-        atrasos: updatedLead.delays,
-        distrato_assinado: updatedLead.signedDistrato,
-        proposta: updatedLead.proposal,
-        origem: updatedLead.status,
-        criado_em: updatedLead.createdAt
+        cep: updatedLead.zipCode,
+        logradouro: updatedLead.address,
+        bairro: updatedLead.neighborhood
       },
       dados_contrato: {
-        percentual: contract.percentage,
-        formato: contract.format,
-        valor_fixo: contract.value,
-        metodo_pagamento: contract.paymentMethod,
+        valor_total: contract.value,
+        entrada: contract.downPayment,
         parcelas: contract.installments,
         dia_vencimento: contract.dueDate,
         data_primeira_parcela: contract.firstInstallmentDate,
         gerar_cobranca: contract.generateBilling
       },
+      conjuge: updatedLead.spouseInfo,
       notas: updatedLead.notes,
-      dados_avancados: {
-        dados_pessoais: {
-          email: updatedLead.email,
-          rg: updatedLead.rg,
-          cpf: updatedLead.cpf
-        },
-        endereco: {
-          cep: updatedLead.zipCode,
-          logradouro: updatedLead.address,
-          bairro: updatedLead.neighborhood,
-          cidade: updatedLead.city,
-          uf: updatedLead.state
-        },
-        conjuge: updatedLead.spouseInfo
-      }
+      status_crm: updatedLead.status,
+      criado_em: updatedLead.createdAt
     };
 
     try {
