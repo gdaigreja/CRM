@@ -418,37 +418,39 @@ const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead:
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  onEmailClick();
+                  if (!client.contract?.isCalculation) return;
+                  onUpdate({ ...client, documentData: { ...docData, emailSent: !docData.emailSent } });
                 }}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-medium transition-all border",
-                  docData.emailSent ? "bg-aventurine/10 border-aventurine/20 text-aventurine" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10"
+                  docData.emailSent ? "bg-aventurine/10 border-aventurine/20 text-aventurine" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10",
+                  !client.contract?.isCalculation && "opacity-40 cursor-not-allowed pointer-events-none"
                 )}
+                title={!client.contract?.isCalculation ? "Serviço não contratado" : ""}
               >
                 <div className={cn("w-3 h-3 rounded-sm border flex items-center justify-center", docData.emailSent ? "bg-aventurine border-aventurine" : "border-licorice/20 bg-white")}>
                   {docData.emailSent && <Check size={8} className="text-white" />}
                 </div>
-                <Mail size={12} />
-                Email
+                Cálculo
               </button>
 
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!docData.notificationSent) {
-                    onUpdate({ ...client, documentData: { ...docData, notificationSent: true } });
-                  }
+                  if (!client.contract?.isPlanning) return;
+                  onUpdate({ ...client, documentData: { ...docData, notificationSent: !docData.notificationSent } });
                 }}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-medium transition-all border",
-                  docData.notificationSent ? "bg-aventurine/10 border-aventurine/20 text-aventurine" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10"
+                  docData.notificationSent ? "bg-aventurine/10 border-aventurine/20 text-aventurine" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10",
+                  !client.contract?.isPlanning && "opacity-40 cursor-not-allowed pointer-events-none"
                 )}
+                title={!client.contract?.isPlanning ? "Serviço não contratado" : ""}
               >
                 <div className={cn("w-3 h-3 rounded-sm border flex items-center justify-center", docData.notificationSent ? "bg-aventurine border-aventurine" : "border-licorice/20 bg-white")}>
                   {docData.notificationSent && <Check size={8} className="text-white" />}
                 </div>
-                <Bell size={12} />
-                Notificação
+                Planejamento
               </button>
             </>
           )
@@ -783,31 +785,33 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                     ) : (
                       <>
                         <button 
-                          onClick={() => onEmailClick()}
+                          onClick={() => {
+                            if (!client.contract?.isCalculation) return;
+                            onUpdate({ ...client, documentData: { ...docData, emailSent: !docData.emailSent } });
+                          }}
                           className={cn(
                             "flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold transition-all border w-[120px]",
-                            docData.emailSent ? "bg-orange-500 border-orange-500 text-white" : "bg-white/5 border-white/10 text-white/40"
+                            docData.emailSent ? "bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-900/20" : "bg-white/5 border-white/10 text-white/40",
+                            !client.contract?.isCalculation && "opacity-40 cursor-not-allowed pointer-events-none"
                           )}
                         >
-                          <Mail size={12} />
-                          <span>Email</span>
-                          {docData.emailSent && <Check size={8} />}
+                          <span>Cálculo</span>
+                          {docData.emailSent && <LucideCheck size={8} />}
                         </button>
 
                         <button 
                           onClick={() => {
-                            if (!docData.notificationSent) {
-                              onUpdate({ ...client, documentData: { ...docData, notificationSent: true } });
-                            }
+                            if (!client.contract?.isPlanning) return;
+                            onUpdate({ ...client, documentData: { ...docData, notificationSent: !docData.notificationSent } });
                           }}
                           className={cn(
                             "flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold transition-all border w-[120px]",
-                            docData.notificationSent ? "bg-orange-500 border-orange-500 text-white" : "bg-white/5 border-white/10 text-white/40"
+                            docData.notificationSent ? "bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-900/20" : "bg-white/5 border-white/10 text-white/40",
+                            !client.contract?.isPlanning && "opacity-40 cursor-not-allowed pointer-events-none"
                           )}
                         >
-                          <Bell size={12} />
-                          <span>Notificação</span>
-                          {docData.notificationSent && <Check size={8} />}
+                          <span>Planejamento</span>
+                          {docData.notificationSent && <LucideCheck size={8} />}
                         </button>
                       </>
                     )}
