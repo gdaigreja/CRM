@@ -61,43 +61,50 @@ app.get(["/api/health", "/health"], (req, res) => {
 });
 
 // Helpers for Lead Mapping (Frontend <-> Database)
-const mapDbLeadToFrontend = (dbLead: any) => ({
-  id: dbLead.id,
-  name: dbLead.name,
-  profession: dbLead.profession,
-  phone: dbLead.phone,
-  email: dbLead.email,
-  rg: dbLead.rg,
-  cpf: dbLead.cpf,
-  address: dbLead.address,
-  neighborhood: dbLead.neighborhood,
-  city: dbLead.city,
-  state: dbLead.state,
-  zipCode: dbLead.zip_code,
-  valuePaid: Number(dbLead.value_paid || 0),
-  propertyType: dbLead.property_type,
-  brokerage: Number(dbLead.brokerage || 0),
-  delays: dbLead.delays || 0,
-  signedDistrato: dbLead.signed_distrato || 'Não',
-  proposal: Number(dbLead.proposal || 0),
-  status: dbLead.status,
-  contract: dbLead.contract,
-  documentData: dbLead.document_data,
-  financialRecord: dbLead.financial_record,
-  createdAt: dbLead.created_at,
-  notes: dbLead.notes || "",
-  maritalStatus: dbLead.marital_status || "",
-  archived: dbLead.archived || false,
-  drive: dbLead.drive || "",
+const mapDbLeadToFrontend = (dbLead: any, project: string = 'distrato') => {
+  const isResolve = project === 'resolve';
+  const lead: any = {
+    id: dbLead.id,
+    name: dbLead.name,
+    profession: dbLead.profession,
+    phone: dbLead.phone,
+    email: dbLead.email,
+    rg: dbLead.rg,
+    cpf: dbLead.cpf,
+    address: dbLead.address,
+    neighborhood: dbLead.neighborhood,
+    city: dbLead.city,
+    state: dbLead.state,
+    zipCode: dbLead.zip_code,
+    status: dbLead.status,
+    contract: typeof dbLead.contract === 'string' ? (JSON.parse(dbLead.contract || '{}')) : (dbLead.contract || {}),
+    documentData: typeof dbLead.document_data === 'string' ? (JSON.parse(dbLead.document_data || '[]')) : (dbLead.document_data || []),
+    financialRecord: typeof dbLead.financial_record === 'string' ? (JSON.parse(dbLead.financial_record || '[]')) : (dbLead.financial_record || []),
+    createdAt: dbLead.created_at,
+    notes: dbLead.notes || "",
+    maritalStatus: dbLead.marital_status || "",
+    archived: dbLead.archived || false,
+    drive: dbLead.drive || "",
+  };
 
-  // Retirement fields
-  age: dbLead.age,
-  contribution: dbLead.contribution,
-  isContributing: dbLead.is_contributing,
-  workType: dbLead.work_type,
-  incomeRange: dbLead.income_range,
-  hasRequested: dbLead.has_requested,
-  spouseInfo: (
+  if (isResolve) {
+    lead.age = dbLead.age;
+    lead.contribution = dbLead.contribution;
+    lead.isContributing = dbLead.is_contributing;
+    lead.workType = dbLead.work_type;
+    lead.incomeRange = dbLead.income_range;
+    lead.hasRequested = dbLead.has_requested;
+    lead.serviceType = dbLead.service_type;
+  } else {
+    lead.valuePaid = Number(dbLead.value_paid || 0);
+    lead.propertyType = dbLead.property_type;
+    lead.brokerage = Number(dbLead.brokerage || 0);
+    lead.delays = dbLead.delays || 0;
+    lead.signedDistrato = dbLead.signed_distrato || 'Não';
+    lead.proposal = Number(dbLead.proposal || 0);
+  }
+
+  lead.spouseInfo = (
     (dbLead.spouse_name && dbLead.spouse_name.trim() !== "") ||
     (dbLead.spouse_cpf && dbLead.spouse_cpf.trim() !== "") ||
     (dbLead.spouse_rg && dbLead.spouse_rg.trim() !== "") ||
@@ -109,10 +116,13 @@ const mapDbLeadToFrontend = (dbLead: any) => ({
     rg: dbLead.spouse_rg || "",
     phone: dbLead.spouse_phone || "",
     email: dbLead.spouse_email || ""
-  } : undefined
-});
+  } : undefined;
 
-const mapFrontendLeadToDb = (lead: any) => {
+  return lead;
+};
+
+const mapFrontendLeadToDb = (lead: any, project: string = 'distrato') => {
+  const isResolve = project === 'resolve';
   const dbLead: any = {
     name: lead.name,
     profession: lead.profession,
@@ -125,12 +135,6 @@ const mapFrontendLeadToDb = (lead: any) => {
     city: lead.city,
     state: lead.state,
     zip_code: lead.zipCode,
-    value_paid: lead.valuePaid,
-    property_type: lead.propertyType,
-    brokerage: lead.brokerage,
-    delays: lead.delays,
-    signed_distrato: lead.signedDistrato,
-    proposal: lead.proposal,
     status: lead.status,
     contract: lead.contract,
     document_data: lead.documentData || null,
@@ -144,15 +148,24 @@ const mapFrontendLeadToDb = (lead: any) => {
     spouse_email: lead.spouseInfo?.email || null,
     archived: lead.archived || false,
     drive: lead.drive || null,
-
-    // Retirement fields
-    age: lead.age || null,
-    contribution: lead.contribution || null,
-    is_contributing: lead.isContributing || null,
-    work_type: lead.workType || null,
-    income_range: lead.incomeRange || null,
-    has_requested: lead.hasRequested || null
   };
+
+  if (isResolve) {
+    dbLead.age = lead.age || null;
+    dbLead.contribution = lead.contribution || null;
+    dbLead.is_contributing = lead.isContributing || null;
+    dbLead.work_type = lead.workType || null;
+    dbLead.income_range = lead.incomeRange || null;
+    dbLead.has_requested = lead.hasRequested || null;
+    dbLead.service_type = lead.serviceType || null;
+  } else {
+    dbLead.value_paid = lead.valuePaid;
+    dbLead.property_type = lead.propertyType;
+    dbLead.brokerage = lead.brokerage;
+    dbLead.delays = lead.delays;
+    dbLead.signed_distrato = lead.signedDistrato;
+    dbLead.proposal = lead.proposal;
+  }
 
   // Only include ID if explicitly provided (usually for updates or if frontend generates it)
   if (lead.id) {
@@ -382,19 +395,16 @@ app.post(["/api/leads/webhook", "/leads/webhook"], async (req, res) => {
     telefone = `https://wa.me/55${numericPhone}`;
   }
 
-  const newLeadData = {
+  const project = (payload.operation || 'distrato').toLowerCase();
+  const isResolve = project === 'resolve';
+
+  const newLeadData: any = {
     name: payload.nome,
     profession: payload.profissao || "",
     phone: telefone,
     city: payload.cidade_uf || "",
     state: "",
-    value_paid: payload.valor_pago || 0,
-    property_type: payload.tipo_imovel || "",
-    brokerage: payload.corretagem || 0,
-    delays: payload.atrasos || 0,
-    signed_distrato: "Não",
     notes: "",
-    proposal: 0,
     email: payload.email || "",
     rg: payload.rg || "",
     cpf: payload.cpf || "",
@@ -404,8 +414,25 @@ app.post(["/api/leads/webhook", "/leads/webhook"], async (req, res) => {
     status: "Novo"
   };
 
+  if (isResolve) {
+    newLeadData.age = payload.idade || 0;
+    newLeadData.contribution = payload.contribuicao || 0;
+    newLeadData.is_contributing = payload.contribui || null;
+    newLeadData.work_type = payload.trabalho || null;
+    newLeadData.income_range = payload.renda || null;
+    newLeadData.has_requested = payload.ja_solicitou || null;
+    newLeadData.service_type = payload.service_type || null;
+    newLeadData.marital_status = payload.estado_civil || null;
+  } else {
+    newLeadData.value_paid = payload.valor_pago || 0;
+    newLeadData.property_type = payload.tipo_imovel || "";
+    newLeadData.brokerage = payload.corretagem || 0;
+    newLeadData.delays = payload.atrasos || 0;
+    newLeadData.signed_distrato = "Não";
+    newLeadData.proposal = 0;
+  }
+
   try {
-    const project = (payload.operation || 'distrato').toLowerCase();
     const { data, error } = await supabase
       .from(getTable(project, 'leads'))
       .insert([newLeadData])
@@ -416,7 +443,7 @@ app.post(["/api/leads/webhook", "/leads/webhook"], async (req, res) => {
     res.status(201).json({
       message: "Lead created successfully",
       id: data[0].id,
-      lead: mapDbLeadToFrontend(data[0])
+      lead: mapDbLeadToFrontend(data[0], project)
     });
   } catch (error) {
     console.error("Webhook error:", error);
@@ -433,7 +460,7 @@ app.get(["/api/leads", "/leads"], authenticateToken, async (req: any, res) => {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    res.json(data.map(mapDbLeadToFrontend));
+    res.json(data.map(lead => mapDbLeadToFrontend(lead, req.user.project)));
   } catch (error) {
     console.error("Error fetching leads:", error);
     res.status(500).json({ error: "Failed to fetch leads" });
@@ -443,7 +470,7 @@ app.get(["/api/leads", "/leads"], authenticateToken, async (req: any, res) => {
 app.put(["/api/leads/:id", "/leads/:id"], authenticateToken, async (req: any, res) => {
   const { id } = req.params;
   console.log(`Updating lead ${id} for project ${req.user.project}...`);
-  const updatedLead = mapFrontendLeadToDb(req.body);
+  const updatedLead = mapFrontendLeadToDb(req.body, req.user.project);
   
   // Remove ID from updatedLead to avoid potential issues with updating PK
   const { id: _, ...updateData } = updatedLead;
@@ -466,7 +493,7 @@ app.put(["/api/leads/:id", "/leads/:id"], authenticateToken, async (req: any, re
     }
     
     console.log("Lead updated successfully:", id);
-    res.json(mapDbLeadToFrontend(data[0]));
+    res.json(mapDbLeadToFrontend(data[0], req.user.project));
   } catch (error) {
     console.error("Error updating lead:", error);
     res.status(500).json({ error: "Failed to update lead" });
@@ -490,7 +517,7 @@ app.delete(["/api/leads/:id", "/leads/:id"], authenticateToken, async (req: any,
 });
 
 app.post(["/api/leads", "/leads"], authenticateToken, async (req: any, res) => {
-  const dbLead = mapFrontendLeadToDb(req.body);
+  const dbLead = mapFrontendLeadToDb(req.body, req.user.project);
   try {
     const tableName = getTable(req.user.project, 'leads');
     const { data, error } = await supabase
@@ -499,7 +526,7 @@ app.post(["/api/leads", "/leads"], authenticateToken, async (req: any, res) => {
       .select();
 
     if (error) throw error;
-    res.status(201).json(mapDbLeadToFrontend(data[0]));
+    res.status(201).json(mapDbLeadToFrontend(data[0], req.user.project));
   } catch (error) {
     console.error("Error creating lead:", error);
     res.status(500).json({ error: "Failed to create lead" });

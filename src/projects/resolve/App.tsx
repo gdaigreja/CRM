@@ -1623,9 +1623,13 @@ function LeadCard({ lead, index, onClick, onEdit }: { lead: Lead; index: number;
 
             <div className="mt-3 pt-2.5 border-t border-licorice/6 flex justify-between items-center">
               <span className="text-xs font-bold font-mono text-aventurine">{lead.age || 0} anos</span>
-              <span className="inline-flex items-center text-[9px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full"
-                style={{ background: 'rgba(26,17,16,0.06)', color: 'rgba(26,17,16,0.40)' }}>
-                {lead.contribution || 0} meses
+              <span className={cn(
+                "inline-flex items-center text-[9px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full",
+                lead.serviceType === 'Aposentadoria' ? "bg-green-500/10 text-green-600" : 
+                lead.serviceType === 'Planejamento' ? "bg-yellow-500/10 text-yellow-700" : 
+                "bg-licorice/5 text-licorice/40"
+              )}>
+                {lead.serviceType || `${lead.contribution || 0} meses`}
               </span>
             </div>
           </div>

@@ -42,6 +42,7 @@ export interface Lead {
   workType?: string;
   incomeRange?: string;
   hasRequested?: string;
+  serviceType?: 'Aposentadoria' | 'Planejamento';
 }
 
 export interface LegalProcessInfo {

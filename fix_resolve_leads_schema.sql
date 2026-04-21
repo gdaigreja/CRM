@@ -7,6 +7,9 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='resolve_leads' AND column_name='marital_status') THEN
         ALTER TABLE public.resolve_leads ADD COLUMN marital_status TEXT;
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='resolve_leads' AND column_name='service_type') THEN
+        ALTER TABLE public.resolve_leads ADD COLUMN service_type TEXT;
+    END IF;
 END $$;
 
 -- 2. Rename existing columns to the new retirement domain fields
@@ -59,6 +62,7 @@ ALTER TABLE public.resolve_leads ALTER COLUMN work_type SET DEFAULT NULL;
 ALTER TABLE public.resolve_leads ALTER COLUMN income_range SET DEFAULT NULL;
 ALTER TABLE public.resolve_leads ALTER COLUMN has_requested SET DEFAULT NULL;
 
--- 4. Ensure contract column is ready for JSON data (if it was text)
--- If it's already JSONB, this will be a no-op or slight adjustment
--- ALTER TABLE public.resolve_leads ALTER COLUMN contract TYPE JSONB USING contract::jsonb;
+-- 4. Ensure JSON columns are correctly typed as JSONB
+ALTER TABLE public.resolve_leads ALTER COLUMN contract TYPE JSONB USING (CASE WHEN contract IS NULL OR contract = '' THEN '{}'::jsonb ELSE contract::jsonb END);
+ALTER TABLE public.resolve_leads ALTER COLUMN financial_record TYPE JSONB USING (CASE WHEN financial_record IS NULL OR financial_record = '' THEN '[]'::jsonb ELSE financial_record::jsonb END);
+ALTER TABLE public.resolve_leads ALTER COLUMN document_data TYPE JSONB USING (CASE WHEN document_data IS NULL OR document_data = '' THEN '[]'::jsonb ELSE document_data::jsonb END);
