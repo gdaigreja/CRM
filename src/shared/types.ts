@@ -101,6 +101,8 @@ export interface ContractData {
   dueDate: number;
   firstInstallmentDate: string;
   generateBilling: boolean;
+  isPlanning?: boolean;
+  isCalculation?: boolean;
 }
 
 export interface FinancialRecord {

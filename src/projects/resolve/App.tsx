@@ -443,7 +443,9 @@ export default function App() {
         parcelas: contract.installments,
         dia_vencimento: contract.dueDate,
         data_primeira_parcela: contract.firstInstallmentDate,
-        gerar_cobranca: contract.generateBilling
+        gerar_cobranca: contract.generateBilling,
+        planejamento: contract.isPlanning,
+        calculo: contract.isCalculation
       },
       conjuge: updatedLead.spouseInfo,
       notas: updatedLead.notes,
@@ -1650,6 +1652,8 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
     installments: 12,
     dueDate: 10,
     firstInstallmentDate: new Date().toISOString().split('T')[0],
+    isPlanning: false,
+    isCalculation: false,
     generateBilling: true
   });
 
@@ -1879,10 +1883,47 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
             <div className="space-y-6">
               <h3 className="text-xs font-bold uppercase tracking-widest text-licorice/40 border-b border-licorice/5 pb-2">Dados do Contrato</h3>
               <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2 flex gap-8 mb-1 h-[58px] items-center">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div 
+                      onClick={() => {
+                        const newContract = { ...contract, isPlanning: !contract.isPlanning };
+                        setContract(newContract);
+                        onUpdate({ ...localLead, contract: newContract });
+                      }}
+                      className={cn(
+                        "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
+                        contract.isPlanning ? "bg-aventurine border-aventurine" : "bg-white border-licorice/10 group-hover:border-licorice/20"
+                      )}
+                    >
+                      {contract.isPlanning && <Check size={14} className="text-white" strokeWidth={3} />}
+                    </div>
+                    <span className="text-[10px] font-bold text-licorice/60 group-hover:text-licorice uppercase tracking-widest">Planejamento</span>
+                  </label>
+                  
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div 
+                      onClick={() => {
+                        const newContract = { ...contract, isCalculation: !contract.isCalculation };
+                        setContract(newContract);
+                        onUpdate({ ...localLead, contract: newContract });
+                      }}
+                      className={cn(
+                        "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
+                        contract.isCalculation ? "bg-aventurine border-aventurine" : "bg-white border-licorice/10 group-hover:border-licorice/20"
+                      )}
+                    >
+                      {contract.isCalculation && <Check size={14} className="text-white" strokeWidth={3} />}
+                    </div>
+                    <span className="text-[10px] font-bold text-licorice/60 group-hover:text-licorice uppercase tracking-widest">Cálculo</span>
+                  </label>
+                </div>
+
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Valor (R$)</label>
                   <input
-                    className="input-field font-mono"
+                    disabled={!(contract.isPlanning || contract.isCalculation)}
+                    className={cn("input-field font-mono", !(contract.isPlanning || contract.isCalculation) && "opacity-40 cursor-not-allowed")}
                     value={formatCurrency(contract.value)}
                     onChange={e => setContract({ ...contract, value: parseCurrency(e.target.value) })}
                     onBlur={handleBlur}
@@ -1891,7 +1932,8 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Entrada</label>
                   <input
-                    className="input-field font-mono"
+                    disabled={!(contract.isPlanning || contract.isCalculation)}
+                    className={cn("input-field font-mono", !(contract.isPlanning || contract.isCalculation) && "opacity-40 cursor-not-allowed")}
                     value={formatCurrency(contract.downPayment)}
                     onChange={e => setContract({ ...contract, downPayment: parseCurrency(e.target.value) })}
                     onBlur={handleBlur}
@@ -1901,7 +1943,8 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
                   <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Parcelas</label>
                   <input
                     type="number"
-                    className="input-field"
+                    disabled={!(contract.isPlanning || contract.isCalculation)}
+                    className={cn("input-field", !(contract.isPlanning || contract.isCalculation) && "opacity-40 cursor-not-allowed")}
                     value={contract.installments}
                     onChange={e => setContract({ ...contract, installments: Number(e.target.value) })}
                     onBlur={handleBlur}
@@ -1911,7 +1954,8 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
                   <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Vencimento (Dia)</label>
                   <input
                     type="number"
-                    className="input-field"
+                    disabled={!(contract.isPlanning || contract.isCalculation)}
+                    className={cn("input-field", !(contract.isPlanning || contract.isCalculation) && "opacity-40 cursor-not-allowed")}
                     value={contract.dueDate}
                     onChange={e => setContract({ ...contract, dueDate: Number(e.target.value) })}
                     onBlur={handleBlur}
@@ -1921,16 +1965,18 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
                   <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Data 1ª Parcela</label>
                   <input
                     type="date"
-                    className="input-field"
+                    disabled={!(contract.isPlanning || contract.isCalculation)}
+                    className={cn("input-field", !(contract.isPlanning || contract.isCalculation) && "opacity-40 cursor-not-allowed")}
                     value={contract.firstInstallmentDate}
                     onChange={e => setContract({ ...contract, firstInstallmentDate: e.target.value })}
                     onBlur={handleBlur}
                   />
                 </div>
                 <div className="flex items-center justify-between pt-4">
-                  <span className="text-xs font-bold text-licorice/60">Gerar Cobrança</span>
+                  <span className={cn("text-xs font-bold", (contract.isPlanning || contract.isCalculation) ? "text-licorice/60" : "text-licorice/20")}>Gerar Cobrança</span>
                   <motion.button
                     whileTap={{ scale: 0.9 }}
+                    disabled={!(contract.isPlanning || contract.isCalculation)}
                     onClick={() => {
                       const newContract = { ...contract, generateBilling: !contract.generateBilling };
                       setContract(newContract);
