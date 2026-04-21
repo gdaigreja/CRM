@@ -93,8 +93,8 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
     }
   };
 
-  // Filter leads that have documentData and status is 'Assinado' or 'Churn'
-  const clients = leads.filter(l => l.documentData && (l.status === 'Assinado' || l.status === 'Churn'));
+  // Filter leads that are in 'Assinado' or 'Churn' status to show in Operation view
+  const clients = leads.filter(l => l.status === 'Assinado' || l.status === 'Churn');
 
   const filteredClients = clients.filter(c => {
     const matchesSearch = (c.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -244,7 +244,14 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
 }
 
 const ClientCard: React.FC<{ client: Lead; onClick: () => void; onUpdate: (lead: Lead) => void; onEmailClick: () => void }> = ({ client, onClick, onUpdate, onEmailClick }) => {
-  const docData = client.documentData || { code: '', documents: [], observations: [], emailSent: false, notificationSent: false, minutaHomologada: false };
+  const docData = client.documentData || { 
+    code: '', 
+    documents: [...DEFAULT_DOCUMENTS], 
+    observations: [], 
+    emailSent: false, 
+    notificationSent: false, 
+    minutaHomologada: false 
+  };
   
   const getProgress = (type: 'obrigatório' | 'eventual') => {
     const docs = (docData.documents || []).filter(d => d.type === type);
@@ -513,7 +520,14 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
   const [honorariosValue, setHonorariosValue] = useState('');
   const [paymentDate, setPaymentDate] = useState(new Date().toLocaleDateString('en-CA'));
   
-  const docData = client.documentData || { code: '', documents: [], observations: [], emailSent: false, notificationSent: false, minutaHomologada: false };
+  const docData = client.documentData || { 
+    code: '', 
+    documents: [...DEFAULT_DOCUMENTS], 
+    observations: [], 
+    emailSent: false, 
+    notificationSent: false, 
+    minutaHomologada: false 
+  };
 
   // Sync search internal state when modals open
   useEffect(() => {
