@@ -915,7 +915,7 @@ const DocumentDetailOverlay: React.FC<{ client: Lead; onClose: () => void; onUpd
                     className="overflow-hidden space-y-3"
                   >
                     {(docData.documents || []).filter(d => d.type === 'obrigatório').map(doc => (
-                      <DocumentRow key={doc.id} doc={doc} onUpdate={(u) => handleUpdateDoc(doc.id, u)} />
+                      <DocumentRow key={doc.id} doc={doc} onUpdate={(u) => handleUpdateDoc(doc.id, u)} onDelete={() => handleDeleteDoc(doc.id)} />
                     ))}
                   </motion.div>
                 )}
