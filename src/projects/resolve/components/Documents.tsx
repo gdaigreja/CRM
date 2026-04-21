@@ -595,7 +595,6 @@ const DocumentDetailOverlay: React.FC<{
   const [lastMovement, setLastMovement] = useState('');
   const [movementDate, setMovementDate] = useState('');
   const [counterpartEmail, setCounterpartEmail] = useState('');
-  const [enterprise, setEnterprise] = useState('');
   
   const [movementOptions, setMovementOptions] = useState<string[]>(['Inicial Protocolada', 'Aguardando Citação', 'Contestação Apresentada', 'Decisão Interlocutória', 'Sentença Proferida']);
   
@@ -637,7 +636,6 @@ const DocumentDetailOverlay: React.FC<{
       setLastMovement(docData.legalProcess?.lastMovement || '');
       setMovementDate(docData.legalProcess?.movementDate || '');
       setCounterpartEmail(docData.legalProcess?.counterpartEmail || '');
-      setEnterprise(docData.legalProcess?.enterprise || '');
     }
   }, [showLegalModal, docData.legalProcess]);
 
@@ -1210,8 +1208,7 @@ const DocumentDetailOverlay: React.FC<{
                             court,
                             lastMovement,
                             movementDate,
-                            counterpartEmail,
-                            enterprise
+                            counterpartEmail
                           }
                         }
                       });
@@ -1239,8 +1236,7 @@ const DocumentDetailOverlay: React.FC<{
                             court,
                             lastMovement,
                             movementDate,
-                            counterpartEmail,
-                            enterprise
+                            counterpartEmail
                           }
                         }
                       });
@@ -1268,8 +1264,7 @@ const DocumentDetailOverlay: React.FC<{
                             court,
                             lastMovement,
                             movementDate,
-                            counterpartEmail: newEmail,
-                            enterprise
+                            counterpartEmail: newEmail
                           }
                         }
                       });
@@ -1277,34 +1272,6 @@ const DocumentDetailOverlay: React.FC<{
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Empreendimento</label>
-                  <input 
-                    type="text" 
-                    placeholder="Nome do empreendimento"
-                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-blue-500/50 transition-colors"
-                    value={enterprise}
-                    onChange={(e) => {
-                      const newEnterprise = e.target.value;
-                      setEnterprise(newEnterprise);
-                      onUpdate({
-                        ...client,
-                        documentData: {
-                          ...docData,
-                          legalProcess: {
-                            processNumber,
-                            respondent,
-                            court,
-                            lastMovement,
-                            movementDate,
-                            counterpartEmail,
-                            enterprise: newEnterprise
-                          }
-                        }
-                      });
-                    }}
-                  />
-                </div>
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Tribunal (TJ)</label>
@@ -1324,8 +1291,7 @@ const DocumentDetailOverlay: React.FC<{
                             court: newCourt,
                             lastMovement,
                             movementDate,
-                            counterpartEmail,
-                            enterprise
+                            counterpartEmail
                           }
                         }
                       });
@@ -1361,8 +1327,7 @@ const DocumentDetailOverlay: React.FC<{
                               court,
                               lastMovement,
                               movementDate,
-                              counterpartEmail,
-                              enterprise
+                              counterpartEmail
                             }
                           }
                         });
@@ -1383,8 +1348,7 @@ const DocumentDetailOverlay: React.FC<{
                                 court,
                                 lastMovement,
                                 movementDate,
-                                counterpartEmail,
-                                enterprise
+                                counterpartEmail
                               }
                             }
                           });
@@ -1419,8 +1383,7 @@ const DocumentDetailOverlay: React.FC<{
                             court,
                             lastMovement,
                             movementDate: newDate,
-                            counterpartEmail,
-                            enterprise
+                            counterpartEmail
                           }
                         }
                       });
