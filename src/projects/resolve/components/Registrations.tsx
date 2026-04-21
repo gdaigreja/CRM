@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Lead, LeadStatus } from '../../../shared/types';
-import { cn, formatPhone, formatCPF, formatRG, formatCEP, formatCurrency } from '../../../shared/utils';
+import { cn, formatPhone, formatCurrency, calculateRequirementDate, formatRequirementDate, getRequirementStatus } from '../../../shared/utils';
 import { 
   Search, 
   Pencil, 
@@ -94,6 +94,15 @@ export default function Registrations({
     setShowDeleteConfirm(null);
   };
 
+  const getReqDateInfo = (lead: Lead) => {
+    const date = calculateRequirementDate(lead.birthDate, lead.gender);
+    return {
+      date,
+      text: formatRequirementDate(date),
+      status: getRequirementStatus(date)
+    };
+  };
+
   return (
     <div className="h-full flex flex-col bg-antique overflow-hidden">
       {/* List Area */}
@@ -103,12 +112,13 @@ export default function Registrations({
             <thead>
               <tr className="border-b border-licorice/5" style={{ background: '#FDFDFB' }}>
                 <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Nome</th>
-                <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Telefone</th>
-                <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Profissão</th>
-                <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Contribuição</th>
-                <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Idade</th>
-                <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Status Atual</th>
-                <th className="w-[10%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40 text-left">Ações</th>
+                <th className="w-[12%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Telefone</th>
+                <th className="w-[12%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Profissão</th>
+                <th className="w-[8%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Idade</th>
+                <th className="w-[10%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Contribuição</th>
+                <th className="w-[12%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Data Req.</th>
+                <th className="w-[12%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40 text-center">Status Atual</th>
+                <th className="w-[9%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40 text-left">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-licorice/5">
@@ -134,21 +144,35 @@ export default function Registrations({
                       <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">{lead.profession || 'Não informada'}</span>
                     </td>
                     <td className="px-6 py-3">
-                      <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">{lead.contribution || '0'}</span>
-                    </td>
-                    <td className="px-6 py-3">
                       <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">
                         {lead.age || '0'} anos
                       </span>
                     </td>
                     <td className="px-6 py-3">
-                      <span className={cn(
-                        "text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full inline-block text-center min-w-[80px]",
-                        lead.status === 'Assinado' ? "bg-green-500/10 text-green-600" : 
-                        lead.status === 'Churn' ? "bg-red-500/10 text-red-600" : "bg-licorice/5 text-licorice/40"
-                      )}>
-                        {lead.status}
+                      <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">
+                        {lead.contribution || '0'} anos
                       </span>
+                    </td>
+                    <td className="px-6 py-3">
+                      <span className={cn(
+                        "inline-flex items-center text-[10px] uppercase tracking-tight px-2 py-0.5 rounded-lg truncate",
+                        getReqDateInfo(lead).status === 'past' ? "bg-red-500/10 text-red-600" :
+                        getReqDateInfo(lead).status === 'near' ? "bg-blue-500/10 text-blue-600" :
+                        "bg-licorice/5 text-licorice/40"
+                      )}>
+                        {getReqDateInfo(lead).text}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3">
+                      <div className="flex justify-center">
+                        <span className={cn(
+                          "text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full inline-block text-center min-w-[80px]",
+                          lead.status === 'Assinado' ? "bg-green-500/10 text-green-600" : 
+                          lead.status === 'Churn' ? "bg-red-500/10 text-red-600" : "bg-licorice/5 text-licorice/40"
+                        )}>
+                          {lead.status}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-3">
                       <div className="flex items-center justify-start gap-2 transition-opacity">

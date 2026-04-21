@@ -50,3 +50,38 @@ export function parseCurrency(value: string): number {
   const digits = value.replace(/\D/g, '');
   return Number(digits) / 100;
 }
+
+export function calculateRequirementDate(birthDate?: string, gender?: string): Date | null {
+  if (!birthDate || !gender) return null;
+  try {
+    const [year, month, day] = birthDate.split('-').map(Number);
+    if (!year || !month || !day) return null;
+    const yearsToAdd = (gender === 'Masculino' || gender === 'masculino') ? 65 : 62;
+    return new Date(year + yearsToAdd, month - 1, day);
+  } catch (e) {
+    return null;
+  }
+}
+
+export function formatRequirementDate(date: Date | null): string {
+  if (!date) return 'Não inf.';
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+}
+
+export function getRequirementStatus(date: Date | null): 'past' | 'near' | 'future' | 'unknown' {
+  if (!date) return 'unknown';
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  
+  const reqDate = new Date(date);
+  reqDate.setHours(0, 0, 0, 0);
+
+  if (reqDate < now) return 'past';
+  
+  const sevenDaysLater = new Date(now);
+  sevenDaysLater.setDate(now.getDate() + 7);
+  
+  if (reqDate <= sevenDaysLater) return 'near';
+  
+  return 'future';
+}

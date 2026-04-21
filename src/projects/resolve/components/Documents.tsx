@@ -3,7 +3,7 @@ import { Search, Mail, Bell, Plus, Trash2, X, ChevronDown, ChevronUp, Send, Cale
 import { motion, AnimatePresence } from 'motion/react';
 import { Lead, DocumentItem, DocumentStatus, Observation, ClientDocumentData } from '../../../shared/types';
 import { DEFAULT_DOCUMENTS } from '../constants';
-import { cn } from '../../../shared/utils';
+import { cn, calculateRequirementDate, formatRequirementDate, getRequirementStatus } from '../../../shared/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 interface DocumentsProps {
@@ -15,13 +15,18 @@ interface DocumentsProps {
   filterPendencias: boolean;
   filterComPrazo: boolean;
   filterArquivados: boolean;
-  filterDistribuidos: boolean;
-  filterNaoDistribuidos: boolean;
+  filterJudiciais: boolean;
+  filterAdministrativos: boolean;
   filterTodos: boolean;
+  dateRange: { start: Date | null; end: Date | null; label: string };
 }
 
-export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLead, searchQuery, filterPendencias, filterComPrazo, filterArquivados, filterDistribuidos, filterNaoDistribuidos, filterTodos }: DocumentsProps) {
+export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLead, searchQuery, filterPendencias, filterComPrazo, filterArquivados, filterJudiciais, filterAdministrativos, filterTodos, dateRange }: DocumentsProps) {
   const [selectedClient, setSelectedClient] = useState<Lead | null>(null);
+  const [isBeneficioModalOpen, setIsBeneficioModalOpen] = useState(false);
+  const [pendingBeneficioClient, setPendingBeneficioClient] = useState<Lead | null>(null);
+  const [rendaValue, setRendaValue] = useState('');
+  const [atrasadosValue, setAtrasadosValue] = useState('');
   const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
   const [isEmailConfirmOpen, setIsEmailConfirmOpen] = useState(false);
   const [pendingEmailClient, setPendingEmailClient] = useState<Lead | null>(null);
@@ -141,8 +146,10 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
       } else if (c.financialRecord?.tipoResultado === 'acordo' || c.financialRecord?.tipoResultado === 'sentenca_procedente') {
         if (c.documentData?.minutaHomologada) return false;
       } else {
-        const hasPendencias = (c.documentData?.documents || []).some(d => d.status !== 'Recebido');
-        if (!hasPendencias) return false;
+        const hasDocPendencies = (c.documentData?.documents || []).some(d => d.status !== 'Recebido');
+        const hasServicePendencies = (c.contract?.isCalculation && !c.documentData?.emailSent) || 
+                                     (c.contract?.isPlanning && !c.documentData?.notificationSent);
+        if (!hasDocPendencies && !hasServicePendencies) return false;
       }
     }
 
@@ -151,19 +158,39 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
       if (!hasPrazo) return false;
     }
 
-    if (filterDistribuidos) {
+    if (filterJudiciais) {
       if (!c.documentData?.legalProcess?.processNumber) return false;
     }
 
-    if (filterNaoDistribuidos) {
+    if (filterAdministrativos) {
       if (c.documentData?.legalProcess?.processNumber) return false;
+    }
+
+    // Filter by date range (Data Req.)
+    if (dateRange.start || dateRange.end) {
+      const reqDate = calculateRequirementDate(c.birthDate, c.gender);
+      if (!reqDate) return false;
+      
+      const reqTime = reqDate.getTime();
+      
+      if (dateRange.start && reqTime < new Date(dateRange.start).getTime()) return false;
+      if (dateRange.end && reqTime > new Date(dateRange.end).getTime()) return false;
     }
 
     return true;
   }).sort((a, b) => {
-    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    return dateB - dateA;
+    const reqA = calculateRequirementDate(a.birthDate, a.gender);
+    const reqB = calculateRequirementDate(b.birthDate, b.gender);
+    
+    if (!reqA && !reqB) {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    }
+    if (!reqA) return 1;
+    if (!reqB) return -1;
+    
+    return reqA.getTime() - reqB.getTime();
   });
 
   return (
@@ -182,6 +209,14 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
                 setPendingEmailClient(client);
                 setPendingEmailAction(action);
                 setIsEmailConfirmOpen(true);
+              }}
+              onOpenBeneficio={(client) => {
+                setPendingBeneficioClient(client);
+                const renda = client.financialRecord?.rendaMensal || 0;
+                const atrasados = client.financialRecord?.valorRestituicao || 0;
+                setRendaValue(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(renda));
+                setAtrasadosValue(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(atrasados));
+                setIsBeneficioModalOpen(true);
               }}
             />
           ))}
@@ -213,6 +248,14 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
               setPendingEmailAction(action);
               setIsEmailConfirmOpen(true);
             }}
+            onOpenBeneficio={(client) => {
+              setPendingBeneficioClient(client);
+              const renda = client.financialRecord?.rendaMensal || 0;
+              const atrasados = client.financialRecord?.valorRestituicao || 0;
+              setRendaValue(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(renda));
+              setAtrasadosValue(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(atrasados));
+              setIsBeneficioModalOpen(true);
+            }}
           />
         )}
         {isNewClientModalOpen && (
@@ -239,6 +282,174 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
               setIsNewClientModalOpen(false);
             }}
           />
+        )}
+        {isBeneficioModalOpen && pendingBeneficioClient && (
+          <div className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[300] flex items-center justify-center p-4" onClick={() => setIsBeneficioModalOpen(false)}>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl flex flex-col items-center text-center gap-6 relative"
+              onClick={e => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setIsBeneficioModalOpen(false)}
+                className="absolute right-6 top-6 text-licorice/20 hover:text-licorice transition-colors"
+                title="Fechar"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="w-16 h-16 bg-aventurine/10 rounded-full flex items-center justify-center text-aventurine">
+                <FileText size={32} />
+              </div>
+
+              <div>
+                <h3 className="text-xl font-bold text-licorice">Informar Benefício</h3>
+                <p className="text-sm text-licorice/60 mt-2">Insira os valores da renda e dos atrasados.</p>
+              </div>
+
+              <div className="w-full space-y-4">
+                <div className="space-y-1 text-left">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Renda Mensal</label>
+                  <input 
+                    type="text" 
+                    placeholder="R$ 0,00"
+                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors"
+                    value={rendaValue}
+                    onChange={(e) => {
+                      const val = Number(e.target.value.replace(/\D/g, '')) / 100;
+                      setRendaValue(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val));
+                    }}
+                  />
+                </div>
+                <div className="space-y-1 text-left">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Atrasados</label>
+                  <input 
+                    type="text" 
+                    placeholder="R$ 0,00"
+                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors"
+                    value={atrasadosValue}
+                    onChange={(e) => {
+                      const val = Number(e.target.value.replace(/\D/g, '')) / 100;
+                      setAtrasadosValue(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val));
+                    }}
+                  />
+                </div>
+              </div>
+
+              <button 
+                onClick={() => {
+                  const updatedLead = {
+                    ...pendingBeneficioClient,
+                    archived: true,
+                    financialRecord: {
+                      ...(pendingBeneficioClient.financialRecord || {}),
+                      rendaMensal: Number(rendaValue.replace(/\D/g, '')) / 100,
+                      valorRestituicao: Number(atrasadosValue.replace(/\D/g, '')) / 100,
+                    },
+                    documentData: {
+                      ...(pendingBeneficioClient.documentData || { code: '', documents: [], observations: [], emailSent: false, notificationSent: false }),
+                      minutaHomologada: true
+                    }
+                  };
+                  onUpdateLead(updatedLead);
+                  if (selectedClient?.id === pendingBeneficioClient.id) {
+                    setSelectedClient(updatedLead);
+                  }
+                  setIsBeneficioModalOpen(false);
+                  setPendingBeneficioClient(null);
+                }}
+                className="w-full py-4 bg-aventurine text-white rounded-xl text-sm font-bold hover:bg-aventurine/90 transition-all shadow-lg shadow-aventurine/20"
+              >
+                Confirmar Benefício
+              </button>
+            </motion.div>
+          </div>
+        )}
+        {isBeneficioModalOpen && pendingBeneficioClient && (
+          <div className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[400] flex items-center justify-center p-4" onClick={() => setIsBeneficioModalOpen(false)}>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl flex flex-col items-center text-center gap-6 relative"
+              onClick={e => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setIsBeneficioModalOpen(false)}
+                className="absolute right-6 top-6 text-licorice/20 hover:text-licorice transition-colors"
+                title="Fechar"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="w-16 h-16 bg-aventurine/10 rounded-full flex items-center justify-center text-aventurine">
+                <FileText size={32} />
+              </div>
+
+              <div>
+                <h3 className="text-xl font-bold text-licorice">Informar Benefício</h3>
+                <p className="text-sm text-licorice/60 mt-2">Insira os valores da renda e dos atrasados.</p>
+              </div>
+
+              <div className="w-full space-y-4">
+                <div className="space-y-1 text-left">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Renda Mensal</label>
+                  <input 
+                    type="text" 
+                    placeholder="R$ 0,00"
+                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors"
+                    value={rendaValue}
+                    onChange={(e) => {
+                      const val = Number(e.target.value.replace(/\D/g, '')) / 100;
+                      setRendaValue(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val));
+                    }}
+                  />
+                </div>
+                <div className="space-y-1 text-left">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Atrasados</label>
+                  <input 
+                    type="text" 
+                    placeholder="R$ 0,00"
+                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors"
+                    value={atrasadosValue}
+                    onChange={(e) => {
+                      const val = Number(e.target.value.replace(/\D/g, '')) / 100;
+                      setAtrasadosValue(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val));
+                    }}
+                  />
+                </div>
+              </div>
+
+              <button 
+                onClick={() => {
+                  const updatedLead = {
+                    ...pendingBeneficioClient,
+                    archived: true,
+                    financialRecord: {
+                      ...(pendingBeneficioClient.financialRecord || {}),
+                      rendaMensal: Number(rendaValue.replace(/\D/g, '')) / 100,
+                      valorRestituicao: Number(atrasadosValue.replace(/\D/g, '')) / 100,
+                    },
+                    documentData: {
+                      ...(pendingBeneficioClient.documentData || { code: '', documents: [], observations: [], emailSent: false, notificationSent: false }),
+                      minutaHomologada: true
+                    }
+                  };
+                  onUpdateLead(updatedLead);
+                  if (selectedClient?.id === pendingBeneficioClient.id) {
+                    setSelectedClient(updatedLead);
+                  }
+                  setIsBeneficioModalOpen(false);
+                  setPendingBeneficioClient(null);
+                }}
+                className="w-full py-4 bg-aventurine text-white rounded-xl text-sm font-bold hover:bg-aventurine/90 transition-all shadow-lg shadow-aventurine/20"
+              >
+                Confirmar Benefício
+              </button>
+            </motion.div>
+          </div>
         )}
         {isEmailConfirmOpen && pendingEmailClient && (
           <div className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[300] flex items-center justify-center p-4" onClick={() => {
@@ -309,13 +520,21 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
   );
 }
 
+const calculateRequirementDateLocal = (birthDate?: string, gender?: string) => {
+  const date = calculateRequirementDate(birthDate, gender);
+  return formatRequirementDate(date);
+};
+
 const ClientCard: React.FC<{ 
   client: Lead; 
   onClick: () => void; 
   onUpdate: (lead: Lead) => void; 
   onEmailClick: () => void;
   onConfirmService: (action: 'emailSent' | 'notificationSent') => void;
-}> = ({ client, onClick, onUpdate, onEmailClick, onConfirmService }) => {
+  onOpenBeneficio: (lead: Lead) => void;
+}> = ({ client, onClick, onUpdate, onEmailClick, onConfirmService, onOpenBeneficio }) => {
+  const reqDate = calculateRequirementDate(client.birthDate, client.gender);
+  const reqStatus = getRequirementStatus(reqDate);
   const docData = {
     code: '', 
     documents: [...DEFAULT_DOCUMENTS], 
@@ -359,22 +578,19 @@ const ClientCard: React.FC<{
     >
       {docData?.deadlineFatal && (
         <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none">
-          <div className="absolute top-2 right-[-25px] bg-exotic text-white text-[10px] font-bold py-1 w-[100px] text-center rotate-45 shadow-sm">
-            {docData.deadlineFatal.split('-').slice(1).reverse().join('/')}
+          <div className="absolute top-2 right-[-25px] bg-exotic text-white text-[10px] font-bold py-2 w-[100px] text-center rotate-45 shadow-sm">
           </div>
         </div>
       )}
       {client.status === 'Churn' && (
         <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none z-10">
-          <div className="absolute top-2 right-[-30px] bg-red-600 text-white text-[9px] font-semibold py-0.5 w-[100px] text-center rotate-45 shadow-sm tracking-wide">
-            Churn
+          <div className="absolute top-2 right-[-30px] bg-red-600 text-white text-[9px] font-semibold py-1.5 w-[100px] text-center rotate-45 shadow-sm tracking-wide">
           </div>
         </div>
       )}
       {client.financialRecord?.tipoResultado && client.status !== 'Churn' && (
         <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none z-10">
-          <div className="absolute top-2 right-[-30px] bg-[#00A63E] text-white text-[8px] font-bold py-0.5 w-[100px] text-center rotate-45 shadow-sm tracking-[0.15em]">
-            {client.financialRecord.tipoResultado === 'acordo' ? 'Acordo' : 'Sentença'}
+          <div className="absolute top-2 right-[-30px] bg-[#00A63E] text-white text-[8px] font-bold py-1.5 w-[100px] text-center rotate-45 shadow-sm tracking-[0.15em]">
           </div>
         </div>
       )}
@@ -385,6 +601,16 @@ const ClientCard: React.FC<{
             {docData?.deadlineFatal && (
               <div className="w-2 h-2 rounded-full bg-exotic animate-pulse" />
             )}
+          </div>
+          <div className={cn(
+            "inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-lg mt-0.5 -ml-2 w-fit max-w-[120px]",
+            client.financialRecord?.tipoResultado ? "bg-[#00A63E]/10 text-[#00A63E]" :
+            reqStatus === 'past' ? "bg-red-500/10 text-red-600" : 
+            reqStatus === 'near' ? "bg-blue-500/10 text-blue-600" : 
+            "bg-licorice/5 text-licorice/40"
+          )}>
+            <Calendar size={10} className="flex-shrink-0" />
+            <span className="truncate">{formatRequirementDate(reqDate)}</span>
           </div>
         </div>
 
@@ -475,20 +701,14 @@ const ClientCard: React.FC<{
             Rescisão Formalizada
           </button>
         ) : (
-          (client.financialRecord?.tipoResultado === 'acordo' || client.financialRecord?.tipoResultado === 'sentenca_procedente') ? (
+          (client.financialRecord?.tipoResultado === 'acordo' || client.financialRecord?.tipoResultado === 'sentenca_procedente' || client.financialRecord?.tipoResultado === 'requerimento_realizado') ? (
             <button 
               onClick={(e) => {
                 e.stopPropagation();
-                if (docData.minutaHomologada) return;
-                const newValue = true;
-                onUpdate({ 
-                  ...client, 
-                  archived: newValue,
-                  documentData: { ...docData, minutaHomologada: newValue } 
-                });
+                onOpenBeneficio(client);
               }}
               className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all border",
+                "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border",
                 docData.minutaHomologada ? "bg-[#00A63E]/10 border-[#00A63E]/20 text-[#00A63E] cursor-default" : "bg-licorice/5 border-transparent text-licorice/30 hover:border-licorice/10"
               )}
             >
@@ -496,7 +716,7 @@ const ClientCard: React.FC<{
                 {docData.minutaHomologada && <Check size={8} className="text-white" />}
               </div>
               <FileText size={12} />
-              Minuta Homologada
+              Benefício Concedido
             </button>
           ) : (
             <>
@@ -572,7 +792,8 @@ const DocumentDetailOverlay: React.FC<{
   onEditLead: (lead: Lead) => void; 
   onEmailClick: () => void;
   onConfirmService: (action: 'emailSent' | 'notificationSent') => void;
-}> = ({ client, onClose, onUpdate, onDelete, onEditLead, onEmailClick, onConfirmService }) => {
+  onOpenBeneficio: (lead: Lead) => void;
+}> = ({ client, onClose, onUpdate, onDelete, onEditLead, onEmailClick, onConfirmService, onOpenBeneficio }) => {
   const [isObrigatorioOpen, setIsObrigatorioOpen] = useState(true);
   const [isEventualOpen, setIsEventualOpen] = useState(true);
   const [newObservation, setNewObservation] = useState('');
@@ -676,12 +897,8 @@ const DocumentDetailOverlay: React.FC<{
     const record = client.financialRecord || {};
     const updatedFinancialRecord = {
       ...record,
-      tipoResultado: resultType === 'acordo' ? 'acordo' : 'sentenca_procedente',
-      valorRestituicao: parseCurrency(restituicaoValue),
-      honorariosSucumbenciaisContratuais: parseCurrency(sucumbenciaValue),
-      parcelasResultado: parseInt(parcelasValue) || 1,
-      valorHonorarios: parseCurrency(honorariosValue),
-      dataPagamento: paymentDate,
+      tipoResultado: 'requerimento_realizado' as const,
+      dataPagamento: new Date().toLocaleDateString('en-CA'),
     };
 
     onUpdate({
@@ -866,24 +1083,16 @@ const DocumentDetailOverlay: React.FC<{
                   </button>
                 ) : (
                   <>
-                    {(client.financialRecord?.tipoResultado === 'acordo' || client.financialRecord?.tipoResultado === 'sentenca_procedente') ? (
+                    {(client.financialRecord?.tipoResultado === 'acordo' || client.financialRecord?.tipoResultado === 'sentenca_procedente' || client.financialRecord?.tipoResultado === 'requerimento_realizado') ? (
                       <button 
-                        onClick={() => {
-                          if (docData.minutaHomologada) return;
-                          const newValue = true;
-                          onUpdate({ 
-                            ...client, 
-                            archived: newValue,
-                            documentData: { ...docData, minutaHomologada: newValue } 
-                          });
-                        }}
+                        onClick={() => onOpenBeneficio(client)}
                         className={cn(
                           "flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-medium transition-all border w-[180px]",
                           docData.minutaHomologada ? "bg-[#00A63E]/10 border-[#00A63E]/20 text-[#00A63E] shadow-lg shadow-[#00A63E]/10 cursor-default" : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10"
                         )}
                       >
                         <FileText size={12} />
-                        <span>Minuta Homologada</span>
+                        <span>Benefício Concedido</span>
                         {docData.minutaHomologada && <Check size={8} />}
                       </button>
                     ) : (
@@ -956,7 +1165,7 @@ const DocumentDetailOverlay: React.FC<{
                       setHonorariosValue(formatCurrency(0));
                     }}
                     className="w-10 h-10 flex items-center justify-center rounded-lg transition-all bg-transparent border-2 border-emerald-400/50 text-emerald-400 hover:bg-emerald-400/10 hover:border-emerald-400 hover:scale-105 active:scale-95"
-                    title="Registrar Resultado (Acordo/Sentença)"
+                    title="Confirmar Requerimento"
                   >
                     <LucideCheck size={16} strokeWidth={3} />
                   </button>
@@ -964,24 +1173,7 @@ const DocumentDetailOverlay: React.FC<{
               )}
               {client.status !== 'Churn' && client.financialRecord?.tipoResultado && !docData.minutaHomologada && (
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      const rec = client.financialRecord;
-                      if (!rec) return;
-                      setResultType(rec.tipoResultado === 'acordo' ? 'acordo' : 'sentenca');
-                      setRestituicaoValue(formatCurrency(rec.valorRestituicao || 0));
-                      setSucumbenciaValue(formatCurrency(rec.honorariosSucumbenciaisContratuais || 0));
-                      setParcelasValue(String(rec.parcelasResultado || 1));
-                      setHonorariosValue(formatCurrency(rec.valorHonorarios || 0));
-                      if (rec.dataPagamento) setPaymentDate(rec.dataPagamento);
-                      setIsResultModalReadOnly(true);
-                      setShowResultModal(true);
-                    }}
-                    className="p-2 text-white/40 hover:text-white flex items-center justify-center rounded-lg transition-all hover:bg-white/10 active:scale-95"
-                    title="Ver Resultado Registrado"
-                  >
-                    <Eye size={16} />
-                  </button>
+
                   <button
                     onClick={() => {
                       const { tipoResultado, valorRestituicao, honorariosSucumbenciaisContratuais, parcelasResultado, valorHonorarios, dataPagamento, statusResultado, ...restFinance } = (client.financialRecord || {} as any);
@@ -1478,124 +1670,39 @@ const DocumentDetailOverlay: React.FC<{
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white w-full max-w-lg rounded-3xl p-8 shadow-2xl space-y-8 relative"
+              className="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl flex flex-col items-center text-center gap-6 relative"
               onClick={e => e.stopPropagation()}
             >
               <button 
                 onClick={() => setShowResultModal(false)}
                 className="absolute right-6 top-6 text-licorice/20 hover:text-licorice transition-colors"
-                title="Fechar"
               >
                 <X size={20} />
               </button>
 
-              <div className="text-center space-y-2">
-                <h3 className="text-2xl font-bold text-licorice">
-                   {isResultModalReadOnly ? 'Visualizar Resultado' : 'Registrar Resultado'}
-                </h3>
-                <p className="text-sm text-licorice/40">
-                   {isResultModalReadOnly ? 'Detalhes técnicos do acordo ou sentença (Somente Leitura).' : 'Insira os detalhes técnicos do acordo ou sentença para baixa no financeiro.'}
-                </p>
+              <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500">
+                <Check size={32} strokeWidth={3} />
               </div>
 
-              <div className={cn("flex bg-antique/50 p-1 rounded-xl gap-1", isResultModalReadOnly && "opacity-60 pointer-events-none")}>
+              <div>
+                <h3 className="text-xl font-bold text-licorice">Confirmar Requerimento?</h3>
+                <p className="text-sm text-licorice/60 mt-2">Deseja registrar que o requerimento foi realizado com sucesso?</p>
+              </div>
+
+              <div className="flex w-full gap-3">
                 <button 
-                  onClick={() => !isResultModalReadOnly && setResultType('acordo')}
-                  className={cn(
-                    "flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-lg transition-all",
-                    resultType === 'acordo' ? "bg-white text-aventurine shadow-sm" : "text-licorice/40 hover:text-licorice/60"
-                  )}
+                  onClick={() => setShowResultModal(false)}
+                  className="flex-1 py-3 text-sm font-bold text-licorice/40 hover:text-licorice transition-colors"
                 >
-                  Acordo
+                  Cancelar
                 </button>
-                <button 
-                  onClick={() => !isResultModalReadOnly && setResultType('sentenca')}
-                  className={cn(
-                    "flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-lg transition-all",
-                    resultType === 'sentenca' ? "bg-white text-aventurine shadow-sm" : "text-licorice/40 hover:text-licorice/60"
-                  )}
-                >
-                  Sentença
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Restituição</label>
-                  <input 
-                    type="text" 
-                    placeholder="R$ 0,00"
-                    disabled={isResultModalReadOnly}
-                    className={cn("w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors", isResultModalReadOnly && "opacity-70 cursor-not-allowed")}
-                    value={restituicaoValue}
-                    onChange={(e) => {
-                      const val = formatCurrency(parseCurrency(e.target.value));
-                      setRestituicaoValue(val);
-                      updateHonorarios(val);
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Sucumbência</label>
-                  <input 
-                    type="text" 
-                    placeholder="R$ 0,00"
-                    disabled={isResultModalReadOnly}
-                    className={cn("w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors", isResultModalReadOnly && "opacity-70 cursor-not-allowed")}
-                    value={sucumbenciaValue}
-                    onChange={(e) => {
-                      const val = formatCurrency(parseCurrency(e.target.value));
-                      setSucumbenciaValue(val);
-                      updateHonorarios(restituicaoValue);
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Parcelas</label>
-                  <input 
-                    type="number" 
-                    min="1"
-                    disabled={isResultModalReadOnly}
-                    className={cn("w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors", isResultModalReadOnly && "opacity-70 cursor-not-allowed")}
-                    value={parcelasValue}
-                    onChange={(e) => setParcelasValue(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Honorários ({client.contract?.percentage || 20}%)</label>
-                  <input 
-                    type="text" 
-                    placeholder="R$ 0,00"
-                    disabled={isResultModalReadOnly}
-                    className={cn("w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold text-aventurine focus:outline-none focus:border-aventurine/50 transition-colors", isResultModalReadOnly && "opacity-70 cursor-not-allowed")}
-                    value={honorariosValue}
-                    onChange={(e) => setHonorariosValue(formatCurrency(parseCurrency(e.target.value)))}
-                  />
-                </div>
-
-                <div className="col-span-2 space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Data de Pagamento</label>
-                  <input 
-                    type="date" 
-                    disabled={isResultModalReadOnly}
-                    className={cn("w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors", isResultModalReadOnly && "opacity-70 cursor-not-allowed")}
-                    value={paymentDate}
-                    onChange={(e) => setPaymentDate(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {!isResultModalReadOnly && (
                 <button 
                   onClick={handleConfirmResult}
-                  className="w-full py-4 bg-aventurine text-white rounded-2xl font-bold uppercase tracking-widest shadow-xl shadow-aventurine/20 hover:scale-105 active:scale-95 transition-all"
+                  className="flex-1 py-3 bg-aventurine text-white rounded-xl text-sm font-bold hover:bg-aventurine/90 transition-all shadow-lg shadow-aventurine/20"
                 >
-                  Confirmar Registro
+                  Sim, Confirmar
                 </button>
-              )}
+              </div>
             </motion.div>
           </div>
         )}

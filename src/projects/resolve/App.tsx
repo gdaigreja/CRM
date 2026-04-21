@@ -41,7 +41,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { v4 as uuidv4 } from 'uuid';
 import { Lead, LeadStatus, ContractData, SpouseInfo } from '../../shared/types';
 import { INITIAL_LEADS, KANBAN_COLUMNS, DEFAULT_DOCUMENTS } from './constants';
-import { cn, formatCurrency, formatPhone, parseCurrency, formatRG, formatCPF, formatCEP, formatPercent } from '../../shared/utils';
+import { cn, formatCurrency, formatPhone, parseCurrency, formatRG, formatCPF, formatCEP, formatPercent, calculateRequirementDate, formatRequirementDate, getRequirementStatus } from '../../shared/utils';
 import Dashboard from './components/Dashboard';
 import Registrations from './components/Registrations';
 import EditLeadSidebar from './components/EditLeadSidebar';
@@ -61,6 +61,56 @@ const STATUS_COLORS: Record<string, string> = {
   'Recusado': '#EF4444',       // Red
   'Desqualificado': '#A855F7', // Purple
   'Recuperação': '#A0522D',    // Terracotta (Default)
+};
+
+const getPredefinedRange = (label: string): { start: string | null, end: string | null, label: string } => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  switch (label.toLowerCase()) {
+    case 'esta semana': {
+      const start = new Date(today);
+      start.setDate(today.getDate() - today.getDay());
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      end.setHours(23, 59, 59, 999);
+      return { start: start.toISOString(), end: end.toISOString(), label: 'Esta semana' };
+    }
+    case 'próxima semana': {
+      const start = new Date(today);
+      start.setDate(today.getDate() - today.getDay() + 7);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      end.setHours(23, 59, 59, 999);
+      return { start: start.toISOString(), end: end.toISOString(), label: 'Próxima semana' };
+    }
+    case 'este mês': {
+      const start = new Date(today.getFullYear(), today.getMonth(), 1);
+      const end = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+      return { start: start.toISOString(), end: end.toISOString(), label: 'Este mês' };
+    }
+    case 'mês anterior': {
+      const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const end = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59, 999);
+      return { start: start.toISOString(), end: end.toISOString(), label: 'Mês anterior' };
+    }
+    case 'este ano': {
+      const start = new Date(today.getFullYear(), 0, 1);
+      const end = new Date(today.getFullYear(), 11, 31, 23, 59, 59, 999);
+      return { start: start.toISOString(), end: end.toISOString(), label: 'Este ano' };
+    }
+    case 'ano anterior': {
+      const start = new Date(today.getFullYear() - 1, 0, 1);
+      const end = new Date(today.getFullYear() - 1, 11, 31, 23, 59, 59, 999);
+      return { start: start.toISOString(), end: end.toISOString(), label: 'Ano anterior' };
+    }
+    case 'todo o tempo':
+      return { start: null, end: null, label: 'Todo o tempo' };
+    case 'personalizado':
+      return { start: null, end: null, label: 'Personalizado' };
+    default:
+      return { start: null, end: null, label: label };
+  }
 };
 
 export default function App() {
@@ -205,10 +255,14 @@ export default function App() {
   const [docFilterPendencias, setDocFilterPendencias] = useState(false);
   const [docFilterComPrazo, setDocFilterComPrazo] = useState(false);
   const [docFilterArquivados, setDocFilterArquivados] = useState(false);
-  const [docFilterDistribuidos, setDocFilterDistribuidos] = useState(false);
-  const [docFilterNaoDistribuidos, setDocFilterNaoDistribuidos] = useState(false);
+  const [docFilterJudiciais, setDocFilterJudiciais] = useState(false);
+  const [docFilterAdministrativos, setDocFilterAdministrativos] = useState(false);
   const [docFilterTodos, setDocFilterTodos] = useState(true);
+  const [docDateRange, setDocDateRange] = useState<{ start: string | null, end: string | null, label: string }>(getPredefinedRange('Esta semana'));
   const [showDocFilter, setShowDocFilter] = useState(false);
+  const [showDocDatePicker, setShowDocDatePicker] = useState(false);
+  const [docCustomStart, setDocCustomStart] = useState<string>('');
+  const [docCustomEnd, setDocCustomEnd] = useState<string>('');
 
   // Tasks Filters
   const [taskSearchQuery, setTaskSearchQuery] = useState('');
@@ -631,38 +685,7 @@ export default function App() {
     }
   };
 
-  const getPredefinedRange = (type: string) => {
-    const now = new Date();
-    switch (type) {
-      case 'este mês':
-        return {
-          start: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(),
-          end: now.toISOString(),
-          label: 'Este mês'
-        };
-      case 'mês anterior':
-        return {
-          start: new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString(),
-          end: new Date(now.getFullYear(), now.getMonth(), 0).toISOString(),
-          label: 'Mês anterior'
-        };
-      case 'este ano':
-        return {
-          start: new Date(now.getFullYear(), 0, 1).toISOString(),
-          end: now.toISOString(),
-          label: 'Este ano'
-        };
-      case 'ano anterior':
-        return {
-          start: new Date(now.getFullYear() - 1, 0, 1).toISOString(),
-          end: new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59).toISOString(),
-          label: 'Ano anterior'
-        };
-      case 'desde o início':
-      default:
-        return { start: null, end: now.toISOString(), label: 'Desde o início' };
-    }
-  };
+
 
   // View label map
   const viewLabels: Record<string, string> = {
@@ -959,195 +982,283 @@ ON CONFLICT (id) DO NOTHING;
                     onChange={(e) => setDocSearchQuery(e.target.value)}
                   />
                 </div>
-                <div className="relative">
-                  <button
-                    onClick={() => setShowDocFilter(!showDocFilter)}
-                    className={cn(
-                      "flex items-center gap-2 px-4 py-2 bg-white/50 border rounded-xl text-xs font-medium transition-all shadow-sm",
-                      (docFilterArquivados || docFilterPendencias || docFilterComPrazo || docFilterDistribuidos || docFilterNaoDistribuidos || docFilterTodos)
-                        ? "border-licorice/5 text-[#512E2D] shadow-md shadow-[#512E2D]/10 bg-white"
-                        : "border-licorice/5 text-licorice/40 hover:bg-white/80"
-                    )}
-                  >
-                    <Filter size={12} />
-                    <span>Filtros</span>
-                    {(docFilterArquivados || docFilterPendencias || docFilterComPrazo || docFilterDistribuidos || docFilterNaoDistribuidos || docFilterTodos) && (
-                      <span className="bg-[#512E2D] text-white text-[10px] px-1.5 rounded-full min-w-[18px]">
-                        {[docFilterArquivados, docFilterPendencias, docFilterComPrazo, docFilterDistribuidos, docFilterNaoDistribuidos, docFilterTodos].filter(Boolean).length}
-                      </span>
-                    )}
-                    <ChevronDown size={12} className={cn("transition-transform duration-200", showDocFilter && "rotate-180")} />
-                  </button>
+                <div className="flex items-center gap-4">
+                  {/* Operational Filters Menu */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowDocFilter(!showDocFilter)}
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-2 bg-white/50 border border-licorice/5 rounded-xl text-xs transition-all shadow-sm h-9 min-w-[180px]",
+                        (!docFilterTodos)
+                          ? "border-licorice/5 text-[#512E2D] shadow-md shadow-[#512E2D]/10 bg-white"
+                          : "border-licorice/5 text-licorice/40 hover:bg-white/80"
+                      )}
+                    >
+                      <Filter size={14} className="text-licorice/30" />
+                      <span>Filtros</span>
+                      {!docFilterTodos && (
+                        <span className="bg-[#512E2D] text-white text-[10px] px-1.5 rounded-full min-w-[18px]">
+                          {[docFilterArquivados, docFilterPendencias, docFilterComPrazo, docFilterJudiciais, docFilterAdministrativos].filter(Boolean).length}
+                        </span>
+                      )}
+                      <ChevronDown size={14} className={cn("ml-auto text-licorice/30 transition-transform duration-200", showDocFilter && "rotate-180")} />
+                    </button>
 
-                  <AnimatePresence>
-                    {showDocFilter && (
-                      <>
-                        <div className="fixed inset-0 z-[60]" onClick={() => setShowDocFilter(false)} />
-                        <motion.div
-                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                          className="absolute top-full right-0 mt-3 w-[420px] bg-white rounded-[32px] shadow-2xl border border-licorice/5 z-[100] overflow-hidden"
-                        >
-                          <div className="p-8">
-                            {/* Bloco 1: Todos */}
-                            <div className="pb-6 border-b border-licorice/5 mb-6">
-                              <label className="flex items-center gap-6 cursor-pointer group">
-                                <span className={cn("flex-1 text-[11px] font-bold tracking-[0.05em] transition-colors", docFilterTodos ? "text-[#512E2D]" : "text-licorice/20 group-hover:text-licorice/40")}>Todos</span>
-                                <div
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    const next = !docFilterTodos;
-                                    setDocFilterTodos(next);
-                                    if (next) {
-                                      setDocFilterArquivados(false);
-                                      setDocFilterDistribuidos(false);
-                                      setDocFilterNaoDistribuidos(false);
-                                      setDocFilterPendencias(false);
-                                      setDocFilterComPrazo(false);
-                                    }
+                    <AnimatePresence>
+                      {showDocFilter && (
+                        <>
+                          <div className="fixed inset-0 z-[60]" onClick={() => setShowDocFilter(false)} />
+                          <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className="absolute top-full right-0 mt-3 w-[420px] bg-white rounded-[32px] shadow-2xl border border-licorice/5 z-[100] overflow-hidden"
+                          >
+                            <div className="p-8">
+                              {/* Option: All */}
+                              <div className="pb-6 border-b border-licorice/5 mb-6">
+                                <label className="flex items-center gap-6 cursor-pointer group">
+                                  <span className={cn("flex-1 text-[11px] font-medium tracking-[0.05em] transition-colors uppercase", docFilterTodos ? "text-[#512E2D]" : "text-licorice/20 group-hover:text-licorice/40")}>Todos</span>
+                                  <div
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      const next = !docFilterTodos;
+                                      setDocFilterTodos(next);
+                                      if (next) {
+                                        setDocFilterArquivados(false);
+                                        setDocFilterJudiciais(false);
+                                        setDocFilterAdministrativos(false);
+                                        setDocFilterPendencias(false);
+                                        setDocFilterComPrazo(false);
+                                      }
+                                    }}
+                                    className={cn(
+                                      "w-5 h-5 rounded-lg border flex items-center justify-center transition-all",
+                                      docFilterTodos ? "bg-[#512E2D] border-[#512E2D]" : "border-licorice/10 bg-white group-hover:border-[#512E2D]/30 shadow-inner"
+                                    )}
+                                  >
+                                    {docFilterTodos && <Check size={12} className="text-white" />}
+                                  </div>
+                                </label>
+                              </div>
+
+                              <div className="flex gap-10">
+                                {/* Left Column: Status Options */}
+                                <div className="flex-1 space-y-5">
+                                  <label className="flex items-center gap-6 cursor-pointer group">
+                                    <span className={cn("flex-1 text-[11px] font-medium transition-colors uppercase", docFilterJudiciais ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Judiciais</span>
+                                    <div
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setDocFilterJudiciais(true);
+                                        setDocFilterAdministrativos(false);
+                                        setDocFilterArquivados(false);
+                                        setDocFilterTodos(false);
+                                      }}
+                                      className={cn(
+                                        "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
+                                        docFilterJudiciais ? "border-[#512E2D] p-0.5" : "border-licorice/10 bg-white"
+                                      )}
+                                    >
+                                      {docFilterJudiciais && <div className="w-full h-full rounded-full bg-[#512E2D]" />}
+                                    </div>
+                                  </label>
+
+                                  <label className="flex items-center gap-6 cursor-pointer group">
+                                    <span className={cn("flex-1 text-[11px] font-medium transition-colors uppercase", docFilterAdministrativos ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Administrativos</span>
+                                    <div
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setDocFilterAdministrativos(true);
+                                        setDocFilterJudiciais(false);
+                                        setDocFilterArquivados(false);
+                                        setDocFilterTodos(false);
+                                      }}
+                                      className={cn(
+                                        "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
+                                        docFilterAdministrativos ? "border-[#512E2D] p-0.5" : "border-licorice/10 bg-white"
+                                      )}
+                                    >
+                                      {docFilterAdministrativos && <div className="w-full h-full rounded-full bg-[#512E2D]" />}
+                                    </div>
+                                  </label>
+
+                                  <label className="flex items-center gap-6 cursor-pointer group">
+                                    <span className={cn("flex-1 text-[11px] font-medium transition-colors uppercase", docFilterArquivados ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Arquivados</span>
+                                    <div
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setDocFilterArquivados(true);
+                                        setDocFilterJudiciais(false);
+                                        setDocFilterAdministrativos(false);
+                                        setDocFilterTodos(false);
+                                      }}
+                                      className={cn(
+                                        "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
+                                        docFilterArquivados ? "border-[#512E2D] p-0.5" : "border-licorice/10 bg-white"
+                                      )}
+                                    >
+                                      {docFilterArquivados && <div className="w-full h-full rounded-full bg-[#512E2D]" />}
+                                    </div>
+                                  </label>
+                                </div>
+
+                                <div className="w-px bg-licorice/5 self-stretch" />
+
+                                {/* Right Column: Multi-select Options */}
+                                <div className="space-y-5">
+                                  <label className="flex items-center gap-6 cursor-pointer group">
+                                    <span className={cn("flex-1 text-[11px] font-medium transition-colors uppercase", docFilterPendencias ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Pendências</span>
+                                    <div
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setDocFilterPendencias(!docFilterPendencias);
+                                        setDocFilterTodos(false);
+                                      }}
+                                      className={cn(
+                                        "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                                        docFilterPendencias ? "bg-[#512E2D] border-[#512E2D]" : "border-licorice/10 bg-white group-hover:border-[#512E2D]/30"
+                                      )}
+                                    >
+                                      {docFilterPendencias && <Check size={10} className="text-white" />}
+                                    </div>
+                                  </label>
+
+                                  <label className="flex items-center gap-6 cursor-pointer group">
+                                    <span className={cn("flex-1 text-[11px] font-medium transition-colors uppercase", docFilterComPrazo ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Prazos</span>
+                                    <div
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setDocFilterComPrazo(!docFilterComPrazo);
+                                        setDocFilterTodos(false);
+                                      }}
+                                      className={cn(
+                                        "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                                        docFilterComPrazo ? "bg-[#512E2D] border-[#512E2D]" : "border-licorice/10 bg-white group-hover:border-[#512E2D]/30"
+                                      )}
+                                    >
+                                      {docFilterComPrazo && <Check size={10} className="text-white" />}
+                                    </div>
+                                  </label>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Menu Footer */}
+                            <div className="bg-antique/30 p-4 px-8 border-t border-licorice/5 flex items-center justify-between">
+                              <button
+                                onClick={() => {
+                                  setDocFilterPendencias(false);
+                                  setDocFilterComPrazo(false);
+                                  setDocFilterJudiciais(false);
+                                  setDocFilterAdministrativos(false);
+                                  setDocFilterArquivados(false);
+                                  setDocFilterTodos(true);
+                                }}
+                                className="px-8 py-3 text-xs font-bold text-licorice/40 hover:text-licorice transition-colors uppercase"
+                              >
+                                Limpar
+                              </button>
+                              <button
+                                onClick={() => setShowDocFilter(false)}
+                                className="px-10 py-3 bg-[#512E2D] text-white rounded-2xl text-[11px] font-bold hover:bg-[#3d2222] transition-all shadow-lg shadow-[#512E2D]/20 uppercase active:scale-95"
+                              >
+                                Aplicar
+                              </button>
+                            </div>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Date Filter Dropdown */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowDocDatePicker(!showDocDatePicker)}
+                      className="flex items-center gap-2 px-4 py-2 bg-white/50 border border-licorice/5 rounded-xl text-xs text-licorice/60 hover:bg-white/80 transition-all min-w-[180px] h-9 whitespace-nowrap shadow-sm"
+                    >
+                      <Calendar size={14} className="text-licorice/30" />
+                      <span className="capitalize">{docDateRange.label}</span>
+                      <ChevronDown size={14} className={cn("ml-auto text-licorice/30 transition-transform duration-200", showDocDatePicker && "rotate-180")} />
+                    </button>
+                    <AnimatePresence>
+                      {showDocDatePicker && (
+                        <>
+                          <div className="fixed inset-0 z-[60]" onClick={() => setShowDocDatePicker(false)} />
+                          <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-licorice/5 z-[100] overflow-hidden"
+                          >
+                            <div className="flex flex-col">
+                              <button
+                                onClick={() => {
+                                  setDocDateRange(getPredefinedRange('Esta semana'));
+                                  setDocCustomStart('');
+                                  setDocCustomEnd('');
+                                  setShowDocDatePicker(false);
+                                }}
+                                className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-widest text-licorice/30 hover:bg-antique/50 transition-colors border-b border-licorice/5"
+                              >
+                                Limpar Filtro
+                              </button>
+                              {['Esta semana', 'Próxima semana', 'Este mês', 'Este ano', 'Todo o tempo'].map((opt) => (
+                                <button
+                                  key={opt}
+                                  onClick={() => {
+                                    setDocDateRange(getPredefinedRange(opt));
+                                    setShowDocDatePicker(false);
                                   }}
                                   className={cn(
-                                    "w-5 h-5 rounded-lg border flex items-center justify-center transition-all",
-                                    docFilterTodos ? "bg-[#512E2D] border-[#512E2D]" : "border-licorice/10 bg-white group-hover:border-[#512E2D]/30 shadow-inner"
+                                    "px-4 py-2.5 text-left text-[13px] hover:bg-antique/50 transition-colors",
+                                    docDateRange.label === opt && "bg-antique/30"
                                   )}
                                 >
-                                  {docFilterTodos && <Check size={12} className="text-white" />}
+                                  {opt}
+                                </button>
+                              ))}
+                              
+                              <div className="border-t border-licorice/5 p-4 flex flex-col gap-3">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-licorice/30">Personalizado</p>
+                                <div className="flex flex-col gap-2">
+                                  <input 
+                                    type="date"
+                                    className="w-full bg-white border border-licorice/10 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-aventurine/50 transition-all text-licorice/60"
+                                    value={docCustomStart}
+                                    onChange={(e) => {
+                                      const newStart = e.target.value;
+                                      setDocCustomStart(newStart);
+                                      setDocDateRange({
+                                        ...docDateRange,
+                                        label: 'Personalizado',
+                                        start: newStart ? new Date(newStart).toISOString() : null
+                                      });
+                                    }}
+                                  />
+                                  <input 
+                                    type="date"
+                                    className="w-full bg-white border border-licorice/10 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-aventurine/50 transition-all text-licorice/60"
+                                    value={docCustomEnd}
+                                    onChange={(e) => {
+                                      const newEnd = e.target.value;
+                                      setDocCustomEnd(newEnd);
+                                      setDocDateRange({
+                                        ...docDateRange,
+                                        label: 'Personalizado',
+                                        end: newEnd ? new Date(newEnd).toISOString() : null
+                                      });
+                                    }}
+                                  />
                                 </div>
-                              </label>
-                            </div>
-
-                            {/* Bloco 2: Colunas */}
-                            <div className="flex gap-10">
-                              {/* Coluna Esquerda: Exclusivos */}
-                              <div className="flex-1 space-y-5">
-
-                                <label className="flex items-center gap-6 cursor-pointer group">
-                                  <span className={cn("flex-1 text-[11px] font-bold transition-colors", docFilterDistribuidos ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Distribuídos</span>
-                                  <div
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      setDocFilterDistribuidos(true);
-                                      setDocFilterNaoDistribuidos(false);
-                                      setDocFilterArquivados(false);
-                                      setDocFilterTodos(false);
-                                    }}
-                                    className={cn(
-                                      "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
-                                      docFilterDistribuidos ? "border-[#512E2D] p-0.5" : "border-licorice/10 bg-white"
-                                    )}
-                                  >
-                                    {docFilterDistribuidos && <div className="w-full h-full rounded-full bg-[#512E2D]" />}
-                                  </div>
-                                </label>
-
-                                <label className="flex items-center gap-6 cursor-pointer group">
-                                  <span className={cn("flex-1 text-[11px] font-bold transition-colors", docFilterNaoDistribuidos ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice shadow-none")}>Não Distribuídos</span>
-                                  <div
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      setDocFilterNaoDistribuidos(true);
-                                      setDocFilterDistribuidos(false);
-                                      setDocFilterArquivados(false);
-                                      setDocFilterTodos(false);
-                                    }}
-                                    className={cn(
-                                      "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
-                                      docFilterNaoDistribuidos ? "border-[#512E2D] p-0.5" : "border-licorice/10 bg-white"
-                                    )}
-                                  >
-                                    {docFilterNaoDistribuidos && <div className="w-full h-full rounded-full bg-[#512E2D]" />}
-                                  </div>
-                                </label>
-
-                                <label className="flex items-center gap-6 cursor-pointer group">
-                                  <span className={cn("flex-1 text-[11px] font-bold transition-colors", docFilterArquivados ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Arquivados</span>
-                                  <div
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      setDocFilterArquivados(true);
-                                      setDocFilterDistribuidos(false);
-                                      setDocFilterNaoDistribuidos(false);
-                                      setDocFilterTodos(false);
-                                    }}
-                                    className={cn(
-                                      "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
-                                      docFilterArquivados ? "border-[#512E2D] p-0.5" : "border-licorice/10 bg-white"
-                                    )}
-                                  >
-                                    {docFilterArquivados && <div className="w-full h-full rounded-full bg-[#512E2D]" />}
-                                  </div>
-                                </label>
-                              </div>
-
-                              {/* Divisor vertical */}
-                              <div className="w-px bg-licorice/5 self-stretch" />
-
-                              {/* Coluna Direita: Acumulativos */}
-                              <div className="space-y-5">
-
-                                <label className="flex items-center gap-6 cursor-pointer group">
-                                  <span className={cn("flex-1 text-xs font-medium transition-colors", docFilterPendencias ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Pendências</span>
-                                  <div
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      setDocFilterPendencias(!docFilterPendencias);
-                                      setDocFilterTodos(false);
-                                    }}
-                                    className={cn(
-                                      "w-4 h-4 rounded border flex items-center justify-center transition-all",
-                                      docFilterPendencias ? "bg-[#512E2D] border-[#512E2D]" : "border-licorice/10 bg-white group-hover:border-[#512E2D]/30"
-                                    )}
-                                  >
-                                    {docFilterPendencias && <Check size={10} className="text-white" />}
-                                  </div>
-                                </label>
-
-                                <label className="flex items-center gap-6 cursor-pointer group">
-                                  <span className={cn("flex-1 text-xs font-medium transition-colors", docFilterComPrazo ? "text-[#512E2D]" : "text-licorice/40 group-hover:text-licorice")}>Prazos</span>
-                                  <div
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      setDocFilterComPrazo(!docFilterComPrazo);
-                                      setDocFilterTodos(false);
-                                    }}
-                                    className={cn(
-                                      "w-4 h-4 rounded border flex items-center justify-center transition-all",
-                                      docFilterComPrazo ? "bg-[#512E2D] border-[#512E2D]" : "border-licorice/10 bg-white group-hover:border-[#512E2D]/30"
-                                    )}
-                                  >
-                                    {docFilterComPrazo && <Check size={10} className="text-white" />}
-                                  </div>
-                                </label>
                               </div>
                             </div>
-                          </div>
-
-                          <div className="bg-antique/30 p-4 px-8 border-t border-licorice/5 flex items-center justify-between">
-                            <button
-                              onClick={() => {
-                                setDocFilterArquivados(false);
-                                setDocFilterPendencias(false);
-                                setDocFilterComPrazo(false);
-                                setDocFilterDistribuidos(false);
-                                setDocFilterNaoDistribuidos(false);
-                                setDocFilterTodos(true);
-                              }}
-                              className="text-xs font-medium text-[#512E2D] hover:underline"
-                            >
-                              Limpar
-                            </button>
-                            <button
-                              onClick={() => setShowDocFilter(false)}
-                              className="bg-[#512E2D] text-white px-8 py-2.5 rounded-xl text-xs font-medium shadow-lg shadow-[#512E2D]/20 hover:scale-105 active:scale-95 transition-all"
-                            >
-                              Aplicar
-                            </button>
-                          </div>
-                        </motion.div>
-                      </>
-                    )}
-                  </AnimatePresence>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
               </div>
             )}
@@ -1236,7 +1347,7 @@ ON CONFLICT (id) DO NOTHING;
             <div className="relative">
               <button
                 onClick={() => setShowDatePicker(!showDatePicker)}
-                className="flex items-center gap-2 px-4 py-2 bg-white/50 border border-licorice/5 rounded-xl text-xs font-medium text-licorice/60 hover:bg-white/80 transition-all min-w-[150px] whitespace-nowrap"
+                className="flex items-center gap-2 px-4 py-2 bg-white/50 border border-licorice/5 rounded-xl text-xs text-licorice/60 hover:bg-white/80 transition-all min-w-[150px] whitespace-nowrap shadow-sm"
               >
                 <Calendar size={14} />
                 <span>{dateRange.label}</span>
@@ -1366,6 +1477,14 @@ ON CONFLICT (id) DO NOTHING;
                           <div className="flex-1 overflow-y-auto px-2.5 pb-4 pt-2.5 no-scrollbar flex flex-col gap-2.5">
                             {filteredLeads
                               .filter(l => l.status === column)
+                              .sort((a, b) => {
+                                const reqA = calculateRequirementDate(a.birthDate, a.gender);
+                                const reqB = calculateRequirementDate(b.birthDate, b.gender);
+                                if (!reqA && !reqB) return 0;
+                                if (!reqA) return 1;
+                                if (!reqB) return -1;
+                                return reqA.getTime() - reqB.getTime();
+                              })
                               .map((lead, index) => (
                                 <LeadCard
                                   key={lead.id}
@@ -1396,9 +1515,10 @@ ON CONFLICT (id) DO NOTHING;
               filterPendencias={docFilterPendencias}
               filterComPrazo={docFilterComPrazo}
               filterArquivados={docFilterArquivados}
-              filterDistribuidos={docFilterDistribuidos}
-              filterNaoDistribuidos={docFilterNaoDistribuidos}
+              filterJudiciais={docFilterJudiciais}
+              filterAdministrativos={docFilterAdministrativos}
               filterTodos={docFilterTodos}
+              dateRange={docDateRange}
             />
           ) : view === 'registrations' ? (
             <Registrations
@@ -1580,6 +1700,9 @@ function SidebarIcon({ icon, label, active = false, expanded = false, onClick }:
 }
 
 function LeadCard({ lead, index, onClick, onEdit }: { lead: Lead; index: number; onClick: () => void; onEdit: () => void; key?: string }) {
+  const reqDate = calculateRequirementDate(lead.birthDate, lead.gender);
+  const reqStatus = getRequirementStatus(reqDate);
+
   return (
     <Draggable draggableId={lead.id} index={index}>
       {(provided, snapshot) => (
@@ -1620,6 +1743,16 @@ function LeadCard({ lead, index, onClick, onEdit }: { lead: Lead; index: number;
               <div className="flex items-center gap-1.5 text-[11px] text-licorice/40">
                 <MapPin size={10} className="flex-shrink-0" />
                 <span className="truncate">{lead.city ? `${lead.city}${lead.state ? '/' + lead.state : ''}` : '—'}</span>
+              </div>
+              <div className={cn(
+                "inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-lg mt-0.5 -ml-2 w-fit max-w-[120px]",
+                lead.financialRecord?.tipoResultado ? "bg-[#00A63E]/10 text-[#00A63E]" :
+                reqStatus === 'past' ? "bg-red-500/10 text-red-600" :
+                reqStatus === 'near' ? "bg-blue-500/10 text-blue-600" :
+                "bg-licorice/5 text-licorice/40"
+              )}>
+                <Calendar size={10} className="flex-shrink-0" />
+                <span className="truncate">{formatRequirementDate(reqDate)}</span>
               </div>
             </div>
 

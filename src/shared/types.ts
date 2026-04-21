@@ -114,7 +114,7 @@ export interface FinancialRecord {
   statusExecucao?: 'Aguardando' | 'Processo de Execução Iniciado';
 
   // Bloco B
-  tipoResultado?: 'acordo' | 'sentenca_procedente' | 'improcedente';
+  tipoResultado?: 'acordo' | 'sentenca_procedente' | 'improcedente' | 'requerimento_realizado';
   valorAcordo?: number;
   dataPagamento?: string;
   valorHonorarios?: number;
@@ -128,6 +128,7 @@ export interface FinancialRecord {
   motivoImprocedencia?: string;
   anexoSentenca?: string;
   statusResultado?: 'em_pagamento' | 'finalizado';
+  rendaMensal?: number;
 }
 
 export interface Task {
