@@ -86,6 +86,7 @@ const mapDbLeadToFrontend = (dbLead: any) => ({
   financialRecord: dbLead.financial_record,
   createdAt: dbLead.created_at,
   notes: dbLead.notes || "",
+  maritalStatus: dbLead.marital_status || "",
   archived: dbLead.archived || false,
   drive: dbLead.drive || "",
   spouseInfo: (
@@ -127,6 +128,7 @@ const mapFrontendLeadToDb = (lead: any) => {
     document_data: lead.documentData || null,
     financial_record: lead.financialRecord || null,
     notes: lead.notes,
+    marital_status: lead.maritalStatus || null,
     spouse_name: lead.spouseInfo?.name || null,
     spouse_cpf: lead.spouseInfo?.cpf || null,
     spouse_rg: lead.spouseInfo?.rg || null,

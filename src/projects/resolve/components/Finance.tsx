@@ -588,12 +588,8 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
                         <div className="flex justify-center">
                           <input
                             type="checkbox"
-                            className={cn(
-                              "w-4 h-4 rounded border-licorice/20 text-aventurine focus:ring-aventurine/20",
-                              lead.contract?.format === 'Ao final' ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-                            )}
-                            checked={lead.contract?.format === 'Ao final' ? true : (record.inicioPenhora || false)}
-                            disabled={lead.contract?.format === 'Ao final'}
+                            className="w-4 h-4 rounded border-licorice/20 text-aventurine focus:ring-aventurine/20 cursor-pointer"
+                            checked={record.inicioPenhora || false}
                             onChange={(e) => {
                               onUpdate({
                                 ...lead,

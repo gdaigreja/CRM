@@ -63,10 +63,8 @@ const FIXED_VARIABLES: Variable[] = [
   { id: '17', tag: 'valor_proposta', description: 'Valor da proposta de distrato', field: 'proposal' },
   
   // Dados do Contrato (Honorários/Jurídico)
-  { id: '18', tag: 'percentual_contrato', description: 'Percentual de honorários (%)', field: 'contract.percentage' },
-  { id: '19', tag: 'formato_contrato', description: 'Formato do contrato', field: 'contract.format' },
-  { id: '20', tag: 'valor_contrato', description: 'Valor fixo do contrato', field: 'contract.value' },
-  { id: '21', tag: 'metodo_pagamento', description: 'Método de pagamento', field: 'contract.paymentMethod' },
+  { id: '20', tag: 'valor_contrato', description: 'Valor total do contrato', field: 'contract.value' },
+  { id: '21', tag: 'valor_entrada', description: 'Valor da entrada', field: 'contract.downPayment' },
   { id: '22', tag: 'parcelas_contrato', description: 'Número de parcelas', field: 'contract.installments' },
   { id: '23', tag: 'dia_vencimento', description: 'Dia de vencimento das parcelas', field: 'contract.dueDate' },
   { id: '24', tag: 'data_primeira_parcela', description: 'Data da primeira parcela', field: 'contract.firstInstallmentDate' },
@@ -118,11 +116,8 @@ export default function DocumentGenerator({ leads }: DocumentGeneratorProps) {
 
     if (value === undefined || value === null || value === '') return 'Não informado';
 
-    if (field === 'valuePaid' || field === 'brokerage' || field === 'proposal' || field === 'contract.value') {
+    if (field === 'valuePaid' || field === 'brokerage' || field === 'proposal' || field === 'contract.value' || field === 'contract.downPayment') {
       return formatCurrency(value);
-    }
-    if (field === 'contract.percentage') {
-      return `${value}%`;
     }
     if (field === 'cpf') return formatCPF(value);
     if (field === 'rg') return formatRG(value);

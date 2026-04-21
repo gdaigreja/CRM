@@ -24,6 +24,7 @@ export interface Lead {
   rg?: string;
   cpf?: string;
   contract?: ContractData;
+  maritalStatus?: string;
   createdAt?: string;
 
   // Document Management fields
@@ -85,10 +86,8 @@ export interface ClientDocumentData {
 }
 
 export interface ContractData {
-  percentage: number;
-  format: string;
   value: number;
-  paymentMethod: string;
+  downPayment: number;
   installments: number;
   dueDate: number;
   firstInstallmentDate: string;

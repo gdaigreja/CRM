@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS public.resolve_leads (
     spouse_email TEXT,
     archived BOOLEAN DEFAULT FALSE,
     drive TEXT,
+    marital_status TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

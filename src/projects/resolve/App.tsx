@@ -699,13 +699,13 @@ export default function App() {
         )}>
           {isSidebarExpanded ? (
             <img
-              src="https://zklkmbokwzhbqdoqsnxs.supabase.co/storage/v1/object/public/Imagens/logo_pequena.png"
+              src="/assets/images/logo_maior.png"
               alt="Logo ResolvePrev"
-              className="h-16 object-contain animate-glow-pulse"
+              className="h-16 object-contain"
             />
           ) : (
             <img
-              src="https://zklkmbokwzhbqdoqsnxs.supabase.co/storage/v1/object/public/Imagens/logo_pequena.png"
+              src="/assets/images/logo_pequena.png"
               alt="Logo ResolvePrev"
               className="w-9 h-9 object-contain animate-glow-pulse"
             />
@@ -1646,10 +1646,8 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
 }) {
   const [localLead, setLocalLead] = useState(lead);
   const [contract, setContract] = useState<ContractData>(lead.contract || {
-    percentage: 20,
-    format: 'Parcelado',
-    value: 1200,
-    paymentMethod: 'Boleto Bancário',
+    value: 0,
+    downPayment: 0,
     installments: 12,
     dueDate: 10,
     firstInstallmentDate: new Date().toISOString().split('T')[0],
@@ -1856,104 +1854,46 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
               <h3 className="text-xs font-bold uppercase tracking-widest text-licorice/40 border-b border-licorice/5 pb-2">Dados do Contrato</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Porcentagem (%)</label>
-                  <input
-                    className="input-field font-mono"
-                    value={formatPercent(contract.percentage)}
-                    onChange={e => setContract({ ...contract, percentage: Number(e.target.value.replace(/\D/g, '')) })}
-                    onBlur={handleBlur}
-                  />
-                </div>
-                  <div className="relative flex flex-col gap-1">
-                    <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Formato</label>
-                    <div className="relative">
-                      <select
-                        className="input-field appearance-none pr-10"
-                        value={contract.format}
-                        onChange={e => {
-                          const format = e.target.value;
-                          let newContract = { ...contract, format };
-                          if (format === 'Isento' || format === 'Ao Final') {
-                            newContract = {
-                              ...newContract,
-                              value: 0,
-                              paymentMethod: '',
-                              installments: 0,
-                              dueDate: 0,
-                              firstInstallmentDate: '',
-                              generateBilling: false
-                            };
-                          }
-                          setContract(newContract);
-                          onUpdate({ ...localLead, contract: newContract });
-                        }}
-                      >
-                        <option>Parcelado</option>
-                        <option>Ao Final</option>
-                        <option>Isento</option>
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" size={16} />
-                    </div>
-                  </div>
-
-                {/* Other contract fields - disabled if format is Isento or Ao Final */}
-                <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
                   <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Valor (R$)</label>
                   <input
-                    disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
                     className="input-field font-mono"
-                    value={contract.format === 'Isento' || contract.format === 'Ao Final' ? '' : formatCurrency(contract.value)}
+                    value={formatCurrency(contract.value)}
                     onChange={e => setContract({ ...contract, value: parseCurrency(e.target.value) })}
                     onBlur={handleBlur}
                   />
                 </div>
-                <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
-                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Meio de Pagamento</label>
-                  <div className="relative">
-                    <select
-                      disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
-                      className="input-field appearance-none pr-10"
-                      value={contract.paymentMethod}
-                      onChange={e => {
-                        const newContract = { ...contract, paymentMethod: e.target.value };
-                        setContract(newContract);
-                        onUpdate({ ...localLead, contract: newContract });
-                      }}
-                    >
-                      <option value="">Selecione...</option>
-                      <option>Boleto Bancário</option>
-                      <option>Cartão de Crédito</option>
-                      <option>PIX</option>
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" size={16} />
-                  </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Entrada</label>
+                  <input
+                    className="input-field font-mono"
+                    value={formatCurrency(contract.downPayment)}
+                    onChange={e => setContract({ ...contract, downPayment: parseCurrency(e.target.value) })}
+                    onBlur={handleBlur}
+                  />
                 </div>
-                <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
+                <div className="flex flex-col gap-1">
                   <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Parcelas</label>
                   <input
-                    disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
                     type="number"
                     className="input-field"
-                    value={contract.format === 'Isento' || contract.format === 'Ao Final' ? '' : contract.installments}
+                    value={contract.installments}
                     onChange={e => setContract({ ...contract, installments: Number(e.target.value) })}
                     onBlur={handleBlur}
                   />
                 </div>
-                <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
+                <div className="flex flex-col gap-1">
                   <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Vencimento (Dia)</label>
                   <input
-                    disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
                     type="number"
                     className="input-field"
-                    value={contract.format === 'Isento' || contract.format === 'Ao Final' ? '' : contract.dueDate}
+                    value={contract.dueDate}
                     onChange={e => setContract({ ...contract, dueDate: Number(e.target.value) })}
                     onBlur={handleBlur}
                   />
                 </div>
-                <div className={cn("flex flex-col gap-1", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
+                <div className="flex flex-col gap-1">
                   <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Data 1ª Parcela</label>
                   <input
-                    disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
                     type="date"
                     className="input-field"
                     value={contract.firstInstallmentDate}
@@ -1961,10 +1901,9 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
                     onBlur={handleBlur}
                   />
                 </div>
-                <div className={cn("flex items-center justify-between pt-4", (contract.format === 'Isento' || contract.format === 'Ao Final') && "opacity-40 pointer-events-none")}>
+                <div className="flex items-center justify-between pt-4">
                   <span className="text-xs font-bold text-licorice/60">Gerar Cobrança</span>
                   <motion.button
-                    disabled={contract.format === 'Isento' || contract.format === 'Ao Final'}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => {
                       const newContract = { ...contract, generateBilling: !contract.generateBilling };

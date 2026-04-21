@@ -123,7 +123,7 @@ export default function EditLeadSidebar({
                     <Field label="Profissão" value={editingLead.profession} onChange={v => setEditingLead({...editingLead, profession: v})} onBlur={handleBlur} />
                     <Field label="E-mail" value={editingLead.email || ''} onChange={v => setEditingLead({...editingLead, email: v})} onBlur={handleBlur} />
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Telefone (WhatsApp)</label>
+                      <label className="text-[10px] font-medium text-licorice/30 tracking-widest">Whatsapp</label>
                       <div className="flex gap-2">
                         <input 
                           className="input-field flex-1"
@@ -145,7 +145,21 @@ export default function EditLeadSidebar({
                     </div>
                     <Field label="RG" value={formatRG(editingLead.rg || '')} onChange={v => setEditingLead({...editingLead, rg: v.replace(/\D/g, '')})} onBlur={handleBlur} />
                     <Field label="CPF" value={formatCPF(editingLead.cpf || '')} onChange={v => setEditingLead({...editingLead, cpf: v.replace(/\D/g, '')})} onBlur={handleBlur} />
-
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-medium text-licorice/30">Estado Civil</label>
+                      <select 
+                        className="input-field appearance-none cursor-pointer"
+                        value={editingLead.maritalStatus || ''}
+                        onChange={e => setEditingLead({...editingLead, maritalStatus: e.target.value})}
+                        onBlur={handleBlur}
+                      >
+                        <option value="">Selecione...</option>
+                        <option value="Solteiro(a)">Solteiro(a)</option>
+                        <option value="Casado(a)">Casado(a)</option>
+                        <option value="Divorciado(a)">Divorciado(a)</option>
+                        <option value="Viúvo(a)">Viúvo(a)</option>
+                      </select>
+                    </div>
                   </div>
                 </section>
 
