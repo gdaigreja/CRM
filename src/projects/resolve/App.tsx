@@ -509,13 +509,13 @@ export default function App() {
       phone: '',
       city: '',
       state: '',
-      valuePaid: 0,
-      propertyType: 'Sem construção',
-      brokerage: 0,
-      delays: 0,
-      signedDistrato: 'Não',
+      age: 0,
+      contribution: 0,
+      isContributing: '',
+      workType: '',
+      incomeRange: '',
+      hasRequested: '',
       notes: '',
-      proposal: 0,
       status,
 
       createdAt: new Date().toISOString(),
@@ -1622,10 +1622,10 @@ function LeadCard({ lead, index, onClick, onEdit }: { lead: Lead; index: number;
             </div>
 
             <div className="mt-3 pt-2.5 border-t border-licorice/6 flex justify-between items-center">
-              <span className="text-xs font-bold font-mono text-aventurine">{formatCurrency(lead.valuePaid)}</span>
+              <span className="text-xs font-bold font-mono text-aventurine">{lead.age || 0} anos</span>
               <span className="inline-flex items-center text-[9px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full"
                 style={{ background: 'rgba(26,17,16,0.06)', color: 'rgba(26,17,16,0.40)' }}>
-                {lead.propertyType}
+                {lead.contribution || 0} meses
               </span>
             </div>
           </div>
@@ -1768,82 +1768,109 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
                 }} onBlur={handleBlur} />
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Valor Pago</label>
-                  <input
-                    className="input-field font-mono"
-                    value={formatCurrency(localLead.valuePaid)}
-                    onChange={e => handleChange('valuePaid', parseCurrency(e.target.value))}
-                    onBlur={handleBlur}
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Tipo de Imóvel</label>
-                  <div className="relative">
-                    <select
-                      className="input-field appearance-none pr-10"
-                      value={localLead.propertyType}
-                      onChange={e => {
-                        handleChange('propertyType', e.target.value);
-                        onUpdate({ ...localLead, propertyType: e.target.value, contract });
-                      }}
-                    >
-                      <option>Sem construção</option>
-                      <option>Com construção</option>
-                      <option>Planta</option>
-                      <option>Imóvel Pronto</option>
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" size={16} />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Corretagem</label>
-                  <input
-                    className="input-field font-mono"
-                    value={formatCurrency(localLead.brokerage)}
-                    onChange={e => handleChange('brokerage', parseCurrency(e.target.value))}
-                    onBlur={handleBlur}
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Atrasos (Meses)</label>
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Idade</label>
                   <input
                     type="number"
                     className="input-field"
-                    value={localLead.delays}
-                    onChange={e => handleChange('delays', Number(e.target.value))}
+                    value={localLead.age || 0}
+                    onChange={e => handleChange('age', Number(e.target.value))}
                     onBlur={handleBlur}
                   />
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Distrato Assinado</label>
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Contribuição</label>
+                  <input
+                    type="number"
+                    className="input-field"
+                    value={localLead.contribution || 0}
+                    onChange={e => handleChange('contribution', Number(e.target.value))}
+                    onBlur={handleBlur}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Contribui?</label>
                   <div className="relative">
                     <select
                       className="input-field appearance-none pr-10"
-                      value={localLead.signedDistrato}
+                      value={localLead.isContributing || ""}
                       onChange={e => {
-                        handleChange('signedDistrato', e.target.value);
-                        onUpdate({ ...localLead, signedDistrato: e.target.value, contract });
+                        handleChange('isContributing', e.target.value);
                       }}
+                      onBlur={handleBlur}
                     >
-                      <option>Sim</option>
-                      <option>Não</option>
+                      <option value="">Selecione...</option>
+                      <option>Continuo</option>
+                      <option>Parei</option>
+                      <option>Nunca fiz</option>
+                      <option>Não sei</option>
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" size={16} />
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Proposta</label>
-                  <input
-                    className="input-field font-mono"
-                    value={formatCurrency(localLead.proposal)}
-                    onChange={e => handleChange('proposal', parseCurrency(e.target.value))}
-                    onBlur={handleBlur}
-                  />
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Trabalho</label>
+                  <div className="relative">
+                    <select
+                      className="input-field appearance-none pr-10"
+                      value={localLead.workType || ""}
+                      onChange={e => {
+                        handleChange('workType', e.target.value);
+                      }}
+                      onBlur={handleBlur}
+                    >
+                      <option value="">Selecione...</option>
+                      <option>CLT</option>
+                      <option>Autônomo</option>
+                      <option>Servidor</option>
+                      <option>Rural</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" size={16} />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Renda</label>
+                  <div className="relative">
+                    <select
+                      className="input-field appearance-none pr-10"
+                      value={localLead.incomeRange || ""}
+                      onChange={e => {
+                        handleChange('incomeRange', e.target.value);
+                      }}
+                      onBlur={handleBlur}
+                    >
+                      <option value="">Selecione...</option>
+                      <option>Não tenho renda</option>
+                      <option>Até 2 mil reais</option>
+                      <option>Entre 2 mil e 5 mil</option>
+                      <option>Entre 5 mil e 8 mil</option>
+                      <option>Acima de 8 mil</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" size={16} />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Já solicitou?</label>
+                  <div className="relative">
+                    <select
+                      className="input-field appearance-none pr-10"
+                      value={localLead.hasRequested || ""}
+                      onChange={e => {
+                        handleChange('hasRequested', e.target.value);
+                      }}
+                      onBlur={handleBlur}
+                    >
+                      <option value="">Selecione...</option>
+                      <option>Não</option>
+                      <option>Em andamento</option>
+                      <option>Negado</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" size={16} />
+                  </div>
                 </div>
 
               </div>

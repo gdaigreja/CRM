@@ -105,8 +105,8 @@ export default function Registrations({
                 <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Nome</th>
                 <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Telefone</th>
                 <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Profissão</th>
-                <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Tipo de Imóvel</th>
-                <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Valor Pago</th>
+                <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Contribuição</th>
+                <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Idade</th>
                 <th className="w-[15%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40">Status Atual</th>
                 <th className="w-[10%] px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-licorice/40 text-left">Ações</th>
               </tr>
@@ -134,11 +134,11 @@ export default function Registrations({
                       <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">{lead.profession || 'Não informada'}</span>
                     </td>
                     <td className="px-6 py-3">
-                      <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">{lead.propertyType || 'Não informado'}</span>
+                      <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">{lead.contribution || '0'}</span>
                     </td>
                     <td className="px-6 py-3">
                       <span className="text-[10px] font-bold text-licorice/60 uppercase tracking-tight truncate block">
-                        {formatCurrency(lead.valuePaid || 0)}
+                        {lead.age || '0'} anos
                       </span>
                     </td>
                     <td className="px-6 py-3">

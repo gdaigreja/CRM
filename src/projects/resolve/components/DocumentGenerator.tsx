@@ -54,13 +54,13 @@ const FIXED_VARIABLES: Variable[] = [
   { id: '10', tag: 'estado_cliente', description: 'Estado (UF)', field: 'state' },
   { id: '11', tag: 'cep_cliente', description: 'CEP do cliente', field: 'zipCode' },
   
-  // Dados do Lead / Negócio
-  { id: '12', tag: 'valor_pago', description: 'Valor total pago pelo cliente', field: 'valuePaid' },
-  { id: '13', tag: 'tipo_imovel', description: 'Tipo do imóvel (Apto, Casa, etc)', field: 'propertyType' },
-  { id: '14', tag: 'valor_corretagem', description: 'Valor da corretagem', field: 'brokerage' },
-  { id: '15', tag: 'atrasos_cliente', description: 'Quantidade de parcelas em atraso', field: 'delays' },
-  { id: '16', tag: 'distrato_assinado', description: 'Se o distrato foi assinado (Sim/Não)', field: 'signedDistrato' },
-  { id: '17', tag: 'valor_proposta', description: 'Valor da proposta de distrato', field: 'proposal' },
+  // Dados do Lead / Negócio (ResolvePrev)
+  { id: '12', tag: 'idade_cliente', description: 'Idade do cliente', field: 'age' },
+  { id: '13', tag: 'contribuicao_cliente', description: 'Tempo ou valor de contribuição', field: 'contribution' },
+  { id: '14', tag: 'status_contribuicao', description: 'Se contribui atualmente', field: 'isContributing' },
+  { id: '15', tag: 'tipo_trabalho', description: 'Tipo de trabalho/vínculo (CLT, Rural, etc)', field: 'workType' },
+  { id: '16', tag: 'faixa_renda', description: 'Faixa de renda do cliente', field: 'incomeRange' },
+  { id: '17', tag: 'ja_solicitou', description: 'Se já solicitou o benefício (Sim/Não/Andamento)', field: 'hasRequested' },
   
   // Dados do Contrato (Honorários/Jurídico)
   { id: '20', tag: 'valor_contrato', description: 'Valor total do contrato', field: 'contract.value' },
@@ -116,7 +116,7 @@ export default function DocumentGenerator({ leads }: DocumentGeneratorProps) {
 
     if (value === undefined || value === null || value === '') return 'Não informado';
 
-    if (field === 'valuePaid' || field === 'brokerage' || field === 'proposal' || field === 'contract.value' || field === 'contract.downPayment') {
+    if (field === 'contract.value' || field === 'contract.downPayment') {
       return formatCurrency(value);
     }
     if (field === 'cpf') return formatCPF(value);

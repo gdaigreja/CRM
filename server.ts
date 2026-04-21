@@ -89,6 +89,14 @@ const mapDbLeadToFrontend = (dbLead: any) => ({
   maritalStatus: dbLead.marital_status || "",
   archived: dbLead.archived || false,
   drive: dbLead.drive || "",
+
+  // Retirement fields
+  age: dbLead.age,
+  contribution: dbLead.contribution,
+  isContributing: dbLead.is_contributing,
+  workType: dbLead.work_type,
+  incomeRange: dbLead.income_range,
+  hasRequested: dbLead.has_requested,
   spouseInfo: (
     (dbLead.spouse_name && dbLead.spouse_name.trim() !== "") ||
     (dbLead.spouse_cpf && dbLead.spouse_cpf.trim() !== "") ||
@@ -135,7 +143,15 @@ const mapFrontendLeadToDb = (lead: any) => {
     spouse_phone: lead.spouseInfo?.phone || null,
     spouse_email: lead.spouseInfo?.email || null,
     archived: lead.archived || false,
-    drive: lead.drive || null
+    drive: lead.drive || null,
+
+    // Retirement fields
+    age: lead.age || null,
+    contribution: lead.contribution || null,
+    is_contributing: lead.isContributing || null,
+    work_type: lead.workType || null,
+    income_range: lead.incomeRange || null,
+    has_requested: lead.hasRequested || null
   };
 
   // Only include ID if explicitly provided (usually for updates or if frontend generates it)

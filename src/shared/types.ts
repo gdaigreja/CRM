@@ -34,6 +34,14 @@ export interface Lead {
   spouseInfo?: SpouseInfo;
   archived?: boolean;
   drive?: string;
+
+  // Retirement fields (ResolvePrev)
+  age?: number;
+  contribution?: number;
+  isContributing?: string;
+  workType?: string;
+  incomeRange?: string;
+  hasRequested?: string;
 }
 
 export interface LegalProcessInfo {
