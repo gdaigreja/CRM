@@ -36,6 +36,29 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
     // If already sent, do nothing (don't allow toggling off)
   };
 
+  // Auto-initialize documents for leads that don't have them
+  useEffect(() => {
+    leads.forEach(lead => {
+      const isOperation = lead.status === 'Assinado' || lead.status === 'Churn';
+      const hasNoDocs = !lead.documentData || !lead.documentData.documents || lead.documentData.documents.length === 0;
+      
+      if (isOperation && hasNoDocs) {
+        onUpdateLead({
+          ...lead,
+          documentData: {
+            code: '',
+            observations: [],
+            emailSent: false,
+            notificationSent: false,
+            minutaHomologada: false,
+            ...(lead.documentData || {}),
+            documents: [...DEFAULT_DOCUMENTS]
+          }
+        });
+      }
+    });
+  }, [leads, onUpdateLead]);
+
   const sendEmailWebhook = async (client: Lead) => {
     try {
       const payload = {
@@ -293,14 +316,20 @@ const ClientCard: React.FC<{
   onEmailClick: () => void;
   onConfirmService: (action: 'emailSent' | 'notificationSent') => void;
 }> = ({ client, onClick, onUpdate, onEmailClick, onConfirmService }) => {
-  const docData = client.documentData || { 
+  const docData = {
     code: '', 
     documents: [...DEFAULT_DOCUMENTS], 
     observations: [], 
     emailSent: false, 
     notificationSent: false, 
-    minutaHomologada: false 
+    minutaHomologada: false,
+    ...(client.documentData || {})
   };
+
+  // If documents is empty, use defaults
+  if (!docData.documents || docData.documents.length === 0) {
+    docData.documents = [...DEFAULT_DOCUMENTS];
+  }
   
   const getProgress = (type: 'obrigatório' | 'eventual') => {
     const docs = (docData.documents || []).filter(d => d.type === type);
@@ -577,14 +606,20 @@ const DocumentDetailOverlay: React.FC<{
   const [honorariosValue, setHonorariosValue] = useState('');
   const [paymentDate, setPaymentDate] = useState(new Date().toLocaleDateString('en-CA'));
   
-  const docData = client.documentData || { 
+  const docData = {
     code: '', 
     documents: [...DEFAULT_DOCUMENTS], 
     observations: [], 
     emailSent: false, 
     notificationSent: false, 
-    minutaHomologada: false 
+    minutaHomologada: false,
+    ...(client.documentData || {})
   };
+
+  // If documents is empty, use defaults
+  if (!docData.documents || docData.documents.length === 0) {
+    docData.documents = [...DEFAULT_DOCUMENTS];
+  }
 
   // Sync search internal state when modals open
   useEffect(() => {
