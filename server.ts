@@ -29,11 +29,16 @@ app.use(express.json());
 const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || "";
 
+console.log("Server: Inicializando com URL:", supabaseUrl ? "Presente" : "AUSENTE");
+
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("FATAL: MISSING SUPABASE CREDENTIALS!");
+  console.warn("WARNING: MISSING SUPABASE CREDENTIALS! Using placeholders.");
 }
 
-const supabase = createClient(supabaseUrl || "https://placeholder.supabase.co", supabaseAnonKey || "placeholder");
+const supabase = createClient(
+  supabaseUrl || "https://placeholder.supabase.co", 
+  supabaseAnonKey || "placeholder"
+);
 
 
 
@@ -214,27 +219,25 @@ const USERS_FILE = path.join(process.cwd(), 'users.json');
 
 async function getUsers(project?: string) {
   try {
-    // FORCE SHARED TABLE: Always use 'users' regardless of passed project
     const tableName = 'users';
     const { data, error } = await supabase
       .from(tableName)
       .select('*');
     
     if (error) throw error;
-    console.log(`Successfully fetched ${data?.length || 0} users from table: ${tableName}`);
     if (data && data.length > 0) return data;
     
-    // Fallback to local file if Supabase has no users
+    // Fallback to local file only if not on Vercel or if file exists
     if (fs.existsSync(USERS_FILE)) {
-      return JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
+      try {
+        return JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
+      } catch (e) {
+        console.error("Error parsing users.json", e);
+      }
     }
     return [];
   } catch (e) {
-    console.warn("Error reading users from Supabase, falling back to users.json", e);
-    // Fallback to local file if Supabase fails
-    if (fs.existsSync(USERS_FILE)) {
-      return JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
-    }
+    console.warn("Error reading users from Supabase/File", e);
     return [];
   }
 }
