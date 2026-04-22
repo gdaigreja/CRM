@@ -1,9 +1,15 @@
-// import app from '../server'; // COMENTADO PARA TESTE
+import app from '../server';
 
 export default async function handler(req: any, res: any) {
-  return res.status(200).json({ 
-    status: "ok", 
-    message: "A infraestrutura da Vercel está funcionando!",
-    env: process.env.VERCEL === '1' ? 'Produção (Vercel)' : 'Local'
-  });
+  // Diagnóstico simples
+  if (req.url === '/api/health' || req.url === '/health') {
+    return res.status(200).json({ 
+      status: "ok", 
+      message: "API está online e conectada ao servidor principal!",
+      env: process.env.VERCEL === '1' ? 'Produção (Vercel)' : 'Local'
+    });
+  }
+
+  // Encaminha para o app Express (server.ts)
+  return app(req, res);
 }

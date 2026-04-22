@@ -7,38 +7,34 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { createClient } from '@supabase/supabase-js';
 
-// dotenv is only needed locally
-if (process.env.VERCEL !== '1') {
-  try {
-    const dotenv = await import('dotenv');
-    dotenv.config();
-  } catch (e) {
-    // Ignore if dotenv is not found
-  }
-}
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
-
 app.use(express.json());
 
 // Supabase Configuration
 const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || "";
 
-console.log("Server: Inicializando com URL:", supabaseUrl ? "Presente" : "AUSENTE");
+let _supabase: any = null;
+const getSupabase = () => {
+  if (!_supabase) {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.warn("WARNING: MISSING SUPABASE CREDENTIALS!");
+    }
+    _supabase = createClient(
+      supabaseUrl || "https://placeholder.supabase.co", 
+      supabaseAnonKey || "placeholder"
+    );
+  }
+  return _supabase;
+};
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn("WARNING: MISSING SUPABASE CREDENTIALS! Using placeholders.");
-}
-
-const supabase = createClient(
-  supabaseUrl || "https://placeholder.supabase.co", 
-  supabaseAnonKey || "placeholder"
-);
+// Replace top-level supabase constant with a proxy or just use the getter
+const supabase = new Proxy({}, {
+  get: (target, prop) => getSupabase()[prop]
+});
 
 
 
