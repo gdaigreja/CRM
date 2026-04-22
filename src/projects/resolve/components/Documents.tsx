@@ -588,12 +588,7 @@ const ClientCard: React.FC<{
           </div>
         </div>
       )}
-      {client.financialRecord?.tipoResultado && client.status !== 'Churn' && (
-        <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none z-10">
-          <div className="absolute top-2 right-[-30px] bg-[#00A63E] text-white text-[8px] font-bold py-1.5 w-[100px] text-center rotate-45 shadow-sm tracking-[0.15em]">
-          </div>
-        </div>
-      )}
+
       <div className="flex justify-between items-start">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2">
