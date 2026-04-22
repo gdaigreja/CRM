@@ -1,7 +1,7 @@
 let app;
 try {
-  // Em ESM, precisamos da extensão .js para importações locais
-  const serverModule = await import('../server.js');
+  // Omit extension to let Vercel/Vite handle it correctly
+  const serverModule = await import('../server');
   app = serverModule.default;
 } catch (e: any) {
   app = (req: any, res: any) => {
