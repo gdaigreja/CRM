@@ -53,7 +53,11 @@ const getTable = (project: string | undefined, baseName: string) => {
     return `resolve_${baseName}`;
   }
   
-  // Default to original distrato table
+  if (p === 'distrato') {
+    return `distrato_${baseName}`;
+  }
+  
+  // Default fallback (should not be hit with current projects)
   return baseName;
 };
 
@@ -144,17 +148,17 @@ const mapFrontendLeadToDb = (lead: any, project: string = 'distrato') => {
     document_data: lead.documentData || null,
     financial_record: lead.financialRecord || null,
     notes: lead.notes,
+    spouse_name: lead.spouseInfo?.name || null,
+    spouse_cpf: lead.spouseInfo?.cpf || null,
+    spouse_rg: lead.spouseInfo?.rg || null,
+    spouse_phone: lead.spouseInfo?.phone || null,
+    spouse_email: lead.spouseInfo?.email || null,
     archived: lead.archived || false,
     drive: lead.drive || null,
   };
 
   if (isResolve) {
     dbLead.marital_status = lead.maritalStatus || null;
-    dbLead.spouse_name = lead.spouseInfo?.name || null;
-    dbLead.spouse_cpf = lead.spouseInfo?.cpf || null;
-    dbLead.spouse_rg = lead.spouseInfo?.rg || null;
-    dbLead.spouse_phone = lead.spouseInfo?.phone || null;
-    dbLead.spouse_email = lead.spouseInfo?.email || null;
     dbLead.age = lead.age || null;
     dbLead.contribution = lead.contribution || null;
     dbLead.is_contributing = lead.isContributing || null;
