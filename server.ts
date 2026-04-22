@@ -798,9 +798,13 @@ app.patch(["/api/users/:id", "/users/:id"], authenticateToken, async (req, res) 
 });
 
 async function startServer() {
-  // na Vercel, não precisamos do middleware do Vite nem de servir arquivos estáticos manualmente, 
-  // pois a Vercel cuida disso de forma nativa através do vercel.json e da pasta dist.
-  if (process.env.NODE_ENV === "production" || process.env.VERCEL === '1') {
+  // Na Vercel, não precisamos (e não devemos) servir arquivos estáticos via Express,
+  // pois a Vercel cuida disso nativamente. O Express só servirá a API.
+  if (process.env.VERCEL === '1') {
+    return;
+  }
+
+  if (process.env.NODE_ENV === "production") {
     const distPath = path.resolve(__dirname, 'dist');
     app.use(express.static(distPath));
     
@@ -854,6 +858,8 @@ async function startServer() {
 }
 
 // Inicializa o servidor se necessário (localmente)
-startServer();
+if (process.env.VERCEL !== '1') {
+  startServer();
+}
 
 export default app;
