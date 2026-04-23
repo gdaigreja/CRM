@@ -154,7 +154,7 @@ export default function App() {
                 .filter((f: any) => f.enabled)
                 .map((f: any) => f.id);
 
-              let roleId = p.role_id.toLowerCase();
+              let roleId = (p.role_id || '').toLowerCase();
               if (roleId === 'administrador') roleId = 'admin';
               if (roleId === 'visualizador') roleId = 'viewer';
 
@@ -223,7 +223,7 @@ export default function App() {
   useEffect(() => {
     if (user) {
       console.log("Current User Role:", user.role);
-      console.log("Role Permissions Loaded:", rolePermissions.length > 0 ? "Yes" : "No");
+      console.log("Role Permissions Loaded:", Object.keys(rolePermissions).length > 0 ? "Yes" : "No");
     }
   }, [user, rolePermissions]);
 
@@ -481,15 +481,20 @@ export default function App() {
 
   const filteredLeads = leads
     .filter(l => {
-      const matchesSearch = l.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        l.city.toLowerCase().includes(searchQuery.toLowerCase());
-
-      // Dashboard date filtering
-      if (view === 'dashboard' && dateRange.start) {
-        const createdAt = new Date(l.createdAt || '').getTime();
-        const start = new Date(dateRange.start).getTime();
-        const end = dateRange.end ? new Date(dateRange.end).getTime() : Infinity;
-        if (createdAt < start || createdAt > end) return false;
+      const query = searchQuery.toLowerCase();
+      const queryDigits = searchQuery.replace(/\D/g, '');
+      const matchesSearch = 
+        (l.name || '').toLowerCase().includes(query) ||
+        (l.city || '').toLowerCase().includes(query) ||
+        (queryDigits !== '' && (l.phone || '').replace(/\D/g, '').includes(queryDigits));
+      
+      if (view === 'dashboard' && dateRange) {
+        const date = new Date(l.createdAt || '');
+        const start = dateRange.start ? new Date(dateRange.start) : null;
+        const end = dateRange.end ? new Date(dateRange.end) : null;
+        
+        if (start && date < start) return false;
+        if (end && date > end) return false;
       }
 
       return matchesSearch;

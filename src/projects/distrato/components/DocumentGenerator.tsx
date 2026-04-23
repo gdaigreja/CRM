@@ -85,10 +85,13 @@ export default function DocumentGenerator({ leads }: DocumentGeneratorProps) {
   const [variables] = useState<Variable[]>(FIXED_VARIABLES);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
+  const query = searchQuery.toLowerCase();
+  const queryDigits = searchQuery.replace(/\D/g, '');
   const filteredLeads = leads.filter(l => 
-    l.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (l.name || '').toLowerCase().includes(query) ||
     l.cpf?.includes(searchQuery) ||
-    l.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    l.email?.toLowerCase().includes(query) ||
+    (queryDigits !== '' && (l.phone || '').replace(/\D/g, '').includes(queryDigits))
   ).slice(0, 5);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

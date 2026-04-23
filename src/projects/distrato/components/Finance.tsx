@@ -126,10 +126,12 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
       if (l.status !== 'Churn') return false;
 
       const query = searchQuery.toLowerCase();
+      const queryDigits = searchQuery.replace(/\D/g, '');
       const matchesSearch = !searchQuery ||
-        l.name.toLowerCase().includes(query) ||
+        (l.name || '').toLowerCase().includes(query) ||
         l.cpf?.includes(query) ||
-        l.email?.toLowerCase().includes(query);
+        l.email?.toLowerCase().includes(query) ||
+        (queryDigits !== '' && (l.phone || '').replace(/\D/g, '').includes(queryDigits));
 
       if (!matchesSearch) return false;
 
@@ -171,10 +173,12 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
       if (!l.documentData?.minutaHomologada) return false;
 
       const query = searchQuery.toLowerCase();
+      const queryDigits = searchQuery.replace(/\D/g, '');
       const matchesSearch = !searchQuery ||
-        l.name.toLowerCase().includes(query) ||
+        (l.name || '').toLowerCase().includes(query) ||
         l.cpf?.includes(query) ||
-        l.email?.toLowerCase().includes(query);
+        l.email?.toLowerCase().includes(query) ||
+        (queryDigits !== '' && (l.phone || '').replace(/\D/g, '').includes(queryDigits));
 
       const status = l.financialRecord?.statusResultado || 'em_pagamento';
       const matchesStatus = statusFilter === 'todos' || status === statusFilter;

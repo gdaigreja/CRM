@@ -62,9 +62,12 @@ export default function Registrations({
       const queryDigits = searchQuery.replace(/\D/g, '');
       
       const matchesSearch = 
-        lead.name.toLowerCase().includes(query) ||
+        (lead.name || '').toLowerCase().includes(query) ||
         (lead.email || '').toLowerCase().includes(query) ||
-        (queryDigits !== '' && (lead.cpf || '').includes(queryDigits));
+        (queryDigits !== '' && (
+          (lead.cpf || '').includes(queryDigits) ||
+          (lead.phone || '').replace(/\D/g, '').includes(queryDigits)
+        ));
       
       const isCliente = lead.status === 'Assinado' || lead.status === 'Churn';
       const matchesType = 

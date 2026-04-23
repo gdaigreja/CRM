@@ -90,7 +90,7 @@ export default function Tasks({ leads, externalFilters, onTriggerConsumed }: Tas
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
-      const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      const matchesSearch = (task.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                           task.description?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = filterStatus === 'todos' || task.status === filterStatus;
       return matchesSearch && matchesStatus;
@@ -390,7 +390,7 @@ export default function Tasks({ leads, externalFilters, onTriggerConsumed }: Tas
                               .filter(t => t.status === status)
                               .filter(t => {
                                 const search = searchQuery.toLowerCase();
-                                return t.title.toLowerCase().includes(search) || 
+                                return (t.title || '').toLowerCase().includes(search) || 
                                        t.description?.toLowerCase().includes(search);
                               })
                               .map((task, index) => (
@@ -576,9 +576,19 @@ export default function Tasks({ leads, externalFilters, onTriggerConsumed }: Tas
                           className="absolute z-10 left-0 right-0 mt-2 bg-white border border-licorice/5 rounded-2xl shadow-xl max-h-48 overflow-y-auto no-scrollbar"
                         >
                           <div className="p-2">
-                            {leads.filter(l => l.name.toLowerCase().includes(clientSearchQuery.toLowerCase())).length > 0 ? (
+                            {leads.filter(l => {
+                              const query = clientSearchQuery.toLowerCase();
+                              const queryDigits = clientSearchQuery.replace(/\D/g, '');
+                              return (l.name || '').toLowerCase().includes(query) ||
+                                     (queryDigits !== '' && (l.phone || '').replace(/\D/g, '').includes(queryDigits));
+                            }).length > 0 ? (
                               leads
-                                .filter(l => l.name.toLowerCase().includes(clientSearchQuery.toLowerCase()))
+                                .filter(l => {
+                                  const query = clientSearchQuery.toLowerCase();
+                                  const queryDigits = clientSearchQuery.replace(/\D/g, '');
+                                  return (l.name || '').toLowerCase().includes(query) ||
+                                         (queryDigits !== '' && (l.phone || '').replace(/\D/g, '').includes(queryDigits));
+                                })
                                 .map(lead => (
                                   <button
                                     key={lead.id}
