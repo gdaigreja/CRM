@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   DragDropContext,
   Droppable,
@@ -1585,57 +1586,71 @@ function SidebarIcon({ icon, label, active = false, expanded = false, onClick }:
 function LeadCard({ lead, index, onClick, onEdit }: { lead: Lead; index: number; onClick: () => void; onEdit: () => void; key?: string }) {
   return (
     <Draggable draggableId={lead.id} index={index}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          onClick={onClick}
-          className="group relative cursor-pointer rounded-xl transition-shadow duration-150"
-          style={{
-            ...provided.draggableProps.style,
-            background: snapshot.isDragging ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.92)',
-            border: '1px solid rgba(26,17,16,0.08)',
-            boxShadow: snapshot.isDragging
-              ? '0 12px 32px rgba(26,17,16,0.18), 0 4px 8px rgba(26,17,16,0.10), 0 0 0 1px rgba(77,42,41,0.15)'
-              : '0 1px 3px rgba(26,17,16,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
-          }}
-        >
-          {/* Hover lift effect handled via CSS transition */}
-          <div className="p-3.5">
-            <div className="flex justify-between items-start mb-2.5">
-              <h3 className="text-sm font-semibold leading-snug text-licorice group-hover:text-aventurine transition-colors duration-150 pr-6">
-                {lead.name}
-              </h3>
-              <button
-                onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                className="absolute top-3 right-3 p-1.5 text-licorice/20 hover:text-aventurine hover:bg-aventurine/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-              >
-                <Pencil size={11} />
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-1.5 text-[11px] text-licorice/40">
-                <Phone size={10} className="flex-shrink-0" />
-                <span className="truncate">{lead.phone ? formatPhone(lead.phone) : '—'}</span>
+      {(provided, snapshot) => {
+        const card = (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            onClick={onClick}
+            className={cn(
+              "group relative cursor-pointer rounded-xl transition-shadow duration-150",
+              snapshot.isDragging && "z-[9999]"
+            )}
+            style={{
+              ...provided.draggableProps.style,
+              background: snapshot.isDragging ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.92)',
+              border: '1px solid rgba(26,17,16,0.08)',
+              boxShadow: snapshot.isDragging
+                ? '0 12px 32px rgba(26,17,16,0.18), 0 4px 8px rgba(26,17,16,0.10), 0 0 0 1px rgba(77,42,41,0.15)'
+                : '0 1px 3px rgba(26,17,16,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
+              // Ensure the card keeps its width when portaled
+              width: snapshot.isDragging ? '270px' : provided.draggableProps.style?.width,
+              pointerEvents: 'auto',
+            }}
+          >
+            {/* Hover lift effect handled via CSS transition */}
+            <div className="p-3.5">
+              <div className="flex justify-between items-start mb-2.5">
+                <h3 className="text-sm font-semibold leading-snug text-licorice group-hover:text-aventurine transition-colors duration-150 pr-6">
+                  {lead.name}
+                </h3>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                  className="absolute top-3 right-3 p-1.5 text-licorice/20 hover:text-aventurine hover:bg-aventurine/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  <Pencil size={11} />
+                </button>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-licorice/40">
-                <MapPin size={10} className="flex-shrink-0" />
-                <span className="truncate">{lead.city ? `${lead.city}${lead.state ? '/' + lead.state : ''}` : '—'}</span>
-              </div>
-            </div>
 
-            <div className="mt-3 pt-2.5 border-t border-licorice/6 flex justify-between items-center">
-              <span className="text-xs font-bold font-mono text-aventurine">{formatCurrency(lead.valuePaid)}</span>
-              <span className="inline-flex items-center text-[9px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full"
-                style={{ background: 'rgba(26,17,16,0.06)', color: 'rgba(26,17,16,0.40)' }}>
-                {lead.propertyType}
-              </span>
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-1.5 text-[11px] text-licorice/40">
+                  <Phone size={10} className="flex-shrink-0" />
+                  <span className="truncate">{lead.phone ? formatPhone(lead.phone) : '—'}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] text-licorice/40">
+                  <MapPin size={10} className="flex-shrink-0" />
+                  <span className="truncate">{lead.city ? `${lead.city}${lead.state ? '/' + lead.state : ''}` : '—'}</span>
+                </div>
+              </div>
+
+              <div className="mt-3 pt-2.5 border-t border-licorice/6 flex justify-between items-center">
+                <span className="text-xs font-bold font-mono text-aventurine">{formatCurrency(lead.valuePaid)}</span>
+                <span className="inline-flex items-center text-[9px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(26,17,16,0.06)', color: 'rgba(26,17,16,0.40)' }}>
+                  {lead.propertyType}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+
+        if (snapshot.isDragging) {
+          return createPortal(card, document.body);
+        }
+
+        return card;
+      }}
     </Draggable>
   );
 }
