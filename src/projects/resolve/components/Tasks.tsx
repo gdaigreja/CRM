@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Task, Lead } from '../../../shared/types';
 import { cn } from '../../../shared/utils';
 import { 
@@ -395,57 +396,70 @@ export default function Tasks({ leads, externalFilters, onTriggerConsumed }: Tas
                               })
                               .map((task, index) => (
                                 <DraggableAny key={task.id} draggableId={task.id} index={index}>
-                                  {(provided: any, snapshot: any) => (
-                                    <div
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      {...provided.dragHandleProps}
-                                      className={cn(
-                                        "bg-white p-5 rounded-2xl border border-licorice/5 shadow-sm transition-all cursor-pointer",
-                                        snapshot.isDragging ? "shadow-xl scale-105 rotate-2" : "hover:shadow-md"
-                                      )}
-                                      onClick={() => handleEditTask(task)}
-                                    >
-                                      <div className="space-y-3">
-                                        <div className="flex items-start justify-between gap-2">
-                                          <h4 className={cn(
-                                            "text-sm font-bold text-licorice leading-tight",
-                                            task.status === 'concluida' && "line-through text-licorice/40"
-                                          )}>
-                                            {task.title}
-                                          </h4>
-                                          <span className={cn(
-                                             "px-2 py-0.5 rounded-xl text-[9px] font-medium tracking-wide shrink-0",
-                                             getPriorityColor(task.priority)
-                                           )}>
-                                             {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
-                                          </span>
-                                        </div>
-                                        
-                                        {task.description && (
-                                          <p className="text-[11px] text-licorice/60 line-clamp-2">
-                                            {task.description}
-                                          </p>
+                                  {(provided: any, snapshot: any) => {
+                                    const taskCard = (
+                                      <div
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        {...provided.dragHandleProps}
+                                        className={cn(
+                                          "bg-white p-5 rounded-2xl border border-licorice/5 shadow-sm transition-all cursor-pointer",
+                                          snapshot.isDragging ? "shadow-xl z-[9999]" : "hover:shadow-md"
                                         )}
+                                        style={{
+                                          ...provided.draggableProps.style,
+                                          // Maintain consistent width while portaled
+                                          width: snapshot.isDragging ? '300px' : provided.draggableProps.style?.width,
+                                        }}
+                                        onClick={() => handleEditTask(task)}
+                                      >
+                                        <div className="space-y-3">
+                                          <div className="flex items-start justify-between gap-2">
+                                            <h4 className={cn(
+                                              "text-sm font-bold text-licorice leading-tight",
+                                              task.status === 'concluida' && "line-through text-licorice/40"
+                                            )}>
+                                              {task.title}
+                                            </h4>
+                                            <span className={cn(
+                                               "px-2 py-0.5 rounded-xl text-[9px] font-medium tracking-wide shrink-0",
+                                               getPriorityColor(task.priority)
+                                             )}>
+                                               {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                                            </span>
+                                          </div>
+                                          
+                                          {task.description && (
+                                            <p className="text-[11px] text-licorice/60 line-clamp-2">
+                                              {task.description}
+                                            </p>
+                                          )}
 
-                                        <div className="flex items-center justify-between pt-2 border-t border-licorice/5">
-                                          <div className="flex items-center gap-2">
-                                            {task.dueDate && (
-                                              <div className="flex items-center gap-1 text-[9px] font-bold text-licorice/40">
-                                                <Calendar size={10} />
-                                                <span>{new Date(task.dueDate).toLocaleDateString('pt-BR')}</span>
+                                          <div className="flex items-center justify-between pt-2 border-t border-licorice/5">
+                                            <div className="flex items-center gap-2">
+                                              {task.dueDate && (
+                                                <div className="flex items-center gap-1 text-[9px] font-bold text-licorice/40">
+                                                  <Calendar size={10} />
+                                                  <span>{new Date(task.dueDate).toLocaleDateString('pt-BR')}</span>
+                                                </div>
+                                              )}
+                                            </div>
+                                            {task.leadId && (
+                                              <div className="w-6 h-6 bg-antique rounded-lg flex items-center justify-center text-[10px] font-bold text-licorice">
+                                                {leads.find(l => l.id === task.leadId)?.name.charAt(0)}
                                               </div>
                                             )}
                                           </div>
-                                          {task.leadId && (
-                                            <div className="w-6 h-6 bg-antique rounded-lg flex items-center justify-center text-[10px] font-bold text-licorice">
-                                              {leads.find(l => l.id === task.leadId)?.name.charAt(0)}
-                                            </div>
-                                          )}
                                         </div>
                                       </div>
-                                    </div>
-                                  )}
+                                    );
+
+                                    if (snapshot.isDragging) {
+                                      return createPortal(taskCard, document.body);
+                                    }
+
+                                    return taskCard;
+                                  }}
                                 </DraggableAny>
                               ))}
                             {provided.placeholder}

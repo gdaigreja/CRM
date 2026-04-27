@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   DragDropContext,
   Droppable,
@@ -1705,74 +1706,89 @@ function LeadCard({ lead, index, onClick, onEdit }: { lead: Lead; index: number;
 
   return (
     <Draggable draggableId={lead.id} index={index}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          onClick={onClick}
-          className="group relative cursor-pointer rounded-xl transition-shadow duration-150"
-          style={{
-            ...provided.draggableProps.style,
-            background: snapshot.isDragging ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.92)',
-            border: '1px solid rgba(26,17,16,0.08)',
-            boxShadow: snapshot.isDragging
-              ? '0 12px 32px rgba(26,17,16,0.18), 0 4px 8px rgba(26,17,16,0.10), 0 0 0 1px rgba(77,42,41,0.15)'
-              : '0 1px 3px rgba(26,17,16,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
-          }}
-        >
-          {/* Hover lift effect handled via CSS transition */}
-          <div className="p-3.5">
-            <div className="flex justify-between items-start mb-2.5">
-              <h3 className="text-sm font-semibold leading-snug text-licorice group-hover:text-aventurine transition-colors duration-150 pr-6">
-                {lead.name}
-              </h3>
-              <button
-                onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                className="absolute top-3 right-3 p-1.5 text-licorice/20 hover:text-aventurine hover:bg-aventurine/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-              >
-                <Pencil size={11} />
-              </button>
-            </div>
+      {(provided, snapshot) => {
+        const card = (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            onClick={onClick}
+            className={cn(
+              "group relative cursor-pointer rounded-xl transition-shadow duration-150",
+              snapshot.isDragging && "z-[9999]"
+            )}
+            style={{
+              ...provided.draggableProps.style,
+              background: snapshot.isDragging ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.92)',
+              border: '1px solid rgba(26,17,16,0.08)',
+              boxShadow: snapshot.isDragging
+                ? '0 12px 32px rgba(26,17,16,0.18), 0 4px 8px rgba(26,17,16,0.10), 0 0 0 1px rgba(77,42,41,0.15)'
+                : '0 1px 3px rgba(26,17,16,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
+              // Maintain consistent width while portaled
+              width: snapshot.isDragging ? '280px' : provided.draggableProps.style?.width,
+              pointerEvents: 'auto',
+            }}
+          >
+            {/* Hover lift effect handled via CSS transition */}
+            <div className="p-3.5">
+              <div className="flex justify-between items-start mb-2.5">
+                <h3 className="text-sm font-semibold leading-snug text-licorice group-hover:text-aventurine transition-colors duration-150 pr-6">
+                  {lead.name}
+                </h3>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                  className="absolute top-3 right-3 p-1.5 text-licorice/20 hover:text-aventurine hover:bg-aventurine/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  <Pencil size={11} />
+                </button>
+              </div>
 
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-1.5 text-[11px] text-licorice/40">
-                <Phone size={10} className="flex-shrink-0" />
-                <span className="truncate">{lead.phone ? formatPhone(lead.phone) : '—'}</span>
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-1.5 text-[11px] text-licorice/40">
+                  <Phone size={10} className="flex-shrink-0" />
+                  <span className="truncate">{lead.phone ? formatPhone(lead.phone) : '—'}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] text-licorice/40">
+                  <MapPin size={10} className="flex-shrink-0" />
+                  <span className="truncate">{lead.city ? `${lead.city}${lead.state ? '/' + lead.state : ''}` : '—'}</span>
+                </div>
+                <div className={cn(
+                  "inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-lg mt-0.5 -ml-2 w-fit max-w-[120px]",
+                  lead.financialRecord?.tipoResultado ? "bg-[#00A63E]/10 text-[#00A63E]" :
+                  reqStatus === 'past' ? "bg-red-500/10 text-red-600" :
+                  reqStatus === 'near' ? "bg-blue-500/10 text-blue-600" :
+                  "bg-licorice/5 text-licorice/40"
+                )}>
+                  <Calendar size={10} className="flex-shrink-0" />
+                  <span className="truncate">{formatRequirementDate(reqDate)}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-licorice/40">
-                <MapPin size={10} className="flex-shrink-0" />
-                <span className="truncate">{lead.city ? `${lead.city}${lead.state ? '/' + lead.state : ''}` : '—'}</span>
-              </div>
-              <div className={cn(
-                "inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-lg mt-0.5 -ml-2 w-fit max-w-[120px]",
-                lead.financialRecord?.tipoResultado ? "bg-[#00A63E]/10 text-[#00A63E]" :
-                reqStatus === 'past' ? "bg-red-500/10 text-red-600" :
-                reqStatus === 'near' ? "bg-blue-500/10 text-blue-600" :
-                "bg-licorice/5 text-licorice/40"
-              )}>
-                <Calendar size={10} className="flex-shrink-0" />
-                <span className="truncate">{formatRequirementDate(reqDate)}</span>
-              </div>
-            </div>
 
-            <div className="mt-3 pt-2.5 border-t border-licorice/6 flex justify-between items-center">
-              <span className="text-xs font-bold font-mono text-aventurine">{lead.age || 0} anos</span>
-              <span className={cn(
-                "inline-flex items-center text-[9px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full",
-                lead.serviceType === 'Aposentadoria' ? "bg-green-500/10 text-green-600" : 
-                lead.serviceType === 'Planejamento' ? "bg-yellow-500/10 text-yellow-700" : 
-                "bg-licorice/5 text-licorice/40"
-              )}>
-                {lead.serviceType || `${lead.contribution || 0} meses`}
-              </span>
+              <div className="mt-3 pt-2.5 border-t border-licorice/6 flex justify-between items-center">
+                <span className="text-xs font-bold font-mono text-aventurine">{lead.age || 0} anos</span>
+                <span className={cn(
+                  "inline-flex items-center text-[9px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full",
+                  lead.serviceType === 'Aposentadoria' ? "bg-green-500/10 text-green-600" : 
+                  lead.serviceType === 'Planejamento' ? "bg-yellow-500/10 text-yellow-700" : 
+                  "bg-licorice/5 text-licorice/40"
+                )}>
+                  {lead.serviceType || `${lead.contribution || 0} meses`}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+
+        if (snapshot.isDragging) {
+          return createPortal(card, document.body);
+        }
+
+        return card;
+      }}
     </Draggable>
   );
 }
+
 
 function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanced, onFinalize }: {
   lead: Lead;
