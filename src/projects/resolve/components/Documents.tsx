@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Mail, Bell, Plus, Trash2, X, ChevronDown, ChevronUp, Send, Calendar, Pencil, AlertCircle, AlertTriangle, FileText, Archive, Activity, Scale, Eye, Check as LucideCheck } from 'lucide-react';
+import { Search, Mail, Bell, Plus, Trash2, X, ChevronDown, ChevronUp, Send, Calendar, Pencil, AlertCircle, AlertTriangle, FileText, Archive, Activity, Scale, Eye, HelpCircle, Check as LucideCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Lead, DocumentItem, DocumentStatus, Observation, ClientDocumentData } from '../../../shared/types';
 import { DEFAULT_DOCUMENTS } from '../constants';
@@ -820,6 +820,9 @@ const DocumentDetailOverlay: React.FC<{
   const [parcelasValue, setParcelasValue] = useState('1');
   const [honorariosValue, setHonorariosValue] = useState('');
   const [paymentDate, setPaymentDate] = useState(new Date().toLocaleDateString('en-CA'));
+  const [showEventualConfirm, setShowEventualConfirm] = useState(false);
+  const [isSendingEventual, setIsSendingEventual] = useState(false);
+  const [isEventualSuccess, setIsEventualSuccess] = useState(false);
   
   const docData = {
     code: '', 
@@ -993,6 +996,42 @@ const DocumentDetailOverlay: React.FC<{
       ...client,
       documentData: { ...docData, documents: (docData.documents || []).filter(d => d.id !== docId) }
     });
+  };
+
+  const handleSendEventualDocs = async () => {
+    setIsSendingEventual(true);
+    const webhookUrl = "https://n8n.srv1077266.hstgr.cloud/webhook/docs-eventuais";
+    
+    const reqDate = calculateRequirementDate(client.birthDate, client.gender);
+    const formattedReqDate = formatRequirementDate(reqDate);
+
+    try {
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          nome: client.name,
+          data_requerimento: formattedReqDate,
+          whatsapp: client.phone,
+          link_drive: client.drive ? (client.drive.startsWith('http') ? client.drive : `https://${client.drive}`) : 'Não informado',
+          timestamp: new Date().toISOString()
+        })
+      });
+
+      if (response.ok) {
+        setIsEventualSuccess(true);
+        // setShowEventualConfirm will be kept true to show the success state
+      } else {
+        throw new Error('Falha ao enviar webhook');
+      }
+    } catch (error) {
+      console.error('Error sending eventual docs webhook:', error);
+      alert('Erro ao enviar a solicitação. Por favor, tente novamente.');
+    } finally {
+      setIsSendingEventual(false);
+    }
   };
 
   return (
@@ -1224,7 +1263,19 @@ const DocumentDetailOverlay: React.FC<{
                 className="flex items-center gap-4 w-full group"
               >
                 <div className="w-1 h-6 bg-[#9F8258] rounded-full" />
-                <span className="text-xs font-bold uppercase tracking-widest text-licorice/60 group-hover:text-licorice transition-colors">Documentos Eventuais</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-widest text-licorice/60 group-hover:text-licorice transition-colors">Documentos Eventuais</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowEventualConfirm(true);
+                    }}
+                    className="p-1 rounded-full text-licorice/20 hover:text-licorice hover:bg-licorice/5 transition-all"
+                    title="Perguntar sobre documentos eventuais"
+                  >
+                    <HelpCircle size={14} />
+                  </button>
+                </div>
                 <div className="flex-1 h-px bg-licorice/5" />
                 {isEventualOpen ? <ChevronUp size={18} className="text-licorice/30" /> : <ChevronDown size={18} className="text-licorice/30" />}
               </button>
@@ -1779,6 +1830,69 @@ const DocumentDetailOverlay: React.FC<{
                   Confirmar
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+
+        {showEventualConfirm && (
+          <div className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={(e) => { e.stopPropagation(); setShowEventualConfirm(false); setIsEventualSuccess(false); }}>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl flex flex-col items-center text-center gap-6 relative"
+              onClick={e => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => { setShowEventualConfirm(false); setIsEventualSuccess(false); }}
+                className="absolute top-4 right-4 p-2 text-licorice/20 hover:text-licorice transition-colors"
+              >
+                <X size={20} />
+              </button>
+
+              {isEventualSuccess ? (
+                <>
+                  <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
+                    <LucideCheck size={32} strokeWidth={3} />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bold text-licorice">Sucesso!</h3>
+                    <p className="text-sm text-licorice/60">A solicitação de informação foi enviada com sucesso para o responsável.</p>
+                  </div>
+                  <button 
+                    onClick={() => { setShowEventualConfirm(false); setIsEventualSuccess(false); }}
+                    className="w-full py-3 bg-licorice text-white rounded-xl text-sm font-bold hover:bg-licorice/90 transition-all"
+                  >
+                    Fechar
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                    <HelpCircle size={32} />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bold text-licorice">Pedir Informação</h3>
+                    <p className="text-sm text-licorice/60">Deseja perguntar ao responsável se este cliente precisará de algum documento eventual?</p>
+                  </div>
+
+                  <div className="flex w-full gap-3">
+                    <button 
+                      onClick={() => setShowEventualConfirm(false)}
+                      className="flex-1 py-3 text-sm font-bold text-licorice/40 hover:text-licorice transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      onClick={handleSendEventualDocs}
+                      disabled={isSendingEventual}
+                      className="flex-1 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-600/90 transition-all shadow-lg shadow-blue-900/20 disabled:opacity-50"
+                    >
+                      {isSendingEventual ? 'Enviando...' : 'Confirmar'}
+                    </button>
+                  </div>
+                </>
+              )}
             </motion.div>
           </div>
         )}

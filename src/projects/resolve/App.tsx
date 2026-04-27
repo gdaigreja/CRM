@@ -244,11 +244,7 @@ export default function App() {
   const [regFilterStatus, setRegFilterStatus] = useState<LeadStatus | 'all'>('all');
 
   // Dashboard Filters
-  const [dateRange, setDateRange] = useState<{ start: string | null, end: string | null, label: string }>({
-    start: null,
-    end: new Date().toISOString(),
-    label: 'Desde o início'
-  });
+  const [dateRange, setDateRange] = useState<{ start: string | null, end: string | null, label: string }>(getPredefinedRange('Todo o tempo'));
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Documents Filters
@@ -259,7 +255,7 @@ export default function App() {
   const [docFilterJudiciais, setDocFilterJudiciais] = useState(false);
   const [docFilterAdministrativos, setDocFilterAdministrativos] = useState(false);
   const [docFilterTodos, setDocFilterTodos] = useState(true);
-  const [docDateRange, setDocDateRange] = useState<{ start: string | null, end: string | null, label: string }>(getPredefinedRange('Esta semana'));
+  const [docDateRange, setDocDateRange] = useState<{ start: string | null, end: string | null, label: string }>(getPredefinedRange('Todo o tempo'));
   const [showDocFilter, setShowDocFilter] = useState(false);
   const [showDocDatePicker, setShowDocDatePicker] = useState(false);
   const [docCustomStart, setDocCustomStart] = useState<string>('');
