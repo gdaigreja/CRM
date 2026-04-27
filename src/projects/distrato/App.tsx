@@ -72,6 +72,8 @@ export default function App() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [pendingFinalize, setPendingFinalize] = useState<{ lead: Lead, contract: ContractData } | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [view, setView] = useState<'kanban' | 'dashboard' | 'registrations' | 'documents' | 'settings' | 'tasks' | 'generator' | 'finance'>('kanban');
   const [editingColumn, setEditingColumn] = useState<string | null>(null);
@@ -407,8 +409,16 @@ export default function App() {
     }
   };
 
-  const handleFinalize = async (lead: Lead, contract: ContractData) => {
+  const handleFinalize = (lead: Lead, contract: ContractData) => {
+    setPendingFinalize({ lead, contract });
+  };
+
+  const executeFinalize = async () => {
+    if (!pendingFinalize) return;
+    const { lead, contract } = pendingFinalize;
     const updatedLead = { ...lead, contract };
+    
+    // Save locally/DB first
     setLeads(prev => prev.map(l => l.id === lead.id ? updatedLead : l));
 
     const webhookUrl = "https://n8n.srv1077266.hstgr.cloud/webhook/distratojusto";
@@ -467,15 +477,16 @@ export default function App() {
       });
 
       if (response.ok) {
-        alert('Contrato gerado e dados enviados com sucesso!');
+        setPendingFinalize(null);
         setSelectedLead(null);
+        setShowSuccessModal(true);
       } else {
         throw new Error('Falha ao enviar dados para o webhook.');
       }
     } catch (error) {
       console.error('Webhook error:', error);
       alert('Contrato finalizado, mas houve um erro ao enviar os dados para o servidor.');
-      // Still close modal since data is saved locally/on db (via setLeads)
+      setPendingFinalize(null);
       setSelectedLead(null);
     }
   };
@@ -1495,6 +1506,23 @@ ON CONFLICT (id) DO NOTHING;
           />
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {pendingFinalize && (
+          <FinalizeConfirmModal
+            onClose={() => setPendingFinalize(null)}
+            onConfirm={executeFinalize}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showSuccessModal && (
+          <SuccessModal
+            onClose={() => setShowSuccessModal(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -1540,6 +1568,90 @@ function DeleteConfirmModal({ onClose, onConfirm }: { onClose: () => void; onCon
             Sim, Excluir
           </button>
         </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function FinalizeConfirmModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+      style={{ background: 'rgba(26,17,16,0.35)' }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.92, opacity: 0, y: 12 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.92, opacity: 0, y: 12 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+        className="bg-white w-full max-w-sm rounded-3xl p-8 flex flex-col items-center text-center gap-6"
+        style={{ boxShadow: '0 24px 64px rgba(26,17,16,0.22), 0 0 0 1px rgba(26,17,16,0.06)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(46,125,50,0.1)' }}>
+          <FilePlus size={28} className="text-aventurine" />
+        </div>
+        <div>
+          <h3 className="font-display text-xl font-bold text-licorice">Gerar Contrato?</h3>
+          <p className="text-sm text-licorice/50 mt-2 leading-relaxed">Os dados serão salvos e enviados para o processamento do contrato.</p>
+        </div>
+        <div className="flex w-full gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 text-sm font-semibold text-licorice/40 hover:text-licorice bg-antique/40 hover:bg-antique rounded-xl transition-all"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 py-3 text-white text-sm font-bold rounded-xl transition-all hover:opacity-90 active:scale-95"
+            style={{ background: '#2E7D32', boxShadow: '0 4px 12px rgba(46,125,50,0.3)' }}
+          >
+            Sim, Gerar
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function SuccessModal({ onClose }: { onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+      style={{ background: 'rgba(26,17,16,0.35)' }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.92, opacity: 0, y: 12 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.92, opacity: 0, y: 12 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+        className="bg-white w-full max-w-sm rounded-3xl p-8 flex flex-col items-center text-center gap-6"
+        style={{ boxShadow: '0 24px 64px rgba(26,17,16,0.22), 0 0 0 1px rgba(26,17,16,0.06)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(46,125,50,0.1)' }}>
+          <Check size={28} className="text-aventurine" />
+        </div>
+        <div>
+          <h3 className="font-display text-xl font-bold text-licorice">Sucesso!</h3>
+          <p className="text-sm text-licorice/50 mt-2 leading-relaxed">O contrato foi gerado e os dados foram enviados com sucesso para o webhook.</p>
+        </div>
+        <button
+          onClick={onClose}
+          className="w-full py-3 text-white text-sm font-bold rounded-xl transition-all hover:opacity-90 active:scale-95"
+          style={{ background: '#2E7D32', boxShadow: '0 4px 12px rgba(46,125,50,0.3)' }}
+        >
+          Entendido
+        </button>
       </motion.div>
     </motion.div>
   );
