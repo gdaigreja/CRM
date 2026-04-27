@@ -204,23 +204,20 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
 
   // Metrics
   const metrics = useMemo(() => {
-    // 1. Restituído = soma das restituições
-    const restituido = leads.reduce((acc, l) => {
-      if (!isWithinRange(l.createdAt)) return acc;
-      return acc + (l.financialRecord?.valorRestituicao || 0);
-    }, 0);
-
-    // 2. Sucumbência = soma das sucumbências
-    const sucumbencia = leads.reduce((acc, l) => {
-      if (!isWithinRange(l.createdAt)) return acc;
-      return acc + (l.financialRecord?.honorariosSucumbenciaisContratuais || 0);
-    }, 0);
-
-    // 3. Honorários = soma dos honorários
-    const honorarios = leads.reduce((acc, l) => {
+    // 1. Honorários Totais (soma da coluna 'Hon. Devido')
+    const honorariosTotais = leads.reduce((acc, l) => {
       if (!isWithinRange(l.createdAt)) return acc;
       return acc + (l.financialRecord?.valorHonorarios || 0);
     }, 0);
+
+    // 2. Honorários Pagos (soma da coluna 'Hon. Pago')
+    const honorariosPagos = leads.reduce((acc, l) => {
+      if (!isWithinRange(l.createdAt)) return acc;
+      return acc + (l.financialRecord?.honorariosPagos || 0);
+    }, 0);
+
+    // 3. Honorários a Receber (Totais - Pagos)
+    const honorariosAReceber = honorariosTotais - honorariosPagos;
 
     // 4. Receita de churn (previsto) = soma apenas de churn com status 'Executado'
     const receitaChurnPrevisto = leads.reduce((acc, l) => {
@@ -231,7 +228,7 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
       return acc;
     }, 0);
 
-    return { restituido, sucumbencia, honorarios, receitaChurnPrevisto };
+    return { honorariosTotais, honorariosPagos, honorariosAReceber, receitaChurnPrevisto };
   }, [leads, dateRange]);
 
   // Loss Rate Monthly Data
@@ -325,22 +322,22 @@ export default function Finance({ leads, onUpdate, externalFilters }: FinancePro
       {/* Metrics Row */}
       <div className="grid grid-cols-4 gap-6 p-6">
         <MetricCard
-          title="Restituído"
-          value={formatCurrency(metrics.restituido)}
-          icon={<DollarSign size={20} />}
+          title="Honorários Totais"
+          value={formatCurrency(metrics.honorariosTotais)}
+          icon={<PieChart size={20} />}
+          color="bg-[#C5A059]"
+        />
+        <MetricCard
+          title="Honorários Pagos"
+          value={formatCurrency(metrics.honorariosPagos)}
+          icon={<CheckCircle2 size={20} />}
           color="bg-success"
         />
         <MetricCard
-          title="Sucumbência"
-          value={formatCurrency(metrics.sucumbencia)}
-          icon={<TrendingUp size={20} />}
-          color="bg-info"
-        />
-        <MetricCard
-          title="Honorários"
-          value={formatCurrency(metrics.honorarios)}
-          icon={<PieChart size={20} />}
-          color="bg-[#C5A059]"
+          title="Honorários a Receber"
+          value={formatCurrency(metrics.honorariosAReceber)}
+          icon={<Clock size={20} />}
+          color="bg-[#F59E0B]"
         />
         <MetricCard
           title="Receita de Churn (Previsto)"
