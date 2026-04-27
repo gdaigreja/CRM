@@ -62,6 +62,8 @@ const STATUS_COLORS: Record<string, string> = {
   'Recusado': '#EF4444',       // Red
   'Desqualificado': '#A855F7', // Purple
   'Recuperação': '#A0522D',    // Terracotta (Default)
+  'Assinado': '#4ADE80',       // Light Green
+  'Churn': '#EF4444',          // Red
 };
 
 export default function App() {

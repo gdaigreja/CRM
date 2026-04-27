@@ -120,7 +120,18 @@ export default function Dashboard({ leads }: DashboardProps) {
   ];
 
   // Colors for charts
-  const COLORS = ['#2D2A26', '#4A453E', '#6B6359', '#8C8275', '#AD9F8F'];
+  const STATUS_COLORS: Record<string, string> = {
+    'Novo': '#94a3b8',
+    'Qualificação': '#F97316',
+    'Follow-up': '#EAB308',
+    'Reunião': '#2E7D32',
+    'Stand-by': '#3B82F6',
+    'Recusado': '#EF4444',
+    'Desqualificado': '#A855F7',
+    'Recuperação': '#A0522D',
+    'Assinado': '#4ADE80',
+    'Churn': '#EF4444',
+  };
 
   const formatCurrencyNoDecimals = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -210,7 +221,7 @@ export default function Dashboard({ leads }: DashboardProps) {
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   >
                     {lossReasonsData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name] || '#A0522D'} />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -291,7 +302,7 @@ export default function Dashboard({ leads }: DashboardProps) {
                   />
                   <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={60}>
                     {funnelData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name] || '#A0522D'} />
                     ))}
                   </Bar>
                 </BarChart>
