@@ -27,6 +27,7 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
   const [pendingBeneficioClient, setPendingBeneficioClient] = useState<Lead | null>(null);
   const [rendaValue, setRendaValue] = useState('');
   const [atrasadosValue, setAtrasadosValue] = useState('');
+  const [primeiroPagamentoValue, setPrimeiroPagamentoValue] = useState('');
   const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
   const [isEmailConfirmOpen, setIsEmailConfirmOpen] = useState(false);
   const [pendingEmailClient, setPendingEmailClient] = useState<Lead | null>(null);
@@ -214,8 +215,10 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
                 setPendingBeneficioClient(client);
                 const renda = client.financialRecord?.rendaMensal || 0;
                 const atrasados = client.financialRecord?.valorRestituicao || 0;
+                const primeiroPagamento = client.financialRecord?.dataPrimeiroPagamento || '';
                 setRendaValue(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(renda));
                 setAtrasadosValue(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(atrasados));
+                setPrimeiroPagamentoValue(primeiroPagamento);
                 setIsBeneficioModalOpen(true);
               }}
             />
@@ -252,8 +255,10 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
               setPendingBeneficioClient(client);
               const renda = client.financialRecord?.rendaMensal || 0;
               const atrasados = client.financialRecord?.valorRestituicao || 0;
+              const primeiroPagamento = client.financialRecord?.dataPrimeiroPagamento || '';
               setRendaValue(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(renda));
               setAtrasadosValue(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(atrasados));
+              setPrimeiroPagamentoValue(primeiroPagamento);
               setIsBeneficioModalOpen(true);
             }}
           />
@@ -336,88 +341,13 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
                     }}
                   />
                 </div>
-              </div>
-
-              <button 
-                onClick={() => {
-                  const updatedLead = {
-                    ...pendingBeneficioClient,
-                    archived: true,
-                    financialRecord: {
-                      ...(pendingBeneficioClient.financialRecord || {}),
-                      rendaMensal: Number(rendaValue.replace(/\D/g, '')) / 100,
-                      valorRestituicao: Number(atrasadosValue.replace(/\D/g, '')) / 100,
-                    },
-                    documentData: {
-                      ...(pendingBeneficioClient.documentData || { code: '', documents: [], observations: [], emailSent: false, notificationSent: false }),
-                      minutaHomologada: true
-                    }
-                  };
-                  onUpdateLead(updatedLead);
-                  if (selectedClient?.id === pendingBeneficioClient.id) {
-                    setSelectedClient(updatedLead);
-                  }
-                  setIsBeneficioModalOpen(false);
-                  setPendingBeneficioClient(null);
-                }}
-                className="w-full py-4 bg-aventurine text-white rounded-xl text-sm font-bold hover:bg-aventurine/90 transition-all shadow-lg shadow-aventurine/20"
-              >
-                Confirmar Benefício
-              </button>
-            </motion.div>
-          </div>
-        )}
-        {isBeneficioModalOpen && pendingBeneficioClient && (
-          <div className="fixed inset-0 bg-licorice/40 backdrop-blur-sm z-[400] flex items-center justify-center p-4" onClick={() => setIsBeneficioModalOpen(false)}>
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl flex flex-col items-center text-center gap-6 relative"
-              onClick={e => e.stopPropagation()}
-            >
-              <button 
-                onClick={() => setIsBeneficioModalOpen(false)}
-                className="absolute right-6 top-6 text-licorice/20 hover:text-licorice transition-colors"
-                title="Fechar"
-              >
-                <X size={20} />
-              </button>
-
-              <div className="w-16 h-16 bg-aventurine/10 rounded-full flex items-center justify-center text-aventurine">
-                <FileText size={32} />
-              </div>
-
-              <div>
-                <h3 className="text-xl font-bold text-licorice">Informar Benefício</h3>
-                <p className="text-sm text-licorice/60 mt-2">Insira os valores da renda e dos atrasados.</p>
-              </div>
-
-              <div className="w-full space-y-4">
                 <div className="space-y-1 text-left">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Renda Mensal</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Data do 1º Pagamento</label>
                   <input 
-                    type="text" 
-                    placeholder="R$ 0,00"
+                    type="date" 
                     className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors"
-                    value={rendaValue}
-                    onChange={(e) => {
-                      const val = Number(e.target.value.replace(/\D/g, '')) / 100;
-                      setRendaValue(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val));
-                    }}
-                  />
-                </div>
-                <div className="space-y-1 text-left">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-licorice/40 block ml-1">Atrasados</label>
-                  <input 
-                    type="text" 
-                    placeholder="R$ 0,00"
-                    className="w-full bg-antique/30 border border-licorice/5 p-4 rounded-2xl text-sm font-semibold focus:outline-none focus:border-aventurine/50 transition-colors"
-                    value={atrasadosValue}
-                    onChange={(e) => {
-                      const val = Number(e.target.value.replace(/\D/g, '')) / 100;
-                      setAtrasadosValue(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val));
-                    }}
+                    value={primeiroPagamentoValue}
+                    onChange={(e) => setPrimeiroPagamentoValue(e.target.value)}
                   />
                 </div>
               </div>
@@ -431,6 +361,11 @@ export default function Documents({ leads, onUpdateLead, onDeleteLead, onEditLea
                       ...(pendingBeneficioClient.financialRecord || {}),
                       rendaMensal: Number(rendaValue.replace(/\D/g, '')) / 100,
                       valorRestituicao: Number(atrasadosValue.replace(/\D/g, '')) / 100,
+                      dataPrimeiroPagamento: primeiroPagamentoValue,
+                      parcelasResultado: 3,
+                      parcelasPagas: 1,
+                      honorariosSucumbenciaisContratuais: Number(atrasadosValue.replace(/\D/g, '')) / 100,
+                      valorHonorarios: ((Number(rendaValue.replace(/\D/g, '')) / 100) * 3) + ((Number(atrasadosValue.replace(/\D/g, '')) / 100) * 0.3)
                     },
                     documentData: {
                       ...(pendingBeneficioClient.documentData || { code: '', documents: [], observations: [], emailSent: false, notificationSent: false }),

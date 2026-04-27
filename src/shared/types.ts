@@ -129,6 +129,7 @@ export interface FinancialRecord {
   anexoSentenca?: string;
   statusResultado?: 'em_pagamento' | 'finalizado';
   rendaMensal?: number;
+  dataPrimeiroPagamento?: string;
 }
 
 export interface Task {

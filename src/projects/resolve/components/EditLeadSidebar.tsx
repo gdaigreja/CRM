@@ -269,6 +269,90 @@ export default function EditLeadSidebar({
                     </button>
                   )}
                 </section>
+                
+                {/* Dados do Benefício */}
+                {(editingLead.status === 'Assinado' || editingLead.status === 'Churn') && (
+                  <section>
+                    <div className="flex items-center gap-2 mb-4">
+                      <DollarSign size={14} className="text-aventurine" />
+                      <h4 className="text-xs font-medium text-licorice/40">Dados do Benefício</h4>
+                    </div>
+                    <div className="grid grid-cols-6 gap-4">
+                      <div className="col-span-6 flex flex-col gap-1">
+                        <label className="text-[10px] font-medium text-licorice/30">Renda Mensal</label>
+                        <input 
+                          className="input-field"
+                          placeholder="R$ 0,00"
+                          value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(editingLead.financialRecord?.rendaMensal || 0)}
+                          onChange={e => {
+                            const val = Number(e.target.value.replace(/\D/g, '')) / 100;
+                            setEditingLead({
+                              ...editingLead,
+                              financialRecord: {
+                                ...(editingLead.financialRecord || {}),
+                                rendaMensal: val,
+                                valorHonorarios: (val * 3) + ((editingLead.financialRecord?.honorariosSucumbenciaisContratuais || 0) * 0.3)
+                              }
+                            });
+                          }}
+                          onBlur={handleBlur}
+                        />
+                      </div>
+                      <div className="col-span-6 flex flex-col gap-1">
+                        <label className="text-[10px] font-medium text-licorice/30">Data do 1º Pagamento</label>
+                        <input 
+                          type="date"
+                          className="input-field"
+                          value={editingLead.financialRecord?.dataPrimeiroPagamento || ''}
+                          onChange={e => setEditingLead({
+                            ...editingLead,
+                            financialRecord: {
+                              ...(editingLead.financialRecord || {}),
+                              dataPrimeiroPagamento: e.target.value
+                            }
+                          })}
+                          onBlur={handleBlur}
+                        />
+                      </div>
+                      <div className="col-span-3 flex flex-col gap-1">
+                        <label className="text-[10px] font-medium text-licorice/30">Atrasados</label>
+                        <input 
+                          className="input-field"
+                          placeholder="R$ 0,00"
+                          value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(editingLead.financialRecord?.honorariosSucumbenciaisContratuais || 0)}
+                          onChange={e => {
+                            const val = Number(e.target.value.replace(/\D/g, '')) / 100;
+                            setEditingLead({
+                              ...editingLead,
+                              financialRecord: {
+                                ...(editingLead.financialRecord || {}),
+                                honorariosSucumbenciaisContratuais: val,
+                                valorHonorarios: ((editingLead.financialRecord?.rendaMensal || 0) * 3) + (val * 0.3)
+                              }
+                            });
+                          }}
+                          onBlur={handleBlur}
+                        />
+                      </div>
+                      <div className="col-span-3 flex flex-col gap-1">
+                        <label className="text-[10px] font-medium text-licorice/30">Parcelas</label>
+                        <input 
+                          type="number"
+                          className="input-field"
+                          value={editingLead.financialRecord?.parcelasResultado || 3}
+                          onChange={e => setEditingLead({
+                            ...editingLead,
+                            financialRecord: {
+                              ...(editingLead.financialRecord || {}),
+                              parcelasResultado: parseInt(e.target.value) || 1
+                            }
+                          })}
+                          onBlur={handleBlur}
+                        />
+                      </div>
+                    </div>
+                  </section>
+                )}
               </div>
             </form>
 
