@@ -56,7 +56,7 @@ export function calculateRequirementDate(birthDate?: string, gender?: string): D
   try {
     const [year, month, day] = birthDate.split('-').map(Number);
     if (!year || !month || !day) return null;
-    const yearsToAdd = (gender === 'Masculino' || gender === 'masculino') ? 65 : 62;
+    const yearsToAdd = (gender === 'Masculino' || gender === 'masculino' || gender === 'Homem') ? 65 : 62;
     return new Date(year + yearsToAdd, month - 1, day);
   } catch (e) {
     return null;

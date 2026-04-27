@@ -190,8 +190,8 @@ export default function EditLeadSidebar({
                         onBlur={handleBlur}
                       >
                         <option value="">Selecione...</option>
-                        <option value="Masculino">Masculino</option>
-                        <option value="Feminino">Feminino</option>
+                        <option value="Homem">Homem</option>
+                        <option value="Mulher">Mulher</option>
                       </select>
                     </div>
                   </div>

@@ -1954,10 +1954,10 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
                       onBlur={handleBlur}
                     >
                       <option value="">Selecione...</option>
-                      <option>Continuo</option>
-                      <option>Parei</option>
-                      <option>Nunca fiz</option>
-                      <option>Não sei</option>
+                      <option>Sim - e continuo contribuindo.</option>
+                      <option>Sim - mas parei há algum tempo.</option>
+                      <option>Nunca fiz contribuição ao INSS.</option>
+                      <option>Não sei responder.</option>
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" size={16} />
                   </div>
@@ -1975,10 +1975,11 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
                       onBlur={handleBlur}
                     >
                       <option value="">Selecione...</option>
-                      <option>CLT</option>
-                      <option>Autônomo</option>
-                      <option>Servidor</option>
-                      <option>Rural</option>
+                      <option>Emprego de carteira assinada (CLT)</option>
+                      <option>Empresário / Autônomo / MEI</option>
+                      <option>Servidor público</option>
+                      <option>Trabalhador rural</option>
+                      <option>Outro</option>
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" size={16} />
                   </div>
@@ -2018,9 +2019,9 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
                       onBlur={handleBlur}
                     >
                       <option value="">Selecione...</option>
-                      <option>Não</option>
-                      <option>Em andamento</option>
-                      <option>Negado</option>
+                      <option>Não - nunca tentei aposentar.</option>
+                      <option>Sim - já tentei e está em andamento.</option>
+                      <option>Sim - mas foi negada pelo INSS.</option>
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" size={16} />
                   </div>
