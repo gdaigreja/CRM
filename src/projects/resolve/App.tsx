@@ -1004,12 +1004,12 @@ ON CONFLICT (id) DO NOTHING;
                     <AnimatePresence>
                       {showDocFilter && (
                         <>
-                          <div className="fixed inset-0 z-[60]" onClick={() => setShowDocFilter(false)} />
+                          <div className="fixed inset-0 z-[9998]" onMouseDown={() => setShowDocFilter(false)} />
                           <motion.div
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="absolute top-full right-0 mt-3 w-[420px] bg-white rounded-[32px] shadow-2xl border border-licorice/5 z-[100] overflow-hidden"
+                            className="absolute top-full right-0 mt-3 w-[420px] bg-white rounded-[32px] shadow-2xl border border-licorice/5 z-[9999] overflow-hidden"
                           >
                             <div className="p-8">
                               {/* Option: All */}
@@ -1182,12 +1182,12 @@ ON CONFLICT (id) DO NOTHING;
                     <AnimatePresence>
                       {showDocDatePicker && (
                         <>
-                          <div className="fixed inset-0 z-[60]" onClick={() => setShowDocDatePicker(false)} />
+                          <div className="fixed inset-0 z-[9998]" onMouseDown={() => setShowDocDatePicker(false)} />
                           <motion.div
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-licorice/5 z-[100] overflow-hidden"
+                            className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-licorice/5 z-[9999] overflow-hidden"
                           >
                             <div className="flex flex-col">
                               <button
