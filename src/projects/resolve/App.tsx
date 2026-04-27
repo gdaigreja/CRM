@@ -1806,6 +1806,21 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
     isCalculation: false,
     generateBilling: true
   });
+  const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
+  const [finalizeSuccess, setFinalizeSuccess] = useState(false);
+
+  const handleFinalizeAction = async () => {
+    setIsFinalizing(true);
+    try {
+      await onFinalize(contract);
+      setFinalizeSuccess(true);
+    } catch (error) {
+      console.error("Erro ao gerar contrato:", error);
+    } finally {
+      setIsFinalizing(false);
+    }
+  };
 
   useEffect(() => {
     setLocalLead(lead);
@@ -1860,7 +1875,7 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
           </div>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => onFinalize(contract)}
+              onClick={() => setShowFinalizeConfirm(true)}
               className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"
               title="Gerar Contrato"
             >
@@ -2165,6 +2180,83 @@ function UnifiedLeadModal({ lead, columns, onClose, onUpdate, onDelete, onAdvanc
 
         </div>
       </motion.div>
+
+      {/* Finalize Confirmation Modal */}
+      <AnimatePresence>
+        {showFinalizeConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 backdrop-blur-md z-[200] flex items-center justify-center p-4"
+            style={{ background: 'rgba(26,17,16,0.4)' }}
+            onClick={() => !isFinalizing && !finalizeSuccess && setShowFinalizeConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white w-full max-w-sm rounded-3xl p-8 flex flex-col items-center text-center gap-6 shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              {!finalizeSuccess ? (
+                <>
+                  <div className="w-16 h-16 bg-aventurine/10 rounded-2xl flex items-center justify-center text-aventurine">
+                    <FilePlus size={32} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-licorice">Gerar Contrato?</h3>
+                    <p className="text-sm text-licorice/60 mt-2">
+                      As informações serão enviadas para o sistema de automação e o contrato será gerado.
+                    </p>
+                  </div>
+                  <div className="flex w-full gap-3">
+                    <button
+                      disabled={isFinalizing}
+                      onClick={() => setShowFinalizeConfirm(false)}
+                      className="flex-1 py-3 text-sm font-bold text-licorice/40 hover:text-licorice transition-colors disabled:opacity-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      disabled={isFinalizing}
+                      onClick={handleFinalizeAction}
+                      className="flex-1 py-3 bg-aventurine text-white rounded-xl text-sm font-bold hover:bg-aventurine/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {isFinalizing ? (
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        "Sim, Gerar"
+                      )}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-16 h-16 bg-green-500/10 rounded-2xl flex items-center justify-center text-green-500">
+                    <Check size={32} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-licorice">Sucesso!</h3>
+                    <p className="text-sm text-licorice/60 mt-2">
+                      O contrato foi enviado com sucesso para a fila de geração.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowFinalizeConfirm(false);
+                      setFinalizeSuccess(false);
+                    }}
+                    className="w-full py-3 bg-aventurine text-white rounded-xl text-sm font-bold hover:bg-aventurine/90 transition-all"
+                  >
+                    Entendido
+                  </button>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
