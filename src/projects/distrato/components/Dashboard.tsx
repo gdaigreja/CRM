@@ -122,6 +122,14 @@ export default function Dashboard({ leads }: DashboardProps) {
   // Colors for charts
   const COLORS = ['#2D2A26', '#4A453E', '#6B6359', '#8C8275', '#AD9F8F'];
 
+  const formatCurrencyNoDecimals = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
   return (
     <div className="h-full overflow-y-auto p-6 no-scrollbar" style={{ background: 'rgba(245,242,237,0.4)' }}>
       <div className="max-w-7xl mx-auto flex flex-col gap-6">
@@ -129,38 +137,38 @@ export default function Dashboard({ leads }: DashboardProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           <MetricCard
             title="Total pago pelos clientes"
-            value={formatCurrency(totalPaid)}
+            value={formatCurrencyNoDecimals(totalPaid)}
             icon={<DollarSign size={18} />}
             description="Soma total investida pelos leads"
-            accent="#4D2A29"
+            accent="#2E7D32"
           />
           <MetricCard
             title="Projeção de Recuperação"
-            value={formatCurrency(recoveryProjection)}
+            value={formatCurrencyNoDecimals(recoveryProjection)}
             icon={<TrendingUp size={18} />}
             description="75% da soma de leads assinados"
-            accent="#512E2D"
+            accent="#1E88E5"
           />
           <MetricCard
             title="Projeção de Honorários"
-            value={formatCurrency(totalFees)}
-            icon={<DollarSign size={18} />}
+            value={formatCurrencyNoDecimals(totalFees)}
+            icon={<BarChart3 size={18} />}
             description="Projeção de recebimento"
-            accent="#A0522D"
+            accent="#F59E0B"
           />
           <MetricCard
             title="Ticket Médio Projetado"
-            value={formatCurrency(projectedAverageTicket)}
+            value={formatCurrencyNoDecimals(projectedAverageTicket)}
             icon={<Target size={18} />}
             description="Média por contrato assinado"
-            accent="#A0522D"
+            accent="#8B5CF6"
           />
           <MetricCard
             title="Contratos Assinados"
             value={signedLeadsCount.toString()}
-            icon={<Target size={18} />}
+            icon={<Users size={18} />}
             description="Total de contratos fechados"
-            accent="#4D2A29"
+            accent="#EC4899"
           />
         </div>
 
