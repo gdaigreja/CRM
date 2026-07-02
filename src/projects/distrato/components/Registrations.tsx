@@ -17,7 +17,8 @@ import {
   Save,
   X,
   AlertCircle,
-  FileText
+  FileText,
+  ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -301,11 +302,62 @@ export default function Registrations({
                   <X size={24} />
                 </button>
               </div>
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-licorice/60">{viewingNotes.name}</p>
-                <div className="p-4 bg-antique/30 rounded-2xl border border-licorice/5 text-sm text-licorice/70 leading-relaxed min-h-[150px] max-h-[300px] overflow-y-auto whitespace-pre-wrap no-scrollbar">
-                  {viewingNotes.notes || 'Nenhuma nota registrada para este cliente.'}
+              <div className="flex flex-col gap-4">
+                <p className="text-xs font-medium text-licorice/60 -mt-2">{viewingNotes.name}</p>
+                
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Anotações do Briefing</label>
+                  <textarea
+                    className="input-field min-h-[150px] max-h-[250px] resize-none"
+                    value={viewingNotes.notes || ''}
+                    onChange={(e) => setViewingNotes({ ...viewingNotes, notes: e.target.value })}
+                    placeholder="Escreva as notas do briefing aqui..."
+                  />
                 </div>
+
+                <div className="grid grid-cols-2 gap-4 mt-1">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Atrasos (Meses)</label>
+                    <input
+                      type="number"
+                      className="input-field"
+                      value={viewingNotes.delays ?? 0}
+                      onChange={(e) => setViewingNotes({ ...viewingNotes, delays: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] uppercase font-bold text-licorice/30 tracking-widest">Distrato Assinado</label>
+                    <div className="relative">
+                      <select
+                        className="input-field appearance-none pr-10"
+                        value={viewingNotes.signedDistrato || 'Não'}
+                        onChange={(e) => setViewingNotes({ ...viewingNotes, signedDistrato: e.target.value })}
+                      >
+                        <option value="Sim">Sim</option>
+                        <option value="Não">Não</option>
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-licorice/40 pointer-events-none" size={16} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex w-full gap-3 mt-2">
+                <button 
+                  onClick={() => setViewingNotes(null)}
+                  className="flex-1 py-3 text-sm font-bold text-licorice/40 hover:text-licorice transition-colors bg-antique/40 hover:bg-antique/60 rounded-xl"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={() => {
+                    onUpdate(viewingNotes);
+                    setViewingNotes(null);
+                  }}
+                  className="flex-1 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20"
+                >
+                  Salvar
+                </button>
               </div>
             </motion.div>
           </motion.div>
